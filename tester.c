@@ -6,8 +6,8 @@
 #include "ev3_tacho.h"
 #include "ev3_sensor.h"
 
-#include "motor_lib.h"
-#define millisleep( msec ) usleep(( msec ) * 1000 )
+#include <math.h>
+#include "picchio_lib.h"
 
 const char const *color[] = { "?", "BLACK", "BLUE", "GREEN", "YELLOW", "RED", "WHITE", "BROWN" };
 #define COLOR_COUNT  (( int )( sizeof( color ) / sizeof( color[ 0 ])))
@@ -17,48 +17,35 @@ int main( void )
 	int i;
 	char s[256];
 	uint8_t motors[2];
+	uint8_t touch;
+	uint8_t color;
+	uint8_t compass;
+	uint8_t gyro;
+	uint8_t dist;
+	position my_pos = { .x = START_X, .y = START_Y, .dir = START_DIR};
 
-  #ifndef __ARM_ARCH_4T__
-	/* Disable auto-detection of the brick (you have to set the correct address below) */
-	ev3_brick_addr = "192.168.0.204";
-  #endif
 
   if ( ev3_init() == -1 ) return ( 1 );
-
-  #ifndef __ARM_ARCH_4T__
-	  printf( "The EV3 brick auto-detection is DISABLED,\nwaiting %s online with plugged tacho...\n", ev3_brick_addr );
-  #else
-	  printf( "Waiting tacho is plugged...\n" );
-  #endif
-
-	while ( ev3_tacho_init() < 1 ) millisleep( 1000 );
 	printf( "*** ( PICCHIO ) Hello! ***\n" );
 
-	printf( "Found tacho motors:\n" );
-	for ( i = 0; i < DESC_LIMIT; i++ ) {
-		if ( ev3_tacho[ i ].type_inx != TACHO_TYPE__NONE_ ) {
-			printf( "  type = %s\n", ev3_tacho_type( ev3_tacho[ i ].type_inx ));
-			printf( "  port = %s\n", ev3_tacho_port_name( i, s ));
-			printf("  port = %d %d\n", ev3_tacho_desc_port(i), ev3_tacho_desc_extport(i));
-		}
+
+	while ( ev3_tacho_init() < 1 ) millisleep( 1000 );
+
+	if ( !ev3_search_tacho_plugged_in( MOT_SX, 0, &motors[0], 0 )) {
+		fprintf( stderr, "Motor SX not found!\n" );
+	}
+	if ( !ev3_search_tacho_plugged_in( MOT_DX, 0, &motors[1], 0 )) {
+		fprintf( stderr, "Motor DX not found!\n" );
 	}
 
-	if ( !ev3_search_tacho_plugged_in(65,0, &motors[0], 0 )) {
-		printf( "Motor SX not found!\n" );
-	}
-	if ( !ev3_search_tacho_plugged_in(68,0, &motors[1], 0 )) {
-		printf( "Motor DX not found!\n" );
-	}
+	// int max_speed;
+	// get_tacho_max_speed( motors[0], &max_speed );
+	// printf("Motor max speed = %d\n", max_speed );
 
-	int max_speed;
-	get_tacho_max_speed( motors[0], &max_speed );
-	printf("Motor max speed = %d\n", max_speed );
-
-
-	// printf("Going forwards...\n");
-  // go_forwards(motors, 2000, max_speed/2);
-  // wait_motor_stop(motors[0]);
-	// wait_motor_stop(motors[1]);
+	printf("Going forwards...\n");
+  go_forwards(motors, 2000, MAX_SPEED/2);
+  wait_motor_stop(motors[0]);
+	wait_motor_stop(motors[1]);
 
   // printf("Going backwards...\n");
 	// go_forwards(motors, 2000, -max_speed/2);
@@ -71,18 +58,76 @@ int main( void )
 	// wait_motor_stop(motors[1]);
 	// millisleep(2000);
 
-	  for (i = 0; i < 4; i++) {
-			printf("Going forwards...\n");
-		  go_forwards(motors, 1000, max_speed/2);
-		  wait_motor_stop(motors[0]);
-			wait_motor_stop(motors[1]);
-		  millisleep(1000);
-			printf("Turning left...\n");
-			turn_left(motors, max_speed/2);
-			wait_motor_stop(motors[0]);
-			wait_motor_stop(motors[1]);
-			millisleep(1000);
-  }
+	// printf("Turning left...\n");
+	// turn_left(motors, max_speed/2, 360);
+	// wait_motor_stop(motors[0]);
+	// wait_motor_stop(motors[1]);
+	//millisleep(2000);
+
+	// for (i = 0; i < 4; i++) {
+	// 		printf("Going forwards...\n");
+	// 	  go_forwards(motors, 1000, max_speed/2);
+	// 	  wait_motor_stop(motors[0]);
+	// 		wait_motor_stop(motors[1]);
+	// 	  millisleep(1000);
+	// 		printf("Turning left...\n");
+	// 		turn_left(motors, max_speed/2);
+	// 		wait_motor_stop(motors[0]);
+	// 		wait_motor_stop(motors[1]);
+	// 		millisleep(1000);
+  // }
+
+
+  ev3_sensor_init();
+
+	if ( !ev3_search_sensor( LEGO_EV3_TOUCH, &touch, 0 )) {
+		fprintf( stderr, "Touch sensor not found...\n" );
+	} else {
+		for (i = 0; i < 10; i++) {
+	  	printf("%f\n", get_value_samples(touch, 100));
+			millisleep(500);
+		}
+	}
+
+	if ( !ev3_search_sensor( LEGO_EV3_COLOR, &color, 0 )) {
+		fprintf( stderr, "Color sensor not found...\n" );
+	} else {
+		set_sensor_command_inx(color, COLOR_COL_COLOR); //TODO
+		for (i = 0; i < 10; i++) {
+	    printf("%f\n", get_value_samples(color, 100));
+			millisleep(500);
+	  }
+	}
+
+	if ( !ev3_search_sensor( HT_NXT_COMPASS, &compass, 0 )) {
+		fprintf( stderr, "Compass not found...\n" );
+	} else {
+		for (i = 0; i < 10; i++) {
+	    printf("%f\n", get_value_samples(compass, 100));
+			millisleep(500);
+	  }
+	}
+
+	if ( !ev3_search_sensor( LEGO_EV3_GYRO, &gyro, 0 )) {
+		fprintf( stderr, "Gyroscope not found...\n" );
+	} else {
+		set_sensor_command_inx(color, COLOR_COL_COLOR); //TODO ang, rate, fas, g_and_a, cal
+		for (i = 0; i < 10; i++) {
+	    printf("%f\n", get_value_samples(gyro, 100));
+			millisleep(500);
+	  }
+	}
+
+	if ( !ev3_search_sensor( LEGO_EV3_US, &dist, 0 )) {
+		fprintf( stderr, "Distance sensor not found...\n" );
+	} else {
+		set_sensor_command_inx(dist, 0); //TODO dist_cm, dist_in, listen, si_cm, si_in, dc_cm, dc_in
+		for (i = 0; i < 10; i++) {
+	    printf("%f\n", get_value_samples(dist, 100));
+			millisleep(500);
+	  }
+	}
+
 
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
