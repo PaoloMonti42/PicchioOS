@@ -42,7 +42,7 @@ void go_forwards(uint8_t *sn, int time, int speed) {
 	multi_set_tacho_ramp_up_sp( sn, MOV_RAMP_UP );
 	multi_set_tacho_ramp_down_sp( sn, MOV_RAMP_DOWN );
 	multi_set_tacho_command_inx( sn, TACHO_RUN_TIMED );
-	float extimation = M_PI;
+	float extimation = (M_PI*WHEEL_DIAM);
 }
 
 void turn_right(uint8_t *sn, int speed, int deg) {

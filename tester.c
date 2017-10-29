@@ -6,11 +6,26 @@
 #include "ev3_tacho.h"
 #include "ev3_sensor.h"
 
+#include <pthread.h>
 #include <math.h>
 #include "picchio_lib.h"
 
 const char const *color[] = { "?", "BLACK", "BLUE", "GREEN", "YELLOW", "RED", "WHITE", "BROWN" };
 #define COLOR_COUNT  (( int )( sizeof( color ) / sizeof( color[ 0 ])))
+
+void *position_logger(void *arg)
+{
+	position *pos = (position *)arg;
+	FILE* fp = fopen("log.txt", "w+");
+	int i;
+	for (i = 0; i < 100; i++) {
+	  fprintf(fp, "ID = %d    x = %+.4d    y = %+.4d\n", MY_ID, pos->x, pos->y);
+		millisleep(100);
+  }
+	printf("Finished logging!\n");
+	fclose(fp);
+	return NULL;
+}
 
 int main( void )
 {
@@ -23,10 +38,11 @@ int main( void )
 	uint8_t gyro;
 	uint8_t dist;
 	position my_pos = { .x = START_X, .y = START_Y, .dir = START_DIR};
-
+  pthread_t logger;
 
   if ( ev3_init() == -1 ) return ( 1 );
 	printf( "*** ( PICCHIO ) Hello! ***\n" );
+  pthread_create(&logger, NULL, position_logger, &my_pos);
 
 
 	while ( ev3_tacho_init() < 1 ) millisleep( 1000 );
