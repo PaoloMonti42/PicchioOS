@@ -43,8 +43,22 @@ int main( void )
   int dir_offset = get_compass_value_samples( compass, 20 );
 	// printf( "Starting orientation of the compass: %d degrees\n", dir_offset );
 
-	turn_right_compass(motors, compass, MAX_SPEED/4, 90);
+	// for ( i = 0; i < 10 ; i++) {
+	// 	update_direction(&(my_pos.dir), dir_offset, compass, 5);
+	// 	printf("My direction: %d\n", my_pos.dir);
+	// 	millisleep(1000);
+  // }
 
+	for ( i = 0; i < 50 ; i++) {
+		printf("My direction: %f\n", get_compass_value_samples( compass, 4 ));
+		millisleep(1000);
+  }
+
+	//turn_right_compass(motors, compass, MAX_SPEED/10, 90);
+	// for ( i = 0; i < 10 ; i++) {
+	//   turn_right_compass(motors, compass, MAX_SPEED/10, 90);
+	// 	update_direction(&(my_pos.dir), dir_offset, compass, 5);
+  // }
 	// fprintf( stdout, "Going forwards...\n" );
   // go_forwards( motors, 2000, MAX_SPEED/2 );
   // wait_motor_stop( motors[0] );
