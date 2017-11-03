@@ -13,6 +13,10 @@ void go_forwards(uint8_t *motors, int time, int speed);
 
 void go_backwards(uint8_t *motors, int time, int speed);
 
+void go_forwards_cm(uint8_t *motors, int cm, int speed);
+
+void go_backwards_cm(uint8_t *motors, int cm, int speed);
+
 void turn_right(uint8_t *motors, int speed, int deg);
 
 void turn_left(uint8_t *motors, int speed, int deg);

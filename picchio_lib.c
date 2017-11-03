@@ -40,7 +40,7 @@ void go_forwards(uint8_t *motors, int time, int speed) {
 	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TIMED );
-	float extimation = (M_PI*WHEEL_DIAM);
+	//float extimation = (M_PI*WHEEL_DIAM*deg)/360.0; TODO
 }
 
 void go_backwards(uint8_t *motors, int time, int speed) {
@@ -50,7 +50,29 @@ void go_backwards(uint8_t *motors, int time, int speed) {
 	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TIMED );
-	float extimation = (M_PI*WHEEL_DIAM);
+	//float extimation = (M_PI*WHEEL_DIAM*deg)/360.0; TODO
+}
+
+void go_forwards_cm(uint8_t *motors, int cm, int speed) {
+	float deg = (360.0*cm*10)/(M_PI*WHEEL_DIAM);
+	printf("%f\n", deg);
+	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
+	multi_set_tacho_speed_sp( motors, speed );
+	multi_set_tacho_position_sp( motors, MOT_DIR * deg );
+	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
+	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
+	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
+}
+
+void go_backwards_cm(uint8_t *motors, int cm, int speed) {
+	float deg = (360.0*cm*10)/(M_PI*WHEEL_DIAM);
+	printf("%f\n", deg);
+	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
+	multi_set_tacho_speed_sp( motors, speed );
+	multi_set_tacho_position_sp( motors, -MOT_DIR * deg );
+	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
+	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
+	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
 }
 
 void turn_right(uint8_t *motors, int speed, int deg) {
@@ -108,7 +130,7 @@ float get_compass_value_samples(uint8_t compass, int samples) {
 		sum  += val;
 	}
 	float r = sum/samples;				// TODO fix when averaging on the edge of 360 and 0
-	return r > 180 ? r - 360 : r; // HACK -180 to 180. Fixes todo above?  
+	return r > 180 ? r - 360 : r; // HACK -180 to 180. Fixes todo above?
 }
 
 void update_direction(int *direction, int direction_offset, uint8_t compass, int samples) {
@@ -126,7 +148,7 @@ void turn_right_compass(uint8_t *motors, uint8_t compass, int speed, int deg) {
 	multi_set_tacho_ramp_down_sp( motors, 0 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 	// printf("%d\n", start_dir);
-	if (start_dir + deg > 180) {
+	if (start_dir + deg > 180) {										// TODO da ripensare tutto, problemi con giri lunghi o < 0
 		int end_dir = start_dir - 360 + deg;
 		do {
 	    dir = get_compass_value_samples( compass, 5 ); // TODO fix precision
@@ -151,7 +173,7 @@ void turn_left_compass(uint8_t *motors, uint8_t compass, int speed, int deg) {
 	multi_set_tacho_ramp_down_sp( motors, 0 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
   // printf("%d\n", start_dir);
-	if (start_dir - deg < -180) {
+	if (start_dir - deg < -180) {												// TODO da ripensare tutto, problemi con giri lunghi o < 0
 		int end_dir = start_dir + 360 - deg;
 		do {
 	    dir = get_compass_value_samples( compass, 5 ); // TODO fix precision

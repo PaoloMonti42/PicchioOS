@@ -49,50 +49,42 @@ int main( void )
 	// 	millisleep(1000);
   // }
 
-	for ( i = 0; i < 50 ; i++) {
-		printf("My direction: %f\n", get_compass_value_samples( compass, 4 ));
-		millisleep(1000);
-  }
+	// for ( i = 0; i < 50 ; i++) {
+	// 	printf("My direction: %f\n", get_compass_value_samples( compass, 4 ));
+	// 	millisleep(1000);
+  // }
 
 	//turn_right_compass(motors, compass, MAX_SPEED/10, 90);
 	// for ( i = 0; i < 10 ; i++) {
 	//   turn_right_compass(motors, compass, MAX_SPEED/10, 90);
 	// 	update_direction(&(my_pos.dir), dir_offset, compass, 5);
   // }
+
+	fprintf( stdout, "Going forwards...\n" );
+  go_forwards_cm( motors, 300, MAX_SPEED/2 );
+  wait_motor_stop( motors[0] );
+	wait_motor_stop( motors[1] );
+
+	// fprintf( stdout, "Turning right...\n" );
+	// turn_right_compass( motors, compass, MAX_SPEED/4, 120 );
+	// wait_motor_stop( motors[0] );
+	// wait_motor_stop( motors[1] );
+	//
 	// fprintf( stdout, "Going forwards...\n" );
-  // go_forwards( motors, 2000, MAX_SPEED/2 );
-  // wait_motor_stop( motors[0] );
+	// go_forwards_cm( motors, 45, MAX_SPEED/2 );
+	// wait_motor_stop( motors[0] );
+	// wait_motor_stop( motors[1] );
+	//
+	// fprintf( stdout, "Turning left...\n" );
+	// turn_left_compass( motors, compass, MAX_SPEED/4, 115 );
+	// wait_motor_stop( motors[0] );
+	// wait_motor_stop( motors[1] );
+	//
+	// fprintf( stdout, "Going forwards...\n" );
+	// go_forwards_cm( motors, 40, MAX_SPEED/2 );
+	// wait_motor_stop( motors[0] );
 	// wait_motor_stop( motors[1] );
 
-  // printf("Going backwards...\n");
-	// go_backwards(motors, 2000, max_speed/2);
-	// wait_motor_stop(motors[0]);
-	// wait_motor_stop(motors[1]);
-
-	// printf("Turning right...\n");
-	// turn_right(motors, max_speed/2);
-	// wait_motor_stop(motors[0]);
-	// wait_motor_stop(motors[1]);
-	// millisleep(2000);
-
-	// printf("Turning left...\n");
-	// turn_left(motors, max_speed/2, 360);
-	// wait_motor_stop(motors[0]);
-	// wait_motor_stop(motors[1]);
-	//millisleep(2000);
-
-	// for (i = 0; i < 4; i++) {
-	// 		printf("Going forwards...\n");
-	// 	  go_forwards(motors, 1000, max_speed/2);
-	// 	  wait_motor_stop(motors[0]);
-	// 		wait_motor_stop(motors[1]);
-	// 	  millisleep(1000);
-	// 		printf("Turning left...\n");
-	// 		turn_left(motors, max_speed/2);
-	// 		wait_motor_stop(motors[0]);
-	// 		wait_motor_stop(motors[1]);
-	// 		millisleep(1000);
-  // }
 
   //pthread_join(logger, NULL);
 	ev3_uninit();
