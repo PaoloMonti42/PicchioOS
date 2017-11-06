@@ -40,7 +40,54 @@ int main( void )
 
 	motor_init( &motors[0], &motors[1] );
 
-  int dir_offset = get_compass_value_samples( compass, 20 );
+	set_sensor_mode_inx(gyro, GYRO_GYRO_RATE);
+	set_sensor_mode_inx(gyro, GYRO_GYRO_ANG);
+
+	float gyro_val;
+
+	printf("Gyroscope Test is on!\n");
+
+	turn_right(motors, MAX_SPEED/4, 90);
+	wait_motor_stop( motors[0] );
+	wait_motor_stop( motors[1] );
+
+	sleep(5);
+
+	reinit_pos_gyro(motors, gyro, MAX_SPEED/16);
+	wait_motor_stop( motors[0] );
+	wait_motor_stop( motors[1] );
+
+	sleep(5);
+
+/*
+	turn_right(motors, MAX_SPEED, 60);
+	wait_motor_stop( motors[0] );
+	wait_motor_stop( motors[1] );
+	turn_left(motors, MAX_SPEED/8, 120);
+	wait_motor_stop( motors[0] );
+	wait_motor_stop( motors[1] );
+
+	reinit_pos_gyro(motors, gyro, MAX_SPEED/16);
+	wait_motor_stop( motors[0] );
+	wait_motor_stop( motors[1] ); */
+
+	turn_right_gyro(motors, gyro, MAX_SPEED/4, 90);
+	wait_motor_stop( motors[0] );
+	wait_motor_stop( motors[1] );
+
+	gyro_val = get_value_samples(gyro, 5);
+	printf("cur_pos=%f\n", gyro_val);
+/*
+	for(i=0; i<50; i++){
+	gyro_val = get_value_single(gyro) - gyro_offset;
+	printf("%f\n", gyro_val);
+	sleep(1);
+}*/
+
+
+
+  //int dir_offset = get_compass_value_samples( compass, 20 );
+
 	// printf( "Starting orientation of the compass: %d degrees\n", dir_offset );
 
 	// for ( i = 0; i < 10 ; i++) {
@@ -50,8 +97,8 @@ int main( void )
   // }
 
 	// for ( i = 0; i < 50 ; i++) {
-	// 	printf("My direction: %f\n", get_compass_value_samples( compass, 4 ));
-	// 	millisleep(1000);
+	// 	printf("Distance: %f\n", get_value_samples( dist, 10 ));
+	// 	millisleep(500);
   // }
 
 	//turn_right_compass(motors, compass, MAX_SPEED/10, 90);
@@ -60,10 +107,18 @@ int main( void )
 	// 	update_direction(&(my_pos.dir), dir_offset, compass, 5);
   // }
 
-	fprintf( stdout, "Going forwards...\n" );
-  go_forwards_cm( motors, 300, MAX_SPEED/2 );
-  wait_motor_stop( motors[0] );
-	wait_motor_stop( motors[1] );
+	// fprintf( stdout, "Going forwards...\n" );
+	// for ( i = 0; i < 2 ; i++) {
+  //   go_forwards_cm(motors, 25, MAX_SPEED/2 );
+	// 	update_position(&my_pos, 25);
+	// 	millisleep(2000);
+	// 	my_pos.dir += 90;
+	  // turn_right(motors, MAX_SPEED/4, 90);
+		// update_direction(&(my_pos.dir), dir_offset, compass, 5);
+		// wait_motor_stop( motors[0] );
+		// wait_motor_stop( motors[1] );
+		// millisleep(1000);
+  // }
 
 	// fprintf( stdout, "Turning right...\n" );
 	// turn_right_compass( motors, compass, MAX_SPEED/4, 120 );
