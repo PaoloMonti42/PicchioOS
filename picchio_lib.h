@@ -9,13 +9,15 @@ void turn_motor_deg_compass(uint8_t motor, int speed, int deg);
 
 void turn_motor_to_pos(uint8_t motor, int speed, int pos);
 
-void go_forwards(uint8_t *motors, int time, int speed);
+void go_forwards_time(uint8_t *motors, int time, int speed);
 
-void go_backwards(uint8_t *motors, int time, int speed);
+void go_backwards_time(uint8_t *motors, int time, int speed);
 
 void go_forwards_cm(uint8_t *motors, int cm, int speed);
 
 void go_backwards_cm(uint8_t *motors, int cm, int speed);
+
+void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed);
 
 void turn_right(uint8_t *motors, int speed, int deg);
 
