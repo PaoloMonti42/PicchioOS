@@ -1,4 +1,3 @@
-#include <string.h>
 #define millisleep( msec ) usleep(( msec ) * 1000 )
 
 typedef struct position {
@@ -6,12 +5,6 @@ typedef struct position {
 	int y;
 	int dir;
 } position;
-
-typedef struct rgb {
-	float r;
-	float g;
-	float b;
-} rgb;
 
 void turn_motor_time(uint8_t motor, int speed, int time, int ramp_up, int ramp_down) {
 	set_tacho_stop_action_inx( motor, STOP_ACTION );
@@ -95,13 +88,8 @@ void turn_right(uint8_t *motors, int speed, int deg) {
 void turn_left(uint8_t *motors, int speed, int deg) {
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, speed );
-<<<<<<< HEAD
 	multi_set_tacho_ramp_up_sp( motors, 500 );
 	multi_set_tacho_ramp_down_sp( motors, 500 );
-=======
-	multi_set_tacho_ramp_up_sp( motors, 0 );
-	multi_set_tacho_ramp_down_sp( motors, 0 );
->>>>>>> martina_gyroscope
 	set_tacho_position_sp( motors[0], - MOT_DIR*(TURN360*deg)/360);
 	set_tacho_position_sp( motors[1], MOT_DIR*(TURN360*deg)/360 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
@@ -218,91 +206,30 @@ void turn_left_compass(uint8_t *motors, uint8_t compass, int speed, int deg) { /
 		stop_motors(motors);
 	}
 	// printf("%d\n", dir);
-}
 
-void reinit_pos_gyro(uint8_t *motors, uint8_t gyro, int speed) {
-	float start_pos = get_value_samples(gyro,5);
-	printf("start_pos=%f\n", start_pos);
-	float cur_pos;
-	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
-	multi_set_tacho_ramp_up_sp( motors, 0 );
-	multi_set_tacho_ramp_down_sp( motors, 0 );
-
-	if(start_pos < 0){
-		set_tacho_speed_sp( motors[0], MOT_DIR * speed);
-		set_tacho_speed_sp( motors[1], -MOT_DIR * speed);
-	} else {
-		set_tacho_speed_sp( motors[0], -MOT_DIR * speed);
-		set_tacho_speed_sp( motors[1], MOT_DIR * speed);
-	}
-
-	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
-	do {
-		cur_pos = get_value_samples(gyro, 5);
-		printf("cur_pos_reinitializing=%f\n", cur_pos);
-	} while(cur_pos < -1 || cur_pos > 1);
-	stop_motors(motors);
 
 }
 
-void turn_left_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
-	float start_dir = get_value_samples( gyro, 5 );
-	float dir;
-	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
-	set_tacho_speed_sp( motors[0], -MOT_DIR * speed);
-	set_tacho_speed_sp( motors[1], MOT_DIR * speed);
-	multi_set_tacho_ramp_up_sp( motors, 0 );
-	multi_set_tacho_ramp_down_sp( motors, 0 );
-	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
-	float end_dir = start_dir-deg;
-	do {
-			dir = get_value_single(gyro);
-			printf("cur_pos=%f\n", dir);
-		} while (dir >= end_dir);
-		stop_motors(motors);
+int front_obstacle () {
+	  int distance;
+		if ((distance = (int)get_value_single(dist)) <= 110 )
+			return distance;
+		else
+			return 0;
 }
 
-void turn_right_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
-	float start_dir = get_value_samples( gyro, 5 );
-	float dir;
-	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
-	set_tacho_speed_sp( motors[0], MOT_DIR * speed);
-	set_tacho_speed_sp( motors[1], -MOT_DIR * speed);
-	multi_set_tacho_ramp_up_sp( motors, 0 );
-	multi_set_tacho_ramp_down_sp( motors, 0 );
-	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
-	float end_dir = start_dir+deg;
-	do {
-			dir = get_value_single(gyro);
-			printf("cur_pos=%f\n", dir);
-		} while (dir <= end_dir);
-		stop_motors(motors);
-}
-
-void get_color_values(rgb * color_val, uint8_t color){
-	get_sensor_value0(color, &(color_val->r));
-	get_sensor_value1(color, &(color_val->g));
-	get_sensor_value2(color, &(color_val->b));
-
-}
-
- int get_main_color(rgb * color_val, char * main_color){
-	 int valid;
-  if (color_val->r < 3 && color_val->g < 3 && color_val->b < 3){
-		valid = 0;
-	} else {
-		valid = 1;
-	}
-	float main_color_val = color_val->r;
-	strcpy(main_color, "RED");
-	if(color_val->g > main_color_val){
-		main_color_val = color_val->g;
-		strcpy(main_color, "GREEN");
-	}
-	if(color_val->b > main_color_val){
-		main_color_val = color_val->b;
-		strcpy(main_color, "BLUE");
-	}
-
-	return valid;
-}
+ void scan_for_obstacle_5_pos (uint8_t *motors,int* obstacle) {
+	 int dir;
+	 dir = get_compass_value_samples( compass, 5 );
+	 obstacle[2] = front_obstacle();
+	 turn_left_compass (motors, compass, MAX_SPEED/10, 45);
+	 obstacle[1] = front_obstacle();
+	 turn_left_compass (motors, compass, MAX_SPEED/10, 45);
+	 obstacle[0] = front_obstacle();
+	 turn_right_compass (motors, compass, MAX_SPEED/10, 90);
+	 turn_right_compass (motors, compass, MAX_SPEED/10, 45);
+	 obstacle[3] = front_obstacle();
+	 turn_right_compass (motors, compass, MAX_SPEED/10, 45);
+	 obstacle[4] = front_obstacle();
+	 turn_left_compass (motors, compass, MAX_SPEED/10, 90);
+ }

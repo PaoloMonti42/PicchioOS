@@ -31,6 +31,10 @@ int main( void )
 	rgb color_val;
   pthread_t logger;
 
+	char command;
+	int	 obstacle[5];
+	int distance;
+
   if ( ev3_init() == -1 )
 	  return ( 1 );
 	printf( "*** ( PICCHIO ) Hello! ***\n" );
@@ -50,6 +54,34 @@ int main( void )
 
 	float gyro_val;
 
+	while (1) {
+		printf("a for scan all posistion s for only front pos q for quit: ");
+		scanf("%c", &command);
+		if (command == 'q') {
+			break;
+		}
+		if (command == 'a') {
+			scan_for_obstacle_5_pos(motors,obstacle);
+			for (i=0;i<5;i++) {
+				printf("pos %d ", i);
+				if (obstacle[i] == 0)
+					printf("no obstacle\n");
+				else
+					printf("obstacle at %d mm\n");
+			}
+		}
+		if (command == 's') {
+				if (distance = (front_obstacle()) != 0)
+					printf("no front obstacle\n")
+				else
+					printf("front obstacle at %d\n",distance);
+			}
+	}
+
+
+
+
+
 /*
 	printf("Gyroscope Test is on!\n");
 
@@ -67,7 +99,7 @@ int main( void )
 
 */
 
-printf("Color test is on!\n");
+/*printf("Color test is on!\n");
 char main_color[6];
 int valid_color;
 
@@ -83,7 +115,7 @@ for(;;){
 	}
 
 }
-
+*/
 /*
 	turn_right(motors, MAX_SPEED, 60);
 	wait_motor_stop( motors[0] );
@@ -145,7 +177,7 @@ for(;;){
 		// wait_motor_stop( motors[1] );
 		// millisleep(1000);
 <<<<<<< HEAD
-  // } 
+  // }
 =======
   // }
 >>>>>>> martina_gyroscope
