@@ -10,8 +10,8 @@
 #include <math.h>
 #include "picchio_lib.h"
 
-const char const *color[] = { "?", "BLACK", "BLUE", "GREEN", "YELLOW", "RED", "WHITE", "BROWN" };
-#define COLOR_COUNT  (( int )( sizeof( color ) / sizeof( color[ 0 ])))
+const char const *colors[] = { "?", "BLACK", "BLUE", "GREEN", "YELLOW", "RED", "WHITE", "BROWN" };
+#define COLOR_COUNT  (( int )( sizeof( colors ) / sizeof( colors[ 0 ])))
 
 int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist);
 int motor_init(uint8_t *motor0, uint8_t *motor1);
@@ -28,6 +28,7 @@ int main( void )
 	uint8_t gyro;
 	uint8_t dist;
 	position my_pos = { .x = START_X, .y = START_Y, .dir = START_DIR };
+	rgb color_val;
   pthread_t logger;
 
   if ( ev3_init() == -1 )
@@ -42,9 +43,11 @@ int main( void )
 
 	set_sensor_mode_inx(gyro, GYRO_GYRO_RATE);
 	set_sensor_mode_inx(gyro, GYRO_GYRO_ANG);
+	set_sensor_mode_inx(color, COLOR_RGB_RAW);
 
 	float gyro_val;
 
+/*
 	printf("Gyroscope Test is on!\n");
 
 	turn_right(motors, MAX_SPEED/4, 90);
@@ -59,6 +62,25 @@ int main( void )
 
 	sleep(5);
 
+*/
+
+printf("Color test is on!\n");
+char main_color[6];
+int valid_color;
+
+for(;;){
+	get_color_values(&color_val, color);
+	printf("R=%f, G=%f, B=%f\n", color_val.r, color_val.g, color_val.b);
+	sleep(1);
+  valid_color = get_main_color(&color_val, main_color);
+	if (valid_color != 0){
+	printf( "\r(%s) \n", main_color);
+	} else {
+	printf("Invalid color.\n");
+	}
+
+}
+
 /*
 	turn_right(motors, MAX_SPEED, 60);
 	wait_motor_stop( motors[0] );
@@ -70,13 +92,13 @@ int main( void )
 	reinit_pos_gyro(motors, gyro, MAX_SPEED/16);
 	wait_motor_stop( motors[0] );
 	wait_motor_stop( motors[1] ); */
-
+/*
 	turn_right_gyro(motors, gyro, MAX_SPEED/4, 90);
 	wait_motor_stop( motors[0] );
 	wait_motor_stop( motors[1] );
 
 	gyro_val = get_value_samples(gyro, 5);
-	printf("cur_pos=%f\n", gyro_val);
+	printf("cur_pos=%f\n", gyro_val); */
 /*
 	for(i=0; i<50; i++){
 	gyro_val = get_value_single(gyro) - gyro_offset;

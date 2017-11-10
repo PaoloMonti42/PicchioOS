@@ -1,3 +1,4 @@
+#include <string.h>
 #define millisleep( msec ) usleep(( msec ) * 1000 )
 
 typedef struct position {
@@ -5,6 +6,12 @@ typedef struct position {
 	int y;
 	int dir;
 } position;
+
+typedef struct rgb {
+	float r;
+	float g;
+	float b;
+} rgb;
 
 void turn_motor_time(uint8_t motor, int speed, int time, int ramp_up, int ramp_down) {
 	set_tacho_stop_action_inx( motor, STOP_ACTION );
@@ -233,7 +240,7 @@ void reinit_pos_gyro(uint8_t *motors, uint8_t gyro, int speed) {
 
 }
 
-void turn_left_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) { // TODO check for values < 0 or > 180
+void turn_left_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 	float start_dir = get_value_samples( gyro, 5 );
 	float dir;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
@@ -250,7 +257,7 @@ void turn_left_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) { // TODO
 		stop_motors(motors);
 }
 
-void turn_right_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) { // TODO check for values < 0 or > 180
+void turn_right_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 	float start_dir = get_value_samples( gyro, 5 );
 	float dir;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
@@ -265,4 +272,32 @@ void turn_right_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) { // TOD
 			printf("cur_pos=%f\n", dir);
 		} while (dir <= end_dir);
 		stop_motors(motors);
+}
+
+void get_color_values(rgb * color_val, uint8_t color){
+	get_sensor_value0(color, &(color_val->r));
+	get_sensor_value1(color, &(color_val->g));
+	get_sensor_value2(color, &(color_val->b));
+
+}
+
+ int get_main_color(rgb * color_val, char * main_color){
+	 int valid;
+  if (color_val->r < 3 && color_val->g < 3 && color_val->b < 3){
+		valid = 0;
+	} else {
+		valid = 1;
+	}
+	float main_color_val = color_val->r;
+	strcpy(main_color, "RED");
+	if(color_val->g > main_color_val){
+		main_color_val = color_val->g;
+		strcpy(main_color, "GREEN");
+	}
+	if(color_val->b > main_color_val){
+		main_color_val = color_val->b;
+		strcpy(main_color, "BLUE");
+	}
+
+	return valid;
 }
