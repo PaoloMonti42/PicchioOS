@@ -1,0 +1,70 @@
+($!
+     ____ __     ____   ___    ____ __         (((((()
+    | |_  \ \  /   ) ) | |  ) | |_  \ \  /  \(@)- /
+    |_|__  \_\/  __)_) |_|_/  |_|__  \_\/   /(@)- \
+                                               ((())))
+
+($set CLASS_PATH "/sys/class/lego-port")
+($set CLASS_FOLDER_PREF "port")
+($set CLASS_ID ($unq CLASS_FOLDER_PREF))
+($set CLASS_TITLE "EV3 port")
+
+($dict CLASS_TYPE
+	(` CLASS_TYPE_NAME        CLASS_TYPE_ID_SHORT  CLASS_TYPE_MODES  )
+	(`
+	(  "ht-nxt-smux-port"     "ht_nxt_smux"        ( "analog" "i2c" ) )
+	(  "legoev3-input-port"   "input"              ( "auto" "nxt-analog" "nxt-color" "nxt-i2c" "other-i2c" "ev3-analog" "ev3-uart" "other-uart" "raw" ) )
+	(  "legoev3-output-port"  "output"             ( "auto" "tacho-motor" "dc-motor" "led" "raw" ) )
+	(  "ms-ev3-smux-port"     "ms_ev3_smux"        ( "uart" "analog" ) )
+	(  "ms-nxtmmx-out-port"   "ms_nxtmmx"          ( "tacho-motor" ) )
+	(  "wedo-port"            "wedo"               ( "auto" ) )
+	)
+)
+($set CLASS_TYPE_ATTR_INDEX ( "mode" ))
+($set CLASS_ATTR_INDEX ())
+($set CLASS_ATTR_FLAGS ())
+
+($set R  0)
+($set RW 1)
+($set W  2)
+
+($dict CLASS_ATTR
+	(` CLASS_ATTR_NAME         CLASS_ATTR_TYPE  CLASS_ATTR_ARRAY  CLASS_ATTR_WRITE  )
+	(`
+	(  "address"               char             1                 R                 )
+	(  "driver_name"           char             1                 R                 )
+	(  "mode"                  char             1                 RW                )
+	(  "modes"                 char             1                 R                 )
+	(  "set_device"            char             1                 W                 )
+	(  "status"                char             1                 R                 )
+	)
+)
+
+($dict CLASS_AVEC
+	(` CLASS_AVEC_NAME  CLASS_AVEC_SIZE  CLASS_AVEC_TYPE  CLASS_AVEC_ARRAY  CLASS_AVEC_WRITE  )
+	(`
+	)
+)
+
+($dict CLASS_DESC
+	(` CLASS_DESC_ID  CLASS_DESC_TYPE  CLASS_DESC_COMMENT  )
+	(`
+	(  type_inx       INX_T            "type"              )
+	(  port           uint8_t          "EV3 port"          )
+	(  extport        uint8_t          "extended port"     )
+	(  addr           uint8_t          "I2C address"       )
+	)
+)
+
+($dict PORT_SLICE
+	(` PORT_SLICE_PREF  PORT_SLICE_RANGE                   PORT_SLICE_PARENT  PORT_SLICE_ID  PORT_SLICE_DESC  PORT_SLICE_FIRST  )
+	(`
+	(  "in"             ('1' '2' '3' '4')                  ""                 input          port             '1'               )
+	(  "out"            ('A' 'B' 'C' 'D')                  ""                 output         port             'A'               )
+	(  "i2c"            (1 254)                            "in"               (`)            addr             1                 )
+	(  "mux"            ('1' '2' '3' '4')                  "i2c"              mux            extport          '1'               )
+	(  "sv"             ('1' '2' '3' '4' '5' '6' '7' '8')  "i2c"              servo          extport          'A'               )
+	(  "M"              ('1' '2')                          "i2c"              nxtmmx         extport          'M'               )
+	(  "wedo"           ('1' '2' '3' '4')                  "in"               wedo           extport          'a'               )
+	)
+)

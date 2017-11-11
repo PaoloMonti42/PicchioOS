@@ -95,13 +95,8 @@ void turn_right(uint8_t *motors, int speed, int deg) {
 void turn_left(uint8_t *motors, int speed, int deg) {
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, speed );
-<<<<<<< HEAD
-	multi_set_tacho_ramp_up_sp( motors, 500 );
-	multi_set_tacho_ramp_down_sp( motors, 500 );
-=======
 	multi_set_tacho_ramp_up_sp( motors, 0 );
 	multi_set_tacho_ramp_down_sp( motors, 0 );
->>>>>>> martina_gyroscope
 	set_tacho_position_sp( motors[0], - MOT_DIR*(TURN360*deg)/360);
 	set_tacho_position_sp( motors[1], MOT_DIR*(TURN360*deg)/360 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );

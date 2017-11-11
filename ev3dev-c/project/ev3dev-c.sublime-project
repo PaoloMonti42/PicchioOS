@@ -1,0 +1,59 @@
+{
+	"folders":
+	[
+		{
+			"path": "../",
+			"file_exclude_patterns": ["args", "*.bak", "*.log", "*.git*", "*.pyd", ".tags", "*.json", "*.dox", "*.bat"],
+			"folder_exclude_patterns": ["project", "etc", "object", "bin", "html", "3d_party", "lib", "yupp", "build",
+			"dist", "*.egg-info", "lua"
+			]
+		}
+	],
+	"settings":
+	{
+		"tab_size": 4,
+		"translate_tabs_to_spaces": false
+	},
+	"build_systems":
+	[
+		{
+			"name": "Make ev3dev-c library",
+			"working_dir": "${project_path}/../source/ev3",
+			"file_regex": "(?:^(..[^:]*):([0-9]+):?([0-9]+)?:? (.*)$)|(?:^[ ]*File \"(...*?)\", line ([0-9]*))",
+			"cmd": ["mingw32-make"],
+			"shell": true,
+			"variants": [
+				{
+					"name": "Make ev3dev-c library - SHARED",
+					"working_dir": "${project_path}/../source/ev3",
+					"cmd": ["mingw32-make", "shared"],
+					"shell": true
+				},
+				{
+					"name": "Make ev3dev-c library - CLEAN",
+					"working_dir": "${project_path}/../source/ev3",
+					"cmd": ["mingw32-make", "clean"],
+					"shell": true
+				},
+				{
+					"name": "Make ev3dev-c library - CLEAN BINARY",
+					"working_dir": "${project_path}/../source/ev3",
+					"cmd": ["mingw32-make", "clean-binary"],
+					"shell": true
+				},
+				{
+					"name": "Make ev3dev-c library - INSTALL",
+					"working_dir": "${project_path}/../source/ev3",
+					"cmd": ["mingw32-make", "install"],
+					"shell": true
+				},
+				{
+					"name": "Make ev3dev-c library - SHARED INSTALL",
+					"working_dir": "${project_path}/../source/ev3",
+					"cmd": ["mingw32-make", "shared-install"],
+					"shell": true
+				}
+			]
+		}
+	]
+}

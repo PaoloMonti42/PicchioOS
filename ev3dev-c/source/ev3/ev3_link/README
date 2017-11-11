@@ -1,0 +1,62 @@
+
+     ____ __     ____   ___    ____ __         (((((()
+    | |_  \ \  /   ) ) | |  ) | |_  \ \  /  \(@)- /
+    |_|__  \_\/  __)_) |_|_/  |_|__  \_\/   /(@)- \
+                                               ((())))
+    ___             ______________________________
+    ___ WHAT IS IT? ______________________________
+
+    ev3_link is a part of ev3dev-c library which allows remote access to
+    the EV3 brick from your program, over a network.
+
+    ev3_link SERVER runs as a daemon on the EV3 brick and handles requests
+    from a remote computer (client).
+
+    The interchange protocol:
+
+        http://in4lio.github.io/ev3dev-c/udp.html
+
+    ___        ___________________________________
+    ___ SERVER ___________________________________
+
+    * * *  How to build ev3_link SERVER
+
+        cd ev3dev-c/source/ev3/ev3_link/
+        make
+
+    * * *  How to automatically start ev3_link SERVER
+
+        cd ev3dev-c/
+        sudo cp source/ev3/ev3_link/ev3_link_d /etc/init.d/
+        sudo cp source/ev3/ev3_link/ev3_link /usr/local/sbin/
+        sudo chmod 755 /etc/init.d/ev3_link_d
+        sudo update-rc.d ev3_link_d defaults
+
+    * * *  How configure WLAN on the EV3 brick
+
+    http://www.ev3dev.org/docs/networking/
+
+    ___        ___________________________________
+    ___ CLIENT ___________________________________
+
+    Approximately every 5 seconds, ev3_link SERVER transmits broadcast
+    messages to port 8800 (or other specified), that allows a client
+    to detect the IP address of the EV3 brick. As well, you can specify
+    the IP address of the server manually, before calling `ev3_init`:
+
+        #include "ev3.h"
+
+        #ifndef __ARM_ARCH_4T__
+            ev3_brick_addr = "192.168.0.204";
+
+        #endif
+
+        ev3_init();
+
+    Remote access to the EV3 brick is implied when you build a program
+    not on __ARM_ARCH_4T__.
+
+    ___         __________________________________
+    ___ LICENSE __________________________________
+
+    Please see the file called "LICENSE".

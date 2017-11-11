@@ -1,0 +1,67 @@
+($!
+     ____ __     ____   ___    ____ __         (((((()
+    | |_  \ \  /   ) ) | |  ) | |_  \ \  /  \(@)- /
+    |_|__  \_\/  __)_) |_|_/  |_|__  \_\/   /(@)- \
+                                               ((())))
+
+($set CLASS_PATH "/sys/class/dc-motor")
+($set CLASS_FOLDER_PREF "motor")
+($set CLASS_ID [dc])
+($set CLASS_TITLE "DC motor")
+
+($set CLASS_COMMANDS ( "run-forever" "run-timed" "run-direct" "stop" ))
+($set CLASS_POLARITYS ( "normal" "inversed" ))   ($! it couldn't be called POLARITIES )
+($set CLASS_STATES ( "running" "ramping" ))
+($set CLASS_STOP_ACTIONS ( "coast" "brake" ))
+
+($dict CLASS_TYPE
+	(` CLASS_TYPE_NAME  )
+	(`
+	(  "rcx-motor"      )
+	)
+)
+
+($set CLASS_TYPE_ID_SHORT_FOR ())
+($set CLASS_TYPE_ID_SHORT     ())
+
+($set CLASS_TYPE_ATTR_INDEX ())
+($set CLASS_ATTR_INDEX ( "command" "polarity" "stop_action" ))
+($set CLASS_ATTR_FLAGS ( "state" ))
+
+($set R  0)
+($set RW 1)
+($set W  2)
+
+($dict CLASS_ATTR
+	(` CLASS_ATTR_NAME         CLASS_ATTR_TYPE  CLASS_ATTR_ARRAY  CLASS_ATTR_WRITE  )
+	(`
+	(  "address"               char             1                 R                 )
+	(  "command"               char             1                 W                 )
+	(  "commands"              char             1                 R                 )
+	(  "driver_name"           char             1                 R                 )
+	(  "duty_cycle"            int              0                 R                 )
+	(  "duty_cycle_sp"         int              0                 RW                )
+	(  "polarity"              char             1                 RW                )
+	(  "state"                 char             1                 R                 )
+	(  "stop_action"           char             1                 W                 )
+	(  "stop_actions"          char             1                 R                 )
+	(  "ramp_down_sp"          int              0                 RW                )
+	(  "ramp_up_sp"            int              0                 RW                )
+	(  "time_sp"               int              0                 RW                )
+	)
+)
+
+($dict CLASS_AVEC
+	(` CLASS_AVEC_NAME  CLASS_AVEC_SIZE  CLASS_AVEC_TYPE  CLASS_AVEC_ARRAY  CLASS_AVEC_WRITE  )
+	(`
+	)
+)
+
+($dict CLASS_DESC
+	(` CLASS_DESC_ID  CLASS_DESC_TYPE  CLASS_DESC_COMMENT  )
+	(`
+	(  type_inx       INX_T            "type"              )
+	(  port           uint8_t          "EV3 port"          )
+	(  extport        uint8_t          "extended port"     )
+	)
+)

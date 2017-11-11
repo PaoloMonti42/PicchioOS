@@ -1,0 +1,96 @@
+($!
+     ____ __     ____   ___    ____ __         (((((()
+    | |_  \ \  /   ) ) | |  ) | |_  \ \  /  \(@)- /
+    |_|__  \_\/  __)_) |_|_/  |_|__  \_\/   /(@)- \
+                                               ((())))
+
+($import "app.yu")
+($TITLE,,EV3 Ports.)
+
+($import stdlib)
+($import hlib)
+
+($implement-named)
+
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include "modp_numtoa.h"
+#include "ev3.h"
+#include "ev3_port.h"
+
+($import "ev3_port-dict.yu")
+($import "ev3_class_decl.yu")
+($import "ev3_class.yu")
+
+($set _SLICE_PREF ($each-PORT_SLICE \i.($upper ($unq ($i PORT_SLICE_PREF)))))
+($set _SLICE_ID   ($each-PORT_SLICE \i.($upper ($i PORT_SLICE_ID))))
+($set _SLICE_OFS  ($each-PORT_SLICE \i.($sub ($ord ($unq ($i PORT_SLICE_FIRST))) ($ord ($unq ($0 ($i PORT_SLICE_RANGE)))))))
+
+($each-PORT_SLICE \i.]
+	#define ($i _SLICE_PREF)_PREF_LEN  ($len ($i _SLICE_PREF))
+
+[ )
+
+void ev3_parse_port_name( char *name, uint8_t *port, uint8_t *extport, uint8_t *addr )
+{
+	*port = EV3_PORT__NONE_;
+	*extport = EXT_PORT__NONE_;
+	*addr = 0;
+
+	($set parse_slice \parent.\indent.($each-PORT_SLICE \i.]
+		($if ($eq parent ($i PORT_SLICE_PARENT)) ]
+			($set _ ($mul ($TAB) indent))
+			($_)
+			($_)if ( strncmp( name, ($i PORT_SLICE_PREF), ($i _SLICE_PREF)_PREF_LEN ) == 0 ) {
+			($_)	/* ($i PORT_SLICE_PREF) */
+			($_)	name += ($i _SLICE_PREF)_PREF_LEN;
+			($_)	*($i PORT_SLICE_DESC) = ($if ($isdigit ($0 ($i PORT_SLICE_RANGE)))
+			,,strtoul( name, &name, 0 ),,*name++)($if ($i _SLICE_OFS),,($SPACE)+ ($i _SLICE_ID)__OFFSET_);
+			($_)	if ( *name != ':' ) return;
+			($_)	++name;
+			($parse_slice ($i PORT_SLICE_PREF) ($inc indent))
+			($_)	return;
+			($_)}
+		[ )
+	[ )
+	)
+
+	($parse_slice "" 0)
+	return;
+}
+
+char *ev3_port_name( uint8_t port, uint8_t extport, uint8_t addr, char *buf )
+{
+	char *p = buf;
+
+	($set add_slice \parent.\indent.($each-PORT_SLICE \i.]
+		($if ($eq parent ($i PORT_SLICE_PARENT)) ]
+			($set _ ($mul ($TAB) indent))
+			($set l,,($i _SLICE_PREF)_PREF_LEN($if ($unq parent),,($SPACE)+ 1))
+			($set d,,($i PORT_SLICE_DESC)($if ($i _SLICE_OFS),,($SPACE)- ($i _SLICE_ID)__OFFSET_))
+			($_)
+			($_)if (( ($i PORT_SLICE_DESC) >= ($if ($i _SLICE_ID),,($i _SLICE_ID)_)($unq ($0 ($i PORT_SLICE_RANGE))) ) && ( ($i PORT_SLICE_DESC) <= ($if ($i _SLICE_ID),,($i _SLICE_ID)_)($unq ($-1 ($i PORT_SLICE_RANGE))) )) {
+			($_)	memcpy( p, ($if ($unq parent),,":")($i PORT_SLICE_PREF), ($l) );
+			($_)	p += ($l);
+			($_)	($if ($isdigit ($0 ($i PORT_SLICE_RANGE))),,p = modp_uitoa10( ($d), p ),,*p++ = ($d));
+			($add_slice ($i PORT_SLICE_PREF) ($inc indent))
+			($_)	*p = '\x00';
+			($_)	return ( buf );
+			($_)}
+		[ )
+	[ )
+	)
+
+	($add_slice "" 0)
+	strcpy( buf, STR_unknown_ );
+	return ( buf );
+}
+
+uint8_t ev3_search_port( uint8_t port, uint8_t extport )
+{
+	uint8_t sn;
+
+	ev3_search_port_plugged_in( port, extport, &sn, 0 );
+	return ( sn );
+}

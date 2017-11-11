@@ -1,0 +1,121 @@
+($!
+     ____ __     ____   ___    ____ __         (((((()
+    | |_  \ \  /   ) ) | |  ) | |_  \ \  /  \(@)- /
+    |_|__  \_\/  __)_) |_|_/  |_|__  \_\/   /(@)- \
+                                               ((())))
+
+($import "app.yu")
+($TITLE,,EV3 Lights (GREEN and RED LEDs at once).)
+
+($import stdlib)
+($import hlib)
+
+($h-begin-named)
+
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
+
+/**
+ *  \defgroup ev3_light Lights
+ *  \brief Access to EV3 GREEN and RED LEDs at once.
+ *  \{
+ */
+
+($extern-c-begin)
+
+/**
+ *  \brief Identifiers of light locations.
+ */
+enum {
+	LIT_LEFT,
+	LIT_RIGHT,
+
+	LIT__LOC__
+};
+
+($dict LIT_COLOR
+	(` LIT_COLOR_NAME  )
+	(`
+	(  "OFF"           )
+	(  "GREEN"         )
+	(  "RED"           )
+	(  "AMBER"         )
+	)
+)
+
+/**
+ *  \brief Identifiers of light colors.
+ */
+enum {
+	($each-LIT_COLOR \i.]
+		LIT_($unq ($i LIT_COLOR_NAME)),
+
+	[ )
+	LIT__COL__
+};
+
+/**
+ *  \brief Light colors.
+ */
+($var-init,,const char *const LIT_COLOR[],,{ ($each-LIT_COLOR \i.[($i LIT_COLOR_NAME), ])STR_unknown_ })
+
+/**
+ *  \brief Get the light color name.
+ *  \param col Color.
+ *  \return Color name.
+ */
+extern const char *light_color( uint8_t col );
+
+/**
+ *  \brief Set the light color.
+ *  \param loc Location.
+ *  \param col Color.
+ */
+extern void set_light( uint8_t loc, uint8_t col );
+
+/**
+ *  \brief Get the light color.
+ *  \param loc Location.
+ *  \return Color.
+ */
+extern uint8_t get_light( uint8_t loc );
+
+/**
+ *  \brief Set the light trigger.
+ *  \param loc Location.
+ *  \param col Color.
+ *  \param trigger Index of trigger.
+ */
+extern void set_light_trigger( uint8_t loc, uint8_t col, uint8_t trigger );
+
+/**
+ *  \brief Get the light trigger.
+ *  \param loc Location.
+ *  \param col Color.
+ *  \return Index of trigger or TRIGGER__COUNT_ - error has occurred.
+ */
+extern uint8_t get_light_trigger( uint8_t loc, uint8_t col );
+
+/**
+ *  \brief Set the light blink.
+ *  \param loc Location.
+ *  \param col Color.
+ *  \param delay_on Time of "on" state in ms.
+ *  \param delay_off Time of "off" state in ms.
+ */
+extern void set_light_blink( uint8_t loc, uint8_t col, int delay_on, int delay_off );
+
+/**
+ *  \brief Check the light is blinking.
+ *  \param loc Location.
+ *  \param col Color.
+ *  \return Flag - the light is blinking.
+ */
+extern bool get_light_blink( uint8_t loc, uint8_t col );
+
+($extern-c-end)
+
+/** \} */
+
+($h-end)

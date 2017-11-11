@@ -1,0 +1,61 @@
+($!
+     ____ __     ____   ___    ____ __         (((((()
+    | |_  \ \  /   ) ) | |  ) | |_  \ \  /  \(@)- /
+    |_|__  \_\/  __)_) |_|_/  |_|__  \_\/   /(@)- \
+                                               ((())))
+
+($set LED_PATH "/sys/class/leds")
+
+($dict LED
+	(` LED_NAME                  LED_ID           )
+	(`
+	(  "ev3:left:green:ev3dev"   EV3_LEFT_GREEN   )
+	(  "ev3:right:green:ev3dev"  EV3_RIGHT_GREEN  )
+	(  "ev3:left:red:ev3dev"     EV3_LEFT_RED     )
+	(  "ev3:right:red:ev3dev"    EV3_RIGHT_RED    )
+	(  "outA::ev3dev"            LED_OUTA         )
+	(  "outB::ev3dev"            LED_OUTB         )
+	(  "outC::ev3dev"            LED_OUTC         )
+	(  "outD::ev3dev"            LED_OUTD         )
+	)
+)
+
+($set R  0)
+($set RW 1)
+($set W  2)
+
+($dict LED_ATTR
+	(` LED_ATTR_NAME     LED_ATTR_TYPE  LED_ATTR_ARRAY  LED_ATTR_WRITE  )
+	(`
+	(  "brightness"      byte           0               RW              )
+	(  "delay_off"       int            0               RW              )
+	(  "delay_on"        int            0               RW              )
+	(  "max_brightness"  byte           0               R               )
+	(  "trigger"         char           1               RW              )
+	)
+)
+
+($dict LED_TRIGGER
+	(` LED_TRIGGER_NAME                             )
+	(`
+	(  "none"                                       )
+	(  "mmc0"                                       )
+	(  "timer"                                      )
+	(  "heartbeat"                                  )
+	(  "default-on"                                 )
+	(  "transient"                                  )
+	(  "legoev3-battery-charging-or-full"           )
+	(  "legoev3-battery-charging"                   )
+	(  "legoev3-battery-full"                       )
+	(  "legoev3-battery-charging-blink-full-solid"  )
+	(  "rfkill0"                                    )
+	(  "phy0rx"                                     )
+	(  "phy0tx"                                     )
+	(  "phy0assoc"                                  )
+	(  "phy0radio"                                  )
+	(  "rfkill1"                                    )
+	)
+)
+
+($set LED_ATTR_ID ($each-LED_ATTR \i.($unq ($i LED_ATTR_NAME))))
+($set LED_TRIGGER_ID ($each-LED_TRIGGER \i.($replace,,($unq ($i LED_TRIGGER_NAME)),,-,,_)))

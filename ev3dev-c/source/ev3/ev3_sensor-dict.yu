@@ -1,0 +1,75 @@
+($!
+     ____ __     ____   ___    ____ __         (((((()
+    | |_  \ \  /   ) ) | |  ) | |_  \ \  /  \(@)- /
+    |_|__  \_\/  __)_) |_|_/  |_|__  \_\/   /(@)- \
+                                               ((())))
+
+($set CLASS_PATH "/sys/class/lego-sensor")
+($set CLASS_FOLDER_PREF "sensor")
+($set CLASS_ID ($unq CLASS_FOLDER_PREF))
+($set CLASS_TITLE "sensor")
+
+($import "grab_sensors.py")
+
+($!dict CLASS_TYPE
+	(` CLASS_TYPE_NAME  CLASS_TYPE_MODES  CLASS_TYPE_COMMANDS  )
+)
+($import { grab_sensors( 'http://docs.ev3dev.org/projects/lego-linux-drivers/en/ev3dev-jessie/sensors.json',
+'../sensors.json' ) })
+
+($set CLASS_TYPE_ID_SHORT_FOR ( "lego_ev3_us" "lego_ev3_gyro" "lego_ev3_color" "lego_ev3_touch" "lego_ev3_ir" ))
+($set CLASS_TYPE_ID_SHORT     ( "us"          "gyro"          "color"          "touch"          "ir"          ))
+
+($set CLASS_TYPE_ATTR_INDEX ( "mode" "command" ))
+($set CLASS_ATTR_INDEX ())
+($set CLASS_ATTR_FLAGS ())
+
+($set R  0)
+($set RW 1)
+($set W  2)
+
+($dict CLASS_ATTR
+	(` CLASS_ATTR_NAME    CLASS_ATTR_TYPE  CLASS_ATTR_ARRAY  CLASS_ATTR_WRITE  )
+	(`
+	(  "address"          char             1                 R                 )
+	(  "bin_data"         byte             2                 RW                )
+	(  "bin_data_format"  char             1                 R                 )
+	(  "command"          char             1                 W                 )
+	(  "commands"         char             1                 R                 )
+	(  "direct"           char             1                 RW                )
+	(  "decimals"         dword            0                 R                 )
+	(  "driver_name"      char             1                 R                 )
+	(  "fw_version"       char             1                 R                 )
+	(  "mode"             char             1                 RW                )
+	(  "modes"            char             1                 R                 )
+	(  "num_values"       dword            0                 R                 )
+	(  "poll_ms"          dword            0                 RW                )
+	(  "units"            char             1                 R                 )
+	(  "value0"           float            0                 R                 )
+	(  "value1"           float            0                 R                 )
+	(  "value2"           float            0                 R                 )
+	(  "value3"           float            0                 R                 )
+	(  "value4"           float            0                 R                 )
+	(  "value5"           float            0                 R                 )
+	(  "value6"           float            0                 R                 )
+	(  "value7"           float            0                 R                 )
+	(  "text_value"       char             1                 R                 )
+	)
+)
+
+($dict CLASS_AVEC
+	(` CLASS_AVEC_NAME  CLASS_AVEC_SIZE  CLASS_AVEC_TYPE  CLASS_AVEC_ARRAY  CLASS_AVEC_WRITE  )
+	(`
+	(  "value"          8                int              0                 0                 )
+	)
+)
+
+($dict CLASS_DESC
+	(` CLASS_DESC_ID  CLASS_DESC_TYPE  CLASS_DESC_COMMENT  )
+	(`
+	(  type_inx       INX_T            "type"              )
+	(  port           uint8_t          "EV3 port"          )
+	(  extport        uint8_t          "extended port"     )
+	(  addr           uint8_t          "I2C address"       )
+	)
+)

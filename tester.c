@@ -41,9 +41,6 @@ int main( void )
 
 	motor_init( &motors[0], &motors[1] );
 
-<<<<<<< HEAD
-  int dir_offset = get_compass_value_samples( compass, 20 );
-=======
 	set_sensor_mode_inx(gyro, GYRO_GYRO_RATE);
 	set_sensor_mode_inx(gyro, GYRO_GYRO_ANG);
 	set_sensor_mode_inx(color, COLOR_RGB_RAW);
@@ -112,7 +109,6 @@ for(;;){
 
 
   //int dir_offset = get_compass_value_samples( compass, 20 );
->>>>>>> martina_gyroscope
 
 	// printf( "Starting orientation of the compass: %d degrees\n", dir_offset );
 
@@ -144,11 +140,7 @@ for(;;){
 		// wait_motor_stop( motors[0] );
 		// wait_motor_stop( motors[1] );
 		// millisleep(1000);
-<<<<<<< HEAD
-  // } 
-=======
   // }
->>>>>>> martina_gyroscope
 
 	// fprintf( stdout, "Turning right...\n" );
 	// turn_right_compass( motors, compass, MAX_SPEED/4, 120 );

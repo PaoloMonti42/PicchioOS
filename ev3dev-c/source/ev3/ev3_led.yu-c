@@ -1,0 +1,87 @@
+($!
+     ____ __     ____   ___    ____ __         (((((()
+    | |_  \ \  /   ) ) | |  ) | |_  \ \  /  \(@)- /
+    |_|__  \_\/  __)_) |_|_/  |_|__  \_\/   /(@)- \
+                                               ((())))
+
+($import "app.yu")
+($TITLE,,EV3 LEDs.)
+
+($import stdlib)
+($import hlib)
+
+($implement-named)
+
+#include <string.h>
+#include <stdio.h>
+#include "ev3.h"
+#include "ev3_led.h"
+
+($import "ev3_led-dict.yu")
+
+($each-LED_ATTR \i.]
+
+	static const char *const led_attr_($i LED_ATTR_ID)[] = {
+		($each-LED \ii.]
+			($q,,($unq LED_PATH)/($unq ($ii LED_NAME))/($unq ($i LED_ATTR_NAME))),
+
+		[ )
+	};
+
+[ )
+
+($each-LED_ATTR \i.]
+
+	($if ($le ($i LED_ATTR_WRITE) RW) ]
+		size_t get_led_($i LED_ATTR_ID)( uint8_t inx, ($i LED_ATTR_TYPE) *buf($[, size_t sz] ? ($i LED_ATTR_ARRAY)) )
+		{
+			if ( inx >= LED__COUNT_ ) return ( 0 );
+
+			return ev3_read_($i LED_ATTR_TYPE)($[_array] ? ($i LED_ATTR_ARRAY))( led_attr_($i LED_ATTR_ID)[ inx ], buf($[, sz] ? ($i LED_ATTR_ARRAY)) );
+		}
+	[ )
+
+	($if ($ge ($i LED_ATTR_WRITE) RW) ]
+		size_t set_led_($i LED_ATTR_ID)( uint8_t inx, ($i LED_ATTR_TYPE) ($[*] ? ($i LED_ATTR_ARRAY))value )
+		{
+			if ( inx >= LED__COUNT_ ) return ( 0 );
+
+			return ev3_write_($i LED_ATTR_TYPE)($[_array] ? ($i LED_ATTR_ARRAY))( led_attr_($i LED_ATTR_ID)[ inx ], value );
+		}
+	[ )
+
+[ )
+
+const char *ev3_led_trigger( INX_T trigger_inx )
+{
+	switch ( trigger_inx ) {
+	($each-LED_TRIGGER \i.]
+	case TRIGGER_($upper ($i LED_TRIGGER_ID)):
+		return ($i LED_TRIGGER_NAME);
+
+	[ )
+	}
+	return ( STR_unknown_ );
+}
+
+INX_T get_led_trigger_inx( uint8_t inx )
+{
+	char buf[ 256 ];
+	char *p;
+	uint8_t trigger_inx = 0;
+
+	if ( !get_led_trigger( inx, buf, sizeof( buf ))) return ( TRIGGER__COUNT_ );
+
+	p = strtok( buf, " " );
+	while ( p ) {
+		if ( *p == '[' ) return ( trigger_inx );
+		++trigger_inx;
+		p = strtok( NULL, " " );
+	}
+	return ( TRIGGER__COUNT_ );
+}
+
+size_t set_led_trigger_inx( uint8_t inx, INX_T trigger_inx )
+{
+	return set_led_trigger( inx, ( char *) ev3_led_trigger( trigger_inx ));
+}

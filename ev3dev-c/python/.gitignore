@@ -1,0 +1,11 @@
+build/
+downloads/
+*.egg-info/
+
+*.bat
+*.egg
+*.json
+
+.pypirc
+README
+platform.h

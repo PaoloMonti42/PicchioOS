@@ -1,0 +1,34 @@
+#!/bin/sh
+
+### BEGIN INIT INFO
+# Provides:          ev3_link
+# Required-Start:    $all
+# Required-Stop:     $all
+# Should-Start:
+# Should-Stop:
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Allows remote access to the EV3 brick
+# Description:
+### END INIT INFO
+
+SCRIPTNAME=/etc/init.d/ev3_link_d
+
+. /lib/lsb/init-functions
+
+[ -x /usr/local/sbin/ev3_link ] || exit 0
+
+case "$1" in
+  start)
+    echo "Starting ev3_link"
+    /usr/local/sbin/ev3_link &
+    ;;
+  stop)
+    echo "Stopping ev3_link"
+    killall ev3_link
+    ;;
+  *)
+    echo "Usage: $SCRIPTNAME {start|stop}"
+    exit 3
+    ;;
+esac
