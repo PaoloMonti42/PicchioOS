@@ -45,36 +45,63 @@ int main( void )
 
 	motor_init( &motors[0], &motors[1] );
 
-<<<<<<< HEAD
+//<<<<<<< HEAD
   int dir_offset = get_compass_value_samples( compass, 20 );
-=======
+//=======
 	set_sensor_mode_inx(gyro, GYRO_GYRO_RATE);
 	set_sensor_mode_inx(gyro, GYRO_GYRO_ANG);
 	set_sensor_mode_inx(color, COLOR_RGB_RAW);
 
 	float gyro_val;
+	float start_angle;
 
-	while (1) {
+	stop_motors(motors);
+
+	start_angle = get_value_single(gyro);
+	printf("starting position gyro %f\n", start_angle);
+	printf("paolo suca \n");
+	scanf("%c", &command);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 60.0);
+	millisleep(500);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 200.0);
+	millisleep(500);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 270.0);
+	millisleep(500);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 30.0);
+	millisleep(500);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 270.0);
+	millisleep(500);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 200.0);
+	millisleep(500);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 170.0);
+	millisleep(500);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 30.0);
+	millisleep(500);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 0.0);
+	millisleep(500);
+
+
+	 while (1) {
 		printf("a for scan all posistion s for only front pos q for quit: ");
 		scanf("%c", &command);
 		if (command == 'q') {
 			break;
 		}
 		if (command == 'a') {
-			scan_for_obstacle_5_pos(motors,obstacle);
+			scan_for_obstacle_5_pos(motors, dist, gyro, obstacle);
 			for (i=0;i<5;i++) {
 				printf("pos %d ", i);
 				if (obstacle[i] == 0)
 					printf("no obstacle\n");
 				else
-					printf("obstacle at %d mm\n");
+					printf("obstacle at %d mm\n", obstacle[i]);
 			}
 		}
 		if (command == 's') {
-				if (distance = (front_obstacle()) != 0)
-					printf("no front obstacle\n")
+				if ((distance = (front_obstacle(dist))) == 0)
+					printf("no front obstacle\n");
 				else
-					printf("front obstacle at %d\n",distance);
+					printf("front obstacle at %d\n", distance);
 			}
 	}
 
@@ -144,7 +171,7 @@ for(;;){
 
 
   //int dir_offset = get_compass_value_samples( compass, 20 );
->>>>>>> martina_gyroscope
+//>>>>>>> martina_gyroscope
 
 	// printf( "Starting orientation of the compass: %d degrees\n", dir_offset );
 
@@ -176,11 +203,11 @@ for(;;){
 		// wait_motor_stop( motors[0] );
 		// wait_motor_stop( motors[1] );
 		// millisleep(1000);
-<<<<<<< HEAD
+//<<<<<<< HEAD
   // }
-=======
+//=======
   // }
->>>>>>> martina_gyroscope
+//>>>>>>> martina_gyroscope
 
 	// fprintf( stdout, "Turning right...\n" );
 	// turn_right_compass( motors, compass, MAX_SPEED/4, 120 );
