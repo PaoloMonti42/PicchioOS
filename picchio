@@ -1,0 +1,8 @@
+#!/bin/bash
+
+if [ "$1" == "-ld" ]
+then
+	sshpass -p "ruebricka25" scp tester robot@ev3dev.local:~
+else
+	sshpass -p "ruebricka25" ssh -o StrictHostKeyChecking=no robot@ev3dev.local
+fi
