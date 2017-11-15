@@ -32,7 +32,7 @@ int main( void )
   pthread_t logger;
 
 	char command;
-	int	 obstacle[5];
+	int	obstacle[5];
 	int distance;
 
   if ( ev3_init() == -1 )
@@ -45,9 +45,8 @@ int main( void )
 
 	motor_init( &motors[0], &motors[1] );
 
-//<<<<<<< HEAD
   int dir_offset = get_compass_value_samples( compass, 20 );
-//=======
+
 	set_sensor_mode_inx(gyro, GYRO_GYRO_RATE);
 	set_sensor_mode_inx(gyro, GYRO_GYRO_ANG);
 	set_sensor_mode_inx(color, COLOR_RGB_RAW);
@@ -61,21 +60,38 @@ int main( void )
 	printf("starting position gyro %f\n", start_angle);
 	printf("paolo suca \n");
 	scanf("%c", &command);
+	// turn_to_angle(motors,gyro, MAX_SPEED/16, 60.0);
+	// millisleep(500);
+	// turn_to_angle(motors,gyro, MAX_SPEED/16, 200.0);
+	// millisleep(500);
+	// turn_to_angle(motors,gyro, MAX_SPEED/16, 270.0);
+	// millisleep(500);
+	// turn_to_angle(motors,gyro, MAX_SPEED/16, 30.0);
+	// millisleep(500);
+	// turn_to_angle(motors,gyro, MAX_SPEED/16, 270.0);
+	// millisleep(500);
+	// turn_to_angle(motors,gyro, MAX_SPEED/16, 200.0);
+	// millisleep(500);
+	// turn_to_angle(motors,gyro, MAX_SPEED/16, 170.0);
+	// millisleep(500);
+	// turn_to_angle(motors,gyro, MAX_SPEED/16, 30.0);
+	// millisleep(500);
+	// turn_to_angle(motors,gyro, MAX_SPEED/16, 0.0);
+	// millisleep(500);
+
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 240.0);
+	millisleep(500);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 180.0);
+	millisleep(500);
 	turn_to_angle(motors,gyro, MAX_SPEED/16, 60.0);
 	millisleep(500);
-	turn_to_angle(motors,gyro, MAX_SPEED/16, 200.0);
-	millisleep(500);
-	turn_to_angle(motors,gyro, MAX_SPEED/16, 270.0);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 90.0);
 	millisleep(500);
 	turn_to_angle(motors,gyro, MAX_SPEED/16, 30.0);
 	millisleep(500);
+	turn_to_angle(motors,gyro, MAX_SPEED/16, 180.0);
+	millisleep(500);
 	turn_to_angle(motors,gyro, MAX_SPEED/16, 270.0);
-	millisleep(500);
-	turn_to_angle(motors,gyro, MAX_SPEED/16, 200.0);
-	millisleep(500);
-	turn_to_angle(motors,gyro, MAX_SPEED/16, 170.0);
-	millisleep(500);
-	turn_to_angle(motors,gyro, MAX_SPEED/16, 30.0);
 	millisleep(500);
 	turn_to_angle(motors,gyro, MAX_SPEED/16, 0.0);
 	millisleep(500);

@@ -225,19 +225,31 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
  	multi_set_tacho_ramp_up_sp( motors, 0 );
  	multi_set_tacho_ramp_down_sp( motors, 0 );
 
-	a = ((start_pos % 360) + 360) % 360; // should solve for negative angles, TODO check
+	a = ((start_pos % 360) + 360) % 360; 
 	if (deg > a) {
 		if ((deg - a) < 180 ) {
 			// turn clockwise
 			set_tacho_speed_sp( motors[0], MOT_DIR * speed);
 	 		set_tacho_speed_sp( motors[1], -MOT_DIR * speed);
 			dest = start_pos - a + deg;
+			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
+		 	do {
+		 		cur_pos = (int)get_value_single(gyro);
+		 		printf("cur_pos_reinitializing=%d\n", cur_pos);
+		 	} while(cur_pos <= dest);
+		 	stop_motors(motors);
 		}
 		else {
 			// turn counterclockwise
 			set_tacho_speed_sp( motors[0], -MOT_DIR * speed);
 	 		set_tacho_speed_sp( motors[1], MOT_DIR * speed);
 			dest = start_pos - a + deg - 360;
+			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
+		 	do {
+		 		cur_pos = (int)get_value_single(gyro);
+		 		printf("cur_pos_reinitializing=%d\n", cur_pos);
+		 	} while(cur_pos >= dest);
+		 	stop_motors(motors);
 		}
 	}
 	else {
@@ -246,39 +258,26 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 			set_tacho_speed_sp( motors[0], -MOT_DIR * speed);
 	 		set_tacho_speed_sp( motors[1], MOT_DIR * speed);
 			dest = start_pos - a + deg;
+			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
+		 	do {
+		 		cur_pos = (int)get_value_single(gyro);
+		 		printf("cur_pos_reinitializing=%d\n", cur_pos);
+		 	} while(cur_pos >= dest);
+		 	stop_motors(motors);
 		}
 		else {
 			// turn clockwise
 			set_tacho_speed_sp( motors[0], MOT_DIR * speed);
 	 		set_tacho_speed_sp( motors[1], -MOT_DIR * speed);
 			dest = start_pos - a + deg + 360;
+			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
+		 	do {
+		 		cur_pos = (int)get_value_single(gyro);
+		 		printf("cur_pos_reinitializing=%d\n", cur_pos);
+		 	} while(cur_pos <= dest);
+		 	stop_motors(motors);
 		}
 	}
-
-	/*dest = start_pos - ((int)start_pos % 360) + deg;
-	if ((dest - start_pos) >= 180.0 ) {
-		set_tacho_speed_sp( motors[0], -MOT_DIR * speed);
- 		set_tacho_speed_sp( motors[1], MOT_DIR * speed);
-	}
-	else {
-		set_tacho_speed_sp( motors[0], MOT_DIR * speed);
- 		set_tacho_speed_sp( motors[1], -MOT_DIR * speed);
-	}*/
- 	/*if(start_pos < deg){
- 		set_tacho_speed_sp( motors[0], MOT_DIR * speed);
- 		set_tacho_speed_sp( motors[1], -MOT_DIR * speed);
- 	} else {
- 		set_tacho_speed_sp( motors[0], -MOT_DIR * speed);
- 		set_tacho_speed_sp( motors[1], MOT_DIR * speed);
- 	}*/
-
-
- 	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
- 	do {
- 		cur_pos = (int)get_value_single(gyro);
- 		printf("cur_pos_reinitializing=%d\n", cur_pos);
- 	} while(cur_pos <= dest-1 || cur_pos >= dest+1);
- 	stop_motors(motors);
 
  }
 
