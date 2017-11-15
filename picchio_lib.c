@@ -225,7 +225,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
  	multi_set_tacho_ramp_up_sp( motors, 0 );
  	multi_set_tacho_ramp_down_sp( motors, 0 );
 
-	a = ((start_pos % 360) + 360) % 360; 
+	a = ((start_pos % 360) + 360) % 360;
 	if (deg > a) {
 		if ((deg - a) < 180 ) {
 			// turn clockwise
@@ -378,19 +378,41 @@ int front_obstacle (uint8_t dist) {
 			return 0;
 }
 
- void scan_for_obstacle_5_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacle) {
+ void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacle, int pos, int span) {
 	 int dir;
+	 int angle, i;
 	 dir = (int)get_value_single(gyro) % 360;
 	 printf("initial direction %d\n", dir);
-	 obstacle[2] = front_obstacle(dist);
-	 turn_left_gyro (motors, gyro, MAX_SPEED/16, 45);
-	 obstacle[1] = front_obstacle(dist);
-	 turn_left_gyro (motors, gyro, MAX_SPEED/16, 45);
-	 obstacle[0] = front_obstacle(dist);
+	 angle = (span) / ((pos-1));
+	 obstacle[(pos-1)/2] = front_obstacle(dist);
+	 for (i=0;i<((pos-1)/2);i++) {
+		 turn_left_gyro (motors, gyro, MAX_SPEED/16, angle);
+		 obstacle[((pos-1)/2)-i] = front_obstacle(dist);
+	 }
 	 turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
-	 turn_right_gyro (motors, gyro, MAX_SPEED/16, 45);
-	 obstacle[3] = front_obstacle(dist);
-	 turn_right_gyro (motors, gyro, MAX_SPEED/16, 45);
-	 obstacle[4] = front_obstacle(dist);
+	 for (i=(((pos-1)/2)+1);i<pos;i++) {
+		 turn_right_gyro (motors, gyro, MAX_SPEED/16, angle);
+		 obstacle[i] = front_obstacle(dist);
+	 }
 	 turn_to_angle(motors, gyro, MAX_SPEED/16, dir);
+ }
+
+ void scan_for_obstacle_N_pos_head (uint8_t motors, uint8_t dist, int* obstacle, int pos, int span) {
+	 int angle, i;
+	 angle = (span) / ((pos-1));
+	 obstacle[(pos-1)/2] = front_obstacle(dist);
+	 for (i=0;i<((pos-1)/2);i++) {
+		 turn_motor_deg(motors, MAX_SPEED/16, angle);
+		 wait_motor_stop(motors);
+		 obstacle[((pos-1)/2)-i] = front_obstacle(dist);
+	 }
+	 turn_motor_deg(motors, MAX_SPEED/16, ((-1)*(span/2)));
+	 wait_motor_stop(motors);
+	 for (i=(((pos-1)/2)+1);i<pos;i++) {
+		 turn_motor_deg(motors, MAX_SPEED/16, ((-1)*angle));
+		 wait_motor_stop(motors);
+		 obstacle[i] = front_obstacle(dist);
+	 }
+	 turn_motor_deg(motors, MAX_SPEED/16, (span/2));
+	 wait_motor_stop(motors);
  }

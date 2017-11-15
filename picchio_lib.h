@@ -53,4 +53,6 @@ int get_main_color(rgb *color_val, char * main_color2);
 
 int front_obstacle (uint8_t dist);
 
-void scan_for_obstacle_5_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacle);
+void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacle, int pos, int span);
+
+void scan_for_obstacle_N_pos_head (uint8_t motors, uint8_t dist, int* obstacle, int pos, int span);
