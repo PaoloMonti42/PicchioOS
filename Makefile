@@ -25,4 +25,5 @@ client:
 	./robotclient
 
 run:
+	export LD_LIBRARY_PATH=~/ev3dev-c/lib
 	./tester

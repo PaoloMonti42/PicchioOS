@@ -3,4 +3,4 @@ make
 sudo make install
 make shared
 sudo make shared-install
-
+cd ../..
