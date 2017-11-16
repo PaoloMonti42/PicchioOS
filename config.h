@@ -15,3 +15,5 @@
 #define MOV_RAMP_DOWN 0
 
 #define TURN360 775
+
+#define DIST_THRESHOLD 130
