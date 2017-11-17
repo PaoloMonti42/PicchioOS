@@ -1,6 +1,7 @@
 #include <string.h>
 #define millisleep( msec ) usleep(( msec ) * 1000 )
-
+#include <time.h>
+//#include <math.h>
 const char const *colors[] = { "?", "BLACK", "BLUE", "GREEN", "YELLOW", "RED", "WHITE", "BROWN" };
 #define COLOR_COUNT  (( int )( sizeof( colors ) / sizeof( colors[ 0 ])))
 
@@ -12,9 +13,26 @@ typedef struct position {
 
 position my_pos = { .x = START_X, .y = START_Y, .dir = START_DIR };
 
-// void update_direction(int ) {
+//void update_direction(int ) {
 //
-// }
+//}
+
+float time_distance(float time, float speed){
+	float d;
+	if(speed==525){
+		d=time*CORR_DIV2;
+	} else if (speed==262 || speed==262.5){
+		d=time*CORR_DIV4;
+	} else if(speed==131){
+		d=time*CORR_DIV8;
+	} else if(speed==65.625 || speed==65){
+		d=time*CORR_DIV16;
+	} else {
+		d=-1;
+	}
+	printf("Distance: %f\n", d);
+	return d;
+}
 
 void update_position(int dist) {  // TODO test
 	my_pos.x += dist * sin((my_pos.dir * M_PI) / 180.0);
@@ -56,17 +74,20 @@ void turn_motor_to_pos(uint8_t motor, int speed, int pos) {
 }
 
 void go_forwards_time(uint8_t *motors, int time, int speed) {
+	int d;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, MOT_DIR * speed );
 	multi_set_tacho_time_sp( motors, time );
 	multi_set_tacho_ramp_up_sp( motors, 0 );
 	multi_set_tacho_ramp_down_sp( motors, 0 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TIMED );
-	// TODO valerio
-	//update_position(int DA_CALCOLARE)
+	//TODO valerio
+	d=(int) time_distance((float) time/1000, speed);
+	update_position(d);
 }
 
 void go_backwards_time(uint8_t *motors, int time, int speed) {
+	int d;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, -MOT_DIR * speed );
 	multi_set_tacho_time_sp( motors, time );
@@ -74,7 +95,8 @@ void go_backwards_time(uint8_t *motors, int time, int speed) {
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TIMED );
 	// TODO valerio
-	//update_position(int DA_CALCOLARE*-1);
+	d=(int) time_distance((float) time/1000, speed);
+	update_position(d);
 }
 
 void go_forwards_cm(uint8_t *motors, int cm, int speed) {
@@ -158,9 +180,6 @@ float get_compass_value_samples(uint8_t compass, int samples) { // problem when 
 	float r = sum/samples;
 	return r > 180 ? r - 360 : r;
 }
-
-
-
 
 void turn_right_compass(uint8_t *motors, uint8_t compass, int speed, int deg) { // TODO check for values < 0 or > 180
 	int dir, start_dir = get_compass_value_samples( compass, 5 );
@@ -302,7 +321,6 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 
   }
 
-
  void turn_left_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
  	float start_dir = get_value_samples( gyro, 5 );
  	float dir;
@@ -375,8 +393,9 @@ int front_obstacle (uint8_t dist) {
 }
 
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
-	float d;
+	float d, x;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
+	clock_t t0=clock();
 	multi_set_tacho_speed_sp( motors, MOT_DIR * speed );
 	multi_set_tacho_ramp_up_sp( motors, 0 );
 	multi_set_tacho_ramp_down_sp( motors, 0 );
@@ -386,10 +405,12 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 		// printf("%f\n", d);
 	} while (d == 0 || d > cm*10);
 	stop_motors(motors);
+	clock_t t1=clock();
+	printf("%Lf\n",(long double) (t1-t0)/EV3_FREQ);
 	// TODO valerio
-	//update_position(int DA_CALCOLARE)
+	x=time_distance((float) (t1-t0)/EV3_FREQ, speed);
+	update_position((int) x);
 }
-
 
  void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacle, int pos, int span) {
 	 int dir;

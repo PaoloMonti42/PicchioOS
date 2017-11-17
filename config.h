@@ -17,3 +17,8 @@
 #define TURN360 775
 
 #define DIST_THRESHOLD 130
+#define EV3_FREQ 697971
+#define CORR_DIV2 0.2528
+#define CORR_DIV4 0.1324
+#define CORR_DIV8 0.074 //not very precise
+#define CORR_DIV16 0.051

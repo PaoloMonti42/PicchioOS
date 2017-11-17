@@ -49,11 +49,21 @@ int main( void )
 	set_sensor_mode_inx(gyro, GYRO_GYRO_ANG);
 	set_sensor_mode_inx(color, COLOR_RGB_RAW);
 
-
-	go_forwards_cm(motors, 10, MAX_SPEED/8);
+int command1, command2;
+command1=2;
+while(command1!=0 || command2!=0){
+	printf("Time (sec):");
+	scanf("%d", &command1);
+	printf("\n");
+	printf("Speed (max:1050):");
+	scanf("%d", &command2);
+	printf("\n");
+	//go_forwards_cm(motors, 10, MAX_SPEED/8);
+	//go_forwards_time(motors, command1*1000, command2);
+	go_forwards_obs(motors, dist, 10, command2);
 	wait_motor_stop(motors[0]);
 	wait_motor_stop(motors[1]);
-
+}
   //pthread_join(logger, NULL);
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
