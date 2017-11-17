@@ -302,6 +302,17 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 
   }
 
+	void init_gyro(uint8_t *motors, uint8_t gyro, int speed){
+		turn_to_angle(motors, gyro, speed, 0);
+		set_sensor_mode_inx(gyro, GYRO_GYRO_RATE);
+		set_sensor_mode_inx(gyro, GYRO_GYRO_ANG);
+	}
+
+	void set_gyro(uint8_t gyro){
+			set_sensor_mode_inx(gyro, GYRO_GYRO_RATE);
+			set_sensor_mode_inx(gyro, GYRO_GYRO_ANG);
+	}
+
 
  void turn_left_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
  	float start_dir = get_value_samples( gyro, 5 );
@@ -315,7 +326,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
  	float end_dir = start_dir-deg;
  	do {
  			dir = get_value_single(gyro);
- 			//printf("cur_pos=%f\n", dir);
+ 			printf("cur_pos=%f\n", dir);
  		} while (dir >= end_dir);
  		stop_motors(motors);
  }

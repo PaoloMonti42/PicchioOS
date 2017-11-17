@@ -50,9 +50,13 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg);
 int get_main_color(rgb *color_val, char * main_color2);
 
 int front_obstacle (uint8_t dist);
-  
+
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed);
 
 void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span);
 
-void scan_for_obstacle_N_pos_head (uint8_t motors, uint8_t dist, int* obstacles, int* angles, int pos, int span);
+void scan_for_obstacle_N_pos_head (uint8_t motors, uint8_t dist, int* obstacle, int pos, int span);
+
+void init_gyro(uint8_t *motors, uint8_t gyro, int speed);
+
+void set_gyro(uint8_t gyro);

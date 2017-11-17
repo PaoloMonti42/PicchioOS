@@ -37,6 +37,8 @@ int main( void )
 	int distance;
 	int pos;
 	int span;
+	float val;
+	char go;
 
   if ( ev3_init() == -1 )
 	  return ( 1 );
@@ -48,29 +50,51 @@ int main( void )
 
 	motor_init( &motors[0], &motors[1] );
 
-	set_sensor_mode_inx(gyro, GYRO_GYRO_RATE);
-	set_sensor_mode_inx(gyro, GYRO_GYRO_ANG);
-	set_sensor_mode_inx(color, COLOR_RGB_RAW);
+	go = getchar();
 
-	printf("press any key to start: ");
-	scanf("%c", &command);
-	printf("num pos: ");
-	scanf("%d", &pos);
-	printf("span: ");
-	scanf("%d", &span);
-	//go_forwards_cm(motors, 10, MAX_SPEED/8);
-	//wait_motor_stop(motors[0]);
-	//wait_motor_stop(motors[1]);
-	for (i=0;i<pos;i++) {
-		angles[i] = 1;
-		angles2[i] = 1;
-		obstacles[i] = 1;
-		obstacles2[i] = 1;
-	}
-	scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, pos, span);
-	scan_for_obstacle_N_pos_head(motors[1], dist, obstacles2, angles2, pos, span);
-	for (i=0;i<pos;i++) printf ("ang %d obs %d\n", angles[i], obstacles[i]);
-	for (i=0;i<pos;i++) printf ("ang %d obs %d\n", angles2[i], obstacles2[i]);
+	if(go=='g'){
+
+	set_gyro(gyro);
+
+	val = get_value_single(gyro);
+	printf("Picchio is at %f\n", val);
+
+	go_forwards_cm(motors, 10, MAX_SPEED/8);
+	wait_motor_stop(motors[0]);
+	wait_motor_stop(motors[1]);
+
+	val = get_value_single(gyro);
+	printf("Picchio is at %f\n", val);
+
+	turn_left_gyro(motors, gyro, MAX_SPEED/16, 30);
+	wait_motor_stop(motors[0]);
+	wait_motor_stop(motors[1]);
+
+	val = get_value_single(gyro);
+	printf("Picchio is at %f\n", val);
+
+	go_forwards_cm(motors, 10, MAX_SPEED/4);
+	wait_motor_stop(motors[0]);
+	wait_motor_stop(motors[1]);
+
+	val = get_value_single(gyro);
+	printf("Picchio is at %f\n", val);
+
+	turn_right_gyro(motors, gyro, MAX_SPEED/16, 120);
+	wait_motor_stop(motors[0]);
+	wait_motor_stop(motors[1]);
+
+	val = get_value_single(gyro);
+	printf("Picchio is at %f\n", val);
+
+	init_gyro(motors, gyro, MAX_SPEED/16);
+
+	val = get_value_single(gyro);
+	printf("Picchio is at %f\n", val);
+
+} else {
+	turn_left_gyro(motors, gyro, MAX_SPEED/2, 32000);
+}
   //pthread_join(logger, NULL);
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
@@ -87,6 +111,8 @@ int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro,
 	if ( !ev3_search_sensor( LEGO_EV3_COLOR, color, 0 )) {
 		fprintf( stderr, "Color sensor not found...\n" );
 		all_ok = 0;
+	} else {
+		set_sensor_mode_inx(*color, COLOR_RGB_RAW);
 	}
 	if ( !ev3_search_sensor( HT_NXT_COMPASS, compass, 0 )) {
 		fprintf( stderr, "Compass not found...\n" );
@@ -95,6 +121,9 @@ int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro,
 	if ( !ev3_search_sensor( LEGO_EV3_GYRO, gyro, 0 )) {
 		fprintf( stderr, "Gyroscope not found...\n" );
 		all_ok = 0;
+	} else {
+		set_sensor_mode_inx(*gyro, GYRO_GYRO_RATE);
+		set_sensor_mode_inx(*gyro, GYRO_GYRO_ANG);
 	}
 	if ( !ev3_search_sensor( LEGO_EV3_US, dist, 0 )) {
 		fprintf( stderr, "Distance sensor not found...\n" );
@@ -119,6 +148,9 @@ int motor_init(uint8_t *motor0, uint8_t* motor1) {
 		all_ok = 0;
 	} else {
 		set_tacho_command_inx( *motor1, TACHO_STOP );
+	}
+	if (all_ok){
+		stop_motors(motors);
 	}
 	return all_ok;
 }
