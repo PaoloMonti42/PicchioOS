@@ -79,7 +79,7 @@ void go_backwards_time(uint8_t *motors, int time, int speed) {
 
 void go_forwards_cm(uint8_t *motors, int cm, int speed) {
 	float deg = (360.0*cm*10)/(M_PI*WHEEL_DIAM);
-	printf("%f\n", deg);
+	//printf("%f\n", deg);
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, speed );
 	multi_set_tacho_position_sp( motors, MOT_DIR * deg );
@@ -214,7 +214,7 @@ void turn_left_compass(uint8_t *motors, uint8_t compass, int speed, int deg) { /
 
 void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
  	int start_pos = (int)get_value_single(gyro);
- 	printf("start_pos=%d\n", start_pos);
+ 	//printf("start_pos=%d\n", start_pos);
  	int cur_pos, dest;
 	int a;
  	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
@@ -231,7 +231,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 		 	do {
 		 		cur_pos = (int)get_value_single(gyro);
-		 		printf("cur_pos_reinitializing=%d\n", cur_pos);
+		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos <= dest);
 		 	stop_motors(motors);
 		}
@@ -243,7 +243,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 		 	do {
 		 		cur_pos = (int)get_value_single(gyro);
-		 		printf("cur_pos_reinitializing=%d\n", cur_pos);
+		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos >= dest);
 		 	stop_motors(motors);
 		}
@@ -257,7 +257,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 		 	do {
 		 		cur_pos = (int)get_value_single(gyro);
-		 		printf("cur_pos_reinitializing=%d\n", cur_pos);
+		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos >= dest);
 		 	stop_motors(motors);
 		}
@@ -269,7 +269,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 		 	do {
 		 		cur_pos = (int)get_value_single(gyro);
-		 		printf("cur_pos_reinitializing=%d\n", cur_pos);
+		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos <= dest);
 		 	stop_motors(motors);
 		}
@@ -279,7 +279,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 
  void reinit_pos_gyro(uint8_t *motors, uint8_t gyro, int speed) {
   	float start_pos = get_value_samples(gyro,5);
-  	printf("start_pos=%f\n", start_pos);
+  	//printf("start_pos=%f\n", start_pos);
   	float cur_pos;
   	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
   	multi_set_tacho_ramp_up_sp( motors, 0 );
@@ -296,7 +296,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
   	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
   	do {
   		cur_pos = get_value_samples(gyro, 5);
-  		printf("cur_pos_reinitializing=%f\n", cur_pos);
+  		//printf("cur_pos_reinitializing=%f\n", cur_pos);
   	} while(cur_pos < -1 || cur_pos > 1);
   	stop_motors(motors);
 
@@ -391,40 +391,49 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 }
 
 
- void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacle, int pos, int span) {
+ void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span) {
 	 int dir;
 	 int angle, i;
+	 float anglef;
 	 dir = (int)get_value_single(gyro) % 360;
-	 printf("initial direction %d\n", dir);
-	 angle = (span) / ((pos-1));
-	 obstacle[(pos-1)/2] = front_obstacle(dist);
+	 //printf("initial direction %d\n", dir);
+	 anglef = (float)(span) / (pos-1);
+	 angle = (int) (anglef);
+	 obstacles[(pos-1)/2] = front_obstacle(dist);
+	 angles[(pos-1)/2] = 0;
 	 for (i=0;i<((pos-1)/2);i++) {
 		 turn_left_gyro (motors, gyro, MAX_SPEED/16, angle);
-		 obstacle[((pos-1)/2)-i] = front_obstacle(dist);
+		 obstacles[((pos-1)/2)-(i+1)] = front_obstacle(dist);
+		 angles[((pos-1)/2)-(i+1)] = (int)((i+1)*(-1)*anglef);
 	 }
 	 turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
 	 for (i=(((pos-1)/2)+1);i<pos;i++) {
 		 turn_right_gyro (motors, gyro, MAX_SPEED/16, angle);
-		 obstacle[i] = front_obstacle(dist);
+		 obstacles[i] = front_obstacle(dist);
+		 angles[i] = (int)((i)*anglef-(span/2));
 	 }
 	 turn_to_angle(motors, gyro, MAX_SPEED/16, dir);
  }
 
- void scan_for_obstacle_N_pos_head (uint8_t motors, uint8_t dist, int* obstacle, int pos, int span) {
+ void scan_for_obstacle_N_pos_head (uint8_t motors, uint8_t dist, int* obstacles, int* angles, int pos, int span) {
 	 int angle, i;
-	 angle = (span) / ((pos-1));
-	 obstacle[(pos-1)/2] = front_obstacle(dist);
+	 float anglef;
+	 anglef = (float)(span) / (pos-1);
+	 angle = (int) (anglef);
+	 obstacles[(pos-1)/2] = front_obstacle(dist);
 	 for (i=0;i<((pos-1)/2);i++) {
 		 turn_motor_deg(motors, MAX_SPEED/16, angle);
 		 wait_motor_stop(motors);
-		 obstacle[((pos-1)/2)-i] = front_obstacle(dist);
+		 obstacles[((pos-1)/2)-(i+1)] = front_obstacle(dist);
+		 angles[((pos-1)/2)-(i+1)] = (int)((i+1)*(-1)*anglef);
 	 }
 	 turn_motor_deg(motors, MAX_SPEED/16, ((-1)*(span/2)));
 	 wait_motor_stop(motors);
 	 for (i=(((pos-1)/2)+1);i<pos;i++) {
 		 turn_motor_deg(motors, MAX_SPEED/16, ((-1)*angle));
 		 wait_motor_stop(motors);
-		 obstacle[i] = front_obstacle(dist);
+		 obstacles[i] = front_obstacle(dist);
+		 angles[i] = (int)((i)*anglef-(span/2));
 	 }
 	 turn_motor_deg(motors, MAX_SPEED/16, (span/2));
 	 wait_motor_stop(motors);

@@ -30,7 +30,10 @@ int main( void )
   pthread_t logger;
 
 	char command;
-	int	obstacle[180];
+	int	obstacles[180];
+	int	obstacles2[180];
+	int	angles[180];
+	int	angles2[180];
 	int distance;
 	int pos;
 	int span;
@@ -49,11 +52,25 @@ int main( void )
 	set_sensor_mode_inx(gyro, GYRO_GYRO_ANG);
 	set_sensor_mode_inx(color, COLOR_RGB_RAW);
 
-
-	go_forwards_cm(motors, 10, MAX_SPEED/8);
-	wait_motor_stop(motors[0]);
-	wait_motor_stop(motors[1]);
-
+	printf("press any key to start: ");
+	scanf("%c", &command);
+	printf("num pos: ");
+	scanf("%d", &pos);
+	printf("span: ");
+	scanf("%d", &span);
+	//go_forwards_cm(motors, 10, MAX_SPEED/8);
+	//wait_motor_stop(motors[0]);
+	//wait_motor_stop(motors[1]);
+	for (i=0;i<pos;i++) {
+		angles[i] = 1;
+		angles2[i] = 1;
+		obstacles[i] = 1;
+		obstacles2[i] = 1;
+	}
+	scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, pos, span);
+	scan_for_obstacle_N_pos_head(motors[1], dist, obstacles2, angles2, pos, span);
+	for (i=0;i<pos;i++) printf ("ang %d obs %d\n", angles[i], obstacles[i]);
+	for (i=0;i<pos;i++) printf ("ang %d obs %d\n", angles2[i], obstacles2[i]);
   //pthread_join(logger, NULL);
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
