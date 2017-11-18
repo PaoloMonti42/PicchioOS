@@ -100,15 +100,15 @@ int main( void )
 			set_tacho_command_inx( sn, TACHO_RUN_TO_REL_POS );
 			Sleep( 500 );
 		}
-	
+
 	} else {
 		printf( "LEGO_EV3_M_MOTOR 1 is NOT found\n" );
 	}
 	}
-	
+
 //Run all sensors
 	ev3_sensor_init();
-	
+
 	printf( "Found sensors:\n" );
 	for ( i = 0; i < DESC_LIMIT; i++ ) {
 		if ( ev3_sensor[ i ].type_inx != SENSOR_TYPE__NONE_ ) {
@@ -128,7 +128,7 @@ int main( void )
 	}
 	if ( ev3_search_sensor( LEGO_EV3_TOUCH, &sn_touch, 0 )) {
 		printf( "TOUCH sensor is found, press BUTTON for EXIT...\n" );
-	} 
+	}
 	for ( ; ; ){
 	    	if ( ev3_search_sensor( LEGO_EV3_COLOR, &sn_color, 0 )) {
 			printf( "COLOR sensor is found, reading COLOR...\n" );

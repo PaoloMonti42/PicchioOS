@@ -9,6 +9,7 @@
 #include <pthread.h>
 #include <math.h>
 #include "picchio_lib.h"
+#include "map.h"
 
 
 int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist);
@@ -31,9 +32,7 @@ int main( void )
 
 	char command;
 	int	obstacles[180];
-	int	obstacles2[180];
-	int	angles[180];
-	int	angles2[180];
+	int angles[9];
 	int distance;
 	int pos;
 	int span;
@@ -56,49 +55,17 @@ int main( void )
 
 	set_gyro(gyro);
 
-	val = get_value_single(gyro);
-	printf("Picchio is at %f\n", val);
-
-	go_forwards_cm(motors, 10, MAX_SPEED/8);
-	wait_motor_stop(motors[0]);
-	wait_motor_stop(motors[1]);
-
-	val = get_value_single(gyro);
-	printf("Picchio is at %f\n", val);
-
-	turn_left_gyro(motors, gyro, MAX_SPEED/16, 30);
-	wait_motor_stop(motors[0]);
-	wait_motor_stop(motors[1]);
-
-	val = get_value_single(gyro);
-	printf("Picchio is at %f\n", val);
-
-	go_forwards_cm(motors, 10, MAX_SPEED/4);
-	wait_motor_stop(motors[0]);
-	wait_motor_stop(motors[1]);
-
-	val = get_value_single(gyro);
-	printf("Picchio is at %f\n", val);
-
-	turn_right_gyro(motors, gyro, MAX_SPEED/16, 120);
-	wait_motor_stop(motors[0]);
-	wait_motor_stop(motors[1]);
-
-	val = get_value_single(gyro);
-	printf("Picchio is at %f\n", val);
-
-	init_gyro(motors, gyro, MAX_SPEED/16);
-
-	val = get_value_single(gyro);
-	printf("Picchio is at %f\n", val);
-
-} else {
-	turn_left_gyro(motors, gyro, MAX_SPEED/2, 32000);
-}
+	scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, 9, 180);
+	for(i=0;i<9;i++){
+			printf("obastacle[%d]=%d\n", i, obstacles[i]);
+			printf("angle[%d]=%d\n", i, angles[i]);
+	}
+	update_map(100, 100, 0, 9, obstacles, angles);
   //pthread_join(logger, NULL);
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
 	return ( 0 );
+	}
 }
 
 int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist) {
@@ -150,7 +117,8 @@ int motor_init(uint8_t *motor0, uint8_t* motor1) {
 		set_tacho_command_inx( *motor1, TACHO_STOP );
 	}
 	if (all_ok){
-		stop_motors(motors);
+		stop_motors(motor0);
+		stop_motors(motor1);
 	}
 	return all_ok;
 }
