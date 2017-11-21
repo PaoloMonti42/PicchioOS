@@ -17,7 +17,7 @@ int motor_init(uint8_t *motor0, uint8_t *motor1, uint8_t *motor_obs);
 void *position_logger(void *arg);
 
 
-int main( void )
+int main( int argc, char **argv )
 {
 	int i;
 	char s[256];
@@ -50,6 +50,11 @@ int main( void )
 
 	motor_init( &motors[0], &motors[1], &motor_obs );
 
+	if (argc == 3) { // TODO test
+		my_pos.x = atoi(argv[1]);
+		my_pos.y = atoi(argv[2]);
+	}
+
 	go = getchar();
 
 	while(1){
@@ -64,6 +69,13 @@ int main( void )
 		if (go == 'u') {
 			turn_motor_deg(motor_obs, MAX_SPEED/8, -120);
 			millisleep(1000);
+		}
+		if (go == 'o') {
+			printf("%d\n", front_obstacle(dist));
+		}
+		if (go == 'c') {
+			get_color(color, s);
+			printf("%s\n", s);
 		}
 		if (go == 'q') {
 			break;
