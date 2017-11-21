@@ -1,6 +1,6 @@
 #include <string.h>
 #define millisleep( msec ) usleep(( msec ) * 1000 )
-#include <time.h>
+#include <sys/timeb.h>
 //#include <math.h>
 const char const *colors[] = { "?", "BLACK", "BLUE", "GREEN", "YELLOW", "RED", "WHITE", "BROWN" };
 #define COLOR_COUNT  (( int )( sizeof( colors ) / sizeof( colors[ 0 ])))
@@ -393,22 +393,26 @@ int front_obstacle (uint8_t dist) {
 }
 
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
-	float d, x;
+	float d, x, time;
+	int millisec;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
-	clock_t t0=clock();
+	struct timeb t0, t1;
 	multi_set_tacho_speed_sp( motors, MOT_DIR * speed );
 	multi_set_tacho_ramp_up_sp( motors, 0 );
 	multi_set_tacho_ramp_down_sp( motors, 0 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
+	ftime(&t0);
 	do {
 		d = front_obstacle(dist);
 		// printf("%f\n", d);
 	} while (d == 0 || d > cm*10);
 	stop_motors(motors);
-	clock_t t1=clock();
-	printf("%Lf\n",(long double) (t1-t0)/EV3_FREQ);
+	ftime(&t1);
+	
 	// TODO valerio
-	x=time_distance((float) (t1-t0)/EV3_FREQ, speed);
+	time= t1.time - t0.time + ((float) t1.millitm-t0.millitm)/1000;
+	printf("Time: %f\n", time);
+	x=time_distance(time, speed);
 	update_position((int) x);
 }
 
