@@ -12,9 +12,15 @@ typedef struct position {
 
 position my_pos = { .x = START_X, .y = START_Y, .dir = START_DIR };
 
-// void update_direction(int ) {
-//
-// }
+void update_direction(int deg) {  // TODO test
+  d = my_pos.dir + deg;
+  if (d > 180) {
+		my_pos.dir = ((d - 180) % 360) - 180;
+	} else if (d < -180) {
+    my_pos.dir = ((d + 180) % 360) + 180;
+	} else
+    my_pos.dir = d;
+}
 
 void update_position(int dist) {  // TODO test
 	my_pos.x += dist * sin((my_pos.dir * M_PI) / 180.0);
@@ -109,6 +115,7 @@ void turn_right(uint8_t *motors, int speed, int deg) {
 	set_tacho_position_sp( motors[0], MOT_DIR*(TURN360*deg)/360 );
 	set_tacho_position_sp( motors[1], -MOT_DIR*(TURN360*deg)/360 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
+	update_direction(deg);
 }
 
 void turn_left(uint8_t *motors, int speed, int deg) {
@@ -119,6 +126,7 @@ void turn_left(uint8_t *motors, int speed, int deg) {
 	set_tacho_position_sp( motors[0], - MOT_DIR*(TURN360*deg)/360);
 	set_tacho_position_sp( motors[1], MOT_DIR*(TURN360*deg)/360 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
+	update_direction(-deg);
 }
 
 void wait_motor_stop(uint8_t motor) { // sometimes don't work properly, TODO fix
@@ -185,6 +193,7 @@ void turn_right_compass(uint8_t *motors, uint8_t compass, int speed, int deg) { 
 		stop_motors(motors);
 	}
 	// printf("%d\n", dir);
+	update_direction(deg);
 }
 
 void turn_left_compass(uint8_t *motors, uint8_t compass, int speed, int deg) { // TODO check for values < 0 or > 180
@@ -210,6 +219,7 @@ void turn_left_compass(uint8_t *motors, uint8_t compass, int speed, int deg) { /
 		stop_motors(motors);
 	}
 	// printf("%d\n", dir);
+	update_direction(-deg);
 }
 
 void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
@@ -234,6 +244,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos <= dest);
 		 	stop_motors(motors);
+			update_direction(deg-a);
 		}
 		else {
 			// turn counterclockwise
@@ -246,6 +257,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos >= dest);
 		 	stop_motors(motors);
+			update_direction(deg-a);
 		}
 	}
 	else {
@@ -260,6 +272,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos >= dest);
 		 	stop_motors(motors);
+			update_direction(deg-a);
 		}
 		else {
 			// turn clockwise
@@ -272,6 +285,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos <= dest);
 		 	stop_motors(motors);
+			update_direction(deg-a);
 		}
 	}
 
@@ -299,7 +313,8 @@ void reinit_pos_gyro(uint8_t *motors, uint8_t gyro, int speed) {
   	//printf("cur_pos_reinitializing=%f\n", cur_pos);
   } while(cur_pos < -1 || cur_pos > 1);
   stop_motors(motors);
-  }
+  update_direction(-start_pos);
+}
 
 void init_gyro(uint8_t *motors, uint8_t gyro, int speed){
 	turn_to_angle(motors, gyro, speed, 0);
@@ -328,6 +343,7 @@ void turn_left_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
  		printf("cur_pos=%f\n", dir);
   } while (dir >= end_dir);
  	stop_motors(motors);
+	update_direction(-deg);
  }
 
 void turn_right_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
@@ -345,6 +361,7 @@ void turn_right_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
  		//printf("cur_pos=%f\n", dir);
  	} while (dir <= end_dir);
  	stop_motors(motors);
+	update_direction(deg);
  }
 
 void get_color_values(rgb * color_val, uint8_t color){
