@@ -49,6 +49,8 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg);
 
 int get_main_color(rgb *color_val, char * main_color2);
 
+int get_color(uint8_t color, char * buf);
+
 int front_obstacle (uint8_t dist);
 
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed);

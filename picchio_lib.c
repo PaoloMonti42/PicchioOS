@@ -13,13 +13,15 @@ typedef struct position {
 position my_pos = { .x = START_X, .y = START_Y, .dir = START_DIR };
 
 void update_direction(int deg) {  // TODO test
-  d = my_pos.dir + deg;
+  int d = my_pos.dir + deg;
   if (d > 180) {
 		my_pos.dir = ((d - 180) % 360) - 180;
 	} else if (d < -180) {
     my_pos.dir = ((d + 180) % 360) + 180;
-	} else
+	} else {
     my_pos.dir = d;
+	}
+	//printf("Updated direction to %d!\n", my_pos.dir);
 }
 
 void update_position(int dist) {  // TODO test
@@ -340,7 +342,7 @@ void turn_left_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
  	float end_dir = start_dir-deg;
  	do {
  	  dir = get_value_single(gyro);
- 		printf("cur_pos=%f\n", dir);
+ 		//printf("cur_pos=%f\n", dir);
   } while (dir >= end_dir);
  	stop_motors(motors);
 	update_direction(-deg);
@@ -432,7 +434,7 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	 obstacles[(pos-1)/2] = front_obstacle(dist);
 	 angles[(pos-1)/2] = 0;
 	 for (i=0;i<((pos-1)/2);i++) {
-		 turn_left_gyro (motors, gyro, MAX_SPEED/16, angle);
+		 turn_left_gyro (motors, gyro, MAX_SPEED/16, angle); // TODO see if breaks update_direction
 		 obstacles[((pos-1)/2)-(i+1)] = front_obstacle(dist);
 		 angles[((pos-1)/2)-(i+1)] = (int)((i+1)*(-1)*anglef);
 	 }

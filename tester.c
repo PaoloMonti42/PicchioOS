@@ -70,6 +70,18 @@ int main( int argc, char **argv )
 			turn_motor_deg(motor_obs, MAX_SPEED/8, -120);
 			millisleep(1000);
 		}
+		if (go == 'r') {
+			int d;
+			scanf("%d\n", &d);
+			turn_right_gyro(motors, gyro, MAX_SPEED/16, d);
+			millisleep((d/90)*1000);
+		}
+		if (go == 'l') {
+			int d;
+			scanf("%d\n", &d);
+			turn_left_gyro(motors, gyro, MAX_SPEED/16, d);
+			millisleep((d/90)*1000);
+		}
 		if (go == 'o') {
 			printf("%d\n", front_obstacle(dist));
 		}
