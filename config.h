@@ -20,7 +20,7 @@
 
 #define EV3_FREQ 697971
 #define WHEEL_RADIUS 0.0275
-#define CORR_DIV2 0.2528
-#define CORR_DIV4 0.1324
-#define CORR_DIV8 0.074 //not very precise
-#define CORR_DIV16 0.051
+#define CORR_DIV2 
+#define CORR_DIV4 
+#define CORR_DIV8 
+#define CORR_DIV16 
