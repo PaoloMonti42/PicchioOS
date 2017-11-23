@@ -19,18 +19,21 @@ position my_pos = { .x = START_X, .y = START_Y, .dir = START_DIR };
 
 float time_distance(float time, int speed){
 	float d;
-	/*if(speed==525){
-		d=time*CORR_DIV2;
-	} else if (speed==262 || speed==262.5){
-		d=time*CORR_DIV4;
+	//speed correction
+	if(speed==525){
+		speed=CORR_DIV2;
+	} else if (speed==262){
+		speed=CORR_DIV4;
 	} else if(speed==131){
-		d=time*CORR_DIV8;
-	} else if(speed==65.625 || speed==65){
-		d=time*CORR_DIV16;
+		speed=CORR_DIV8;
+	} else if(speed==65){
+		speed=CORR_DIV16;
 	} else {
 		d=-1;
-	}*/
-	d=(float) (speed*M_PI)/180*WHEEL_RADIUS*time;
+	}
+	d=(float) (speed*M_PI)/180*WHEEL_RADIUS;
+	printf("Speed: %f\n", d);
+	d=d*time;
 	printf("Distance: %f\n", d);
 	return d;
 }
@@ -75,30 +78,27 @@ void turn_motor_to_pos(uint8_t motor, int speed, int pos) {
 }
 
 void go_forwards_time(uint8_t *motors, int time, int speed) {
-	int d, tacho_speed, tacho_rot;
+	int d;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, MOT_DIR * speed );
+	get_tacho_speed(motors[0], &tacho_speed);
 	multi_set_tacho_time_sp( motors, time );
 	multi_set_tacho_ramp_up_sp( motors, 0 );
 	multi_set_tacho_ramp_down_sp( motors, 0 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TIMED );
-	get_tacho_speed(motors[0], &tacho_speed);
-	get_tacho_count_per_rot(motors[0], &tacho_rot);
 	//TODO valerio
 	d=(int) time_distance((float) time/1000, speed);
 	update_position(d);
 }
 
 void go_backwards_time(uint8_t *motors, int time, int speed) {
-	int d, tacho_speed, tacho_rot;
+	int d;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, -MOT_DIR * speed );
 	multi_set_tacho_time_sp( motors, time );
 	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TIMED );
-	get_tacho_speed(motors[0], &tacho_speed);
-	get_tacho_count_per_rot(motors[0], &tacho_rot);
 	// TODO valerio
 	d=(int) time_distance((float) time/1000, speed);
 	update_position(d);
@@ -399,7 +399,6 @@ int front_obstacle (uint8_t dist) {
 
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	float d, x, time;
-	int tacho_speed, tacho_rot;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	struct timeb t0, t1;
 	multi_set_tacho_speed_sp( motors, MOT_DIR * speed );
@@ -407,15 +406,12 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	multi_set_tacho_ramp_down_sp( motors, 0 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 	ftime(&t0);
-	//get_tacho_speed(motors[0], &tacho_speed);
-	get_tacho_count_per_rot(motors[0], &tacho_rot);
 	do {
 		d = front_obstacle(dist);
 		// printf("%f\n", d);
 	} while (d == 0 || d > cm*10);
 	stop_motors(motors);
 	ftime(&t1);
-	printf("Tacho speed: %d\nTacho rot: %d\n", tacho_speed, tacho_rot);
 	// TODO valerio
 	time= t1.time - t0.time + ((float) t1.millitm-t0.millitm)/1000;
 	printf("Time: %f\n", time);
