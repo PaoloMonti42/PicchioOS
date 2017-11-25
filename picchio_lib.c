@@ -66,6 +66,8 @@ void turn_motor_to_pos(uint8_t motor, int speed, int pos) {
 void go_forwards_time(uint8_t *motors, int time, int speed) {
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, MOT_DIR * speed );
+	set_tacho_speed_sp( motors[0], MOT_DIR * speed * COMP_SX);
+	set_tacho_speed_sp( motors[1], MOT_DIR * speed * COMP_DX);
 	multi_set_tacho_time_sp( motors, time );
 	multi_set_tacho_ramp_up_sp( motors, 0 );
 	multi_set_tacho_ramp_down_sp( motors, 0 );
@@ -76,7 +78,8 @@ void go_forwards_time(uint8_t *motors, int time, int speed) {
 
 void go_backwards_time(uint8_t *motors, int time, int speed) {
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
-	multi_set_tacho_speed_sp( motors, -MOT_DIR * speed );
+	set_tacho_speed_sp( motors[0], -MOT_DIR * speed * COMP_SX);
+	set_tacho_speed_sp( motors[1], -MOT_DIR * speed * COMP_DX);
 	multi_set_tacho_time_sp( motors, time );
 	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
@@ -89,7 +92,8 @@ void go_forwards_cm(uint8_t *motors, int cm, int speed) {
 	float deg = (360.0*cm*10)/(M_PI*WHEEL_DIAM);
 	//printf("%f\n", deg);
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
-	multi_set_tacho_speed_sp( motors, speed );
+	set_tacho_speed_sp( motors[0], speed * COMP_SX);
+	set_tacho_speed_sp( motors[1], speed * COMP_DX);
 	multi_set_tacho_position_sp( motors, MOT_DIR * deg );
 	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
@@ -101,7 +105,8 @@ void go_backwards_cm(uint8_t *motors, int cm, int speed) {
 	float deg = (360.0*cm*10)/(M_PI*WHEEL_DIAM);
 	//printf("%f\n", deg);
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
-	multi_set_tacho_speed_sp( motors, speed );
+	set_tacho_speed_sp( motors[0], speed * COMP_SX);
+	set_tacho_speed_sp( motors[1], speed * COMP_DX);
 	multi_set_tacho_position_sp( motors, -MOT_DIR * deg );
 	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
@@ -409,7 +414,8 @@ int front_obstacle(uint8_t dist) {
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	float d;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
-	multi_set_tacho_speed_sp( motors, MOT_DIR * speed );
+	set_tacho_speed_sp( motors[0], MOT_DIR * speed * COMP_SX);
+	set_tacho_speed_sp( motors[1], MOT_DIR * speed * COMP_DX);
 	multi_set_tacho_ramp_up_sp( motors, 0 );
 	multi_set_tacho_ramp_down_sp( motors, 0 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );

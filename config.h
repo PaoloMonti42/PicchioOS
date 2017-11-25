@@ -3,6 +3,9 @@
 #define START_Y 0
 #define START_DIR 0
 
+#define COMP_SX 0.9925
+#define COMP_DX 1.0000
+
 #define MOT_DIR -1
 #define MOT_SX 65
 #define MOT_DX 68
