@@ -113,7 +113,7 @@ void go_backwards_time(uint8_t *motors, int time, int speed) {
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TIMED );
 	// TODO valerio
 	d=(int) time_distance((float) time/1000, speed);
-	update_position(d);
+	update_position(d * -1);
 }
 
 void go_forwards_cm(uint8_t *motors, int cm, int speed) {
@@ -455,6 +455,7 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	time= t1.time - t0.time + ((float) t1.millitm-t0.millitm)/1000;
 	printf("Time: %f\n", time);
 	x=time_distance(time, speed);
+	map_fix(my_pos.x, my_pos.y, my_pos.dir, x, 0);
 	update_position((int) x);
 }
 
