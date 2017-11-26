@@ -18,3 +18,10 @@
 #define TURN360 810
 
 #define DIST_THRESHOLD 130
+
+//release obstacles
+
+#define ARM_LENGTH 7.5
+#define ANGLE_UP_OBS_MAX 0
+#define ANGLE_DOWN_OBS_MIN 120
+#define PI 3.14159265

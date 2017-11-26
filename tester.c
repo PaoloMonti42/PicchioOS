@@ -63,12 +63,14 @@ int main( int argc, char **argv )
 			millisleep(3000);
 		}
 		if (go == 'd') {
-			turn_motor_deg(motor_obs, MAX_SPEED/8, 120);
-			millisleep(1000);
+			turn_motor_obs_to_pos_down(motor_obs, MAX_SPEED/8, 2);
+			wait_motor_stop(motor_obs);
+			stop_motors(&motor_obs);
 		}
 		if (go == 'u') {
-			turn_motor_deg(motor_obs, MAX_SPEED/8, -120);
-			millisleep(1000);
+			turn_motor_obs_to_pos_up(motor_obs, MAX_SPEED/8, 0);
+			wait_motor_stop(motor_obs);
+			stop_motors(&motor_obs);
 		}
 		if (go == 'o') {
 			printf("%d\n", front_obstacle(dist));
@@ -152,6 +154,7 @@ int motor_init(uint8_t *motor0, uint8_t* motor1, uint8_t* motor_obs) {
 		all_ok = 0;
 	} else {
 		set_tacho_command_inx( *motor_obs, TACHO_STOP );
+		set_tacho_position( *motor_obs, 0 );
 	}
 	if (all_ok){
 		stop_motors(motor0);

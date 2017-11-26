@@ -60,3 +60,7 @@ void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* 
 void init_gyro(uint8_t *motors, uint8_t gyro, int speed);
 
 void set_gyro(uint8_t gyro);
+
+void turn_motor_obs_to_pos_down(int motor, int speed, int height_ob);
+
+void turn_motor_obs_to_pos_up(int motor, int speed, int height_ob);
