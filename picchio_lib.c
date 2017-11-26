@@ -81,7 +81,6 @@ void go_forwards_time(uint8_t *motors, int time, int speed) {
 	int d;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, MOT_DIR * speed );
-	get_tacho_speed(motors[0], &tacho_speed);
 	multi_set_tacho_time_sp( motors, time );
 	multi_set_tacho_ramp_up_sp( motors, 0 );
 	multi_set_tacho_ramp_down_sp( motors, 0 );
