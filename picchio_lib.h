@@ -1,6 +1,8 @@
 #include "config.h"
 #include "picchio_lib.c"
 
+void picchio_greet();
+
 void turn_motor_time(uint8_t motor, int speed, int time, int ramp_up, int ramp_down);
 
 void turn_motor_deg(uint8_t motor, int speed, int deg);

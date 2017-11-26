@@ -10,11 +10,13 @@
 #include <math.h>
 #include "picchio_lib.h"
 #include "map.h"
+#include "bt.h"
 
 
 int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist);
 int motor_init(uint8_t *motor0, uint8_t *motor1, uint8_t *motor_obs);
 void *position_logger(void *arg);
+void *bt_client(void *arg);
 
 
 int main( int argc, char **argv )
@@ -30,6 +32,7 @@ int main( int argc, char **argv )
 	uint8_t dist;
 	rgb color_val;
   pthread_t logger;
+	pthread_t client;
 
 	char command;
 	int	obstacles[180];
@@ -43,8 +46,11 @@ int main( int argc, char **argv )
   if ( ev3_init() == -1 )
 	  return ( 1 );
 	printf( "*** ( PICCHIO ) Hello! ***\n" );
+	picchio_greet();
 
-  pthread_create( &logger, NULL, position_logger, NULL );
+  pthread_create( &logger, NULL, position_logger, NULL);
+
+	pthread_create( &logger, NULL, bt_client, NULL );
 
   sensor_init( &touch, &color, &compass, &gyro, &dist );
 
@@ -183,5 +189,17 @@ void *position_logger(void *arg)
   }
 	fprintf( stdout, "Finished logging!\n" );
 	fclose( fp );
+	return NULL;
+}
+
+void *bt_client(void *arg)
+{
+	printf("Client starting up...\n");
+  sleep(2);
+	while (bt_init() != 0);
+	printf("Successful server connection!\n");
+	sleep(5);
+	robot();
+	printf("Client returning...\n");
 	return NULL;
 }
