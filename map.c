@@ -84,7 +84,7 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
           printf("1 ");
        }  else {
           // fuori dal campo visivo, rimane unknown
-          printf("x ");
+          printf(". ");
         }
       }
       printf("\n");
