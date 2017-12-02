@@ -22,9 +22,16 @@
 
 #define DIST_THRESHOLD 130
 
+
 #define EV3_FREQ 697971
 #define WHEEL_RADIUS 0.0275
-#define CORR_DIV2 522 
+#define CORR_DIV2 522
 #define CORR_DIV4 274
 #define CORR_DIV8 154
 #define CORR_DIV16 78
+
+//release obstacles
+
+#define ARM_LENGTH 7.5
+#define ANGLE_UP_OBS_MAX 0
+#define ANGLE_DOWN_OBS_MIN 120

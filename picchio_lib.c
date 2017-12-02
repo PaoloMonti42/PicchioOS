@@ -1,4 +1,6 @@
 #include <string.h>
+#include <math.h>
+
 #define millisleep( msec ) usleep(( msec ) * 1000 )
 #include <sys/timeb.h>
 //#include <math.h>
@@ -507,3 +509,31 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	 turn_motor_deg(motors, MAX_SPEED/16, (span/2));
 	 wait_motor_stop(motors);
  }
+
+void turn_motor_obs_to_pos_down(int motor, int speed, int height_ob){
+	set_tacho_stop_action_inx( motor, STOP_ACTION );
+ 	set_tacho_speed_sp( motor, speed *  MOT_DIR );
+ 	set_tacho_ramp_up_sp( motor, 0 );
+ 	set_tacho_ramp_down_sp( motor, 0 );
+	float pos;
+	if(height_ob<3.5 && height_ob!=0) {
+		pos = 120 - (acos(0.5 - (float)height_ob/ARM_LENGTH)*180/M_PI-60);
+		printf("pos = %f\n", pos);
+	} else if(height_ob>=3.5 || height_ob==0){
+	  pos = 60;
+	}
+ 	set_tacho_position_sp( motor, pos );
+ 	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
+ }
+
+ void turn_motor_obs_to_pos_up(int motor, int speed, int height_ob){
+ 	  set_tacho_stop_action_inx( motor, STOP_ACTION );
+  	set_tacho_speed_sp( motor, speed *  MOT_DIR );
+  	set_tacho_ramp_up_sp( motor, 0 );
+  	set_tacho_ramp_down_sp( motor, 0 );
+ 	float pos;
+ 		pos=-atan((float)height_ob/3.5)*180/M_PI;
+ 		printf("pos = %f\n", pos);
+  	set_tacho_position_sp( motor, pos );
+  	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
+  }
