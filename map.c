@@ -1,11 +1,71 @@
-
 #include <math.h>
+#include <unistd.h>
 
 #define L 500
 #define HIT 0b11
 #define MISS 0b10
 
 uint16_t mat[L][L] = {{0}};
+
+int isempty(int i,int j){
+        int a=0, k;
+        for(k=0; k<7; k++){
+                if(((matrix[i][j] >> 2*k) & 0b11)!=0)
+                        a++;
+        }
+        return a;
+}
+
+int choice_UD(){
+        int i,k,j;
+        uint16_t  check1=0, check2=0;
+        int half=L/2;
+
+        for(j=0; j<L; j++){
+                for(i=half; i>=0; i--){
+                        check1+=isempty(i,j);
+                        //printf("check1 at %d %d: %d\n", i, j, matrix[i][j]);
+                }
+
+                for(i=half; i<L; i++){
+                        check2+=isempty(i,j);
+                        //printf("check2 at %d %d: %d\n", i, j, matrix[i][j]);
+            }
+                //printf("check1: %d, check2: %d\n", check1, check2);
+        }
+        if(check1<check2){
+                return UP;
+        }else if (check1>check2){
+                return DOWN;
+        }else{
+                return 0;
+        }
+}
+
+int choice_LR(){
+        int i,k,j;
+        uint16_t check1=0, check2=0;
+        int half=L/2;
+
+        for(i=0; i<L; i++){
+                for(j=half; j>=0; j--){
+                        check1+=isempty(i,j);
+                        //printf("check1 at %d %d: %d\n", i, j, matrix[i][j]);
+                }
+                for(j=half; j<L; j++){
+                        check2+=isempty(i,j);
+                        //printf("check2 at %d %d: %d\n", i, j, matrix[i][j]);
+                }
+                        //printf("check1: %d, check2: %d\n", check1, check2);
+        }
+        if(check1<check2){
+                return LEFT;
+        }else if (check1>check2){
+                return RIGHT;
+        }else{
+                return 0;
+        }
+}
 
 void update_map (int x, int y, int dir, int values, int *obstacles, int *angles) {
   int i, j;
