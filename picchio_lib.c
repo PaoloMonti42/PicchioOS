@@ -438,6 +438,7 @@ int front_obstacle(uint8_t dist) {
 
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	float d, x, time;
+	struct timeb t0, t1;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	set_tacho_speed_sp( motors[0], MOT_DIR * speed * COMP_SX);
 	set_tacho_speed_sp( motors[1], MOT_DIR * speed * COMP_DX);
