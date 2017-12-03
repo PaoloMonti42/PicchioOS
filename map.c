@@ -18,6 +18,10 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
   float height_ob = 1;
   float * obstaclesF;
 
+  x+=L/2;
+  y+=20;
+
+  printf("(x,y)=(%d,%d)\n", x, y);
   obstaclesF = (float *)malloc(sizeof(float)*values);
 
   for(i=0;i<values;i++){
@@ -36,31 +40,31 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
 
     float p1x = x - nx;
     float p1y = y - ny;
-    // printf("P1 (%f, %f)\n", p1x, p1y);
+     printf("P1 (%f, %f)\n", p1x, p1y);
 
     float p2x = x + nx;
     float p2y = y + ny;
-    // printf("P2 (%f, %f)\n", p2x, p2y);
+     printf("P2 (%f, %f)\n", p2x, p2y);
 
     float p3x = p2x + mx;
     float p3y = p2y + my;
-    // printf("P3 (%f, %f)\n", p3x, p3y);
+     printf("P3 (%f, %f)\n", p3x, p3y);
 
     float p4x = p1x + mx;
     float p4y = p1y + my;
-    // printf("P4 (%f, %f)\n", p4x, p4y);
+     printf("P4 (%f, %f)\n", p4x, p4y);
 
     float ob_p1x = p4x;
     float ob_p1y = p4y;
-    // printf("P1 (%f, %f)\n", p1x, p1y);
+    //printf("P1 (%f, %f)\n", p1x, p1y);
 
     float ob_p2x = p3x;
     float ob_p2y = p3y;
-    // printf("P2 (%f, %f)\n", p2x, p2y);
+    //printf("P2 (%f, %f)\n", p2x, p2y);
 
     float ob_p3x = ob_p2x + heightx;
     float ob_p3y = ob_p2y + heighty;
-    // printf("P3 (%f, %f)\n", p3x, p3y);
+    //printf("P3 (%f, %f)\n", p3x, p3y);
 
     float ob_p4x = ob_p1x + heightx;
     float ob_p4y = ob_p1y + heighty;
@@ -69,7 +73,7 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
 
 
 
-    for (r = x+t; r > x-t; r--) {
+    for (r = y+t; r > y-t; r--) {
       for (c = x-t; c < x+t+1; c++) {
         if ( (p2y-p1y)*c - (p2x-p1x)*r + p2x*p1y - p2y*p1x <= 0 &&
              (p3y-p2y)*c - (p3x-p2x)*r + p3x*p2y - p3y*p2x <= 0 &&
@@ -102,7 +106,7 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
 void map_print(int startX, int startY, int endX, int endY) {
   int r, c, i;
 
-  FILE * fp = stdout;//fopen("test.txt", "w+");
+  FILE * fp = fopen("map.txt", "w+");
   for (r = endX; r > startX; r--) {
     for (c = startX; c < endX; c++) {
       uint16_t tmp = mat[r][c];
@@ -110,24 +114,19 @@ void map_print(int startX, int startY, int endX, int endY) {
         switch ((tmp >> (7-i)*2) & 0b11)  {
           case (0):
             fprintf(fp, "?");
-            // fprintf(fp, "00 ");
             break;
           case (1):
             fprintf(fp, "X");
-            // fprintf(fp, "00 ");
             break;
           case (2):
             fprintf(fp, "_");
-            // fprintf(fp, "00 ");
             break;
           case (3):
             fprintf(fp, "@");
-            // fprintf(fp, "00 ");
             break;
         }
       }
       fprintf(fp, " ");
-      // fprintf(fp, "| ");
     }
     fprintf(fp, "\n");
   }

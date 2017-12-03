@@ -364,6 +364,7 @@ void set_gyro(uint8_t gyro){
 
 void turn_left_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
   float start_dir = get_value_samples( gyro, 5 );
+	//printf("start_dir=%f\n", start_dir);
   float dir;
  	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
  	set_tacho_speed_sp( motors[0], -MOT_DIR * speed);
@@ -372,6 +373,7 @@ void turn_left_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg) {
  	multi_set_tacho_ramp_down_sp( motors, 0 );
  	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
  	float end_dir = start_dir-deg;
+	//printf("end dir=%f\n", end_dir);
  	do {
  	  dir = get_value_single(gyro);
  		//printf("cur_pos=%f\n", dir);
@@ -440,6 +442,7 @@ int front_obstacle(uint8_t dist) {
 
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	float d, x, time;
+	struct timeb t0, t1;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	set_tacho_speed_sp( motors[0], MOT_DIR * speed * COMP_SX);
 	set_tacho_speed_sp( motors[1], MOT_DIR * speed * COMP_DX);
@@ -456,8 +459,7 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	// TODO valerio
 	time= t1.time - t0.time + ((float) t1.millitm-t0.millitm)/1000;
 	printf("Time: %f\n", time);
-	x=time_distance(time, speed);
-	map_fix(my_pos.x, my_pos.y, my_pos.dir, x, 0);
+	x=time_distance(time, speed)*100;
 	update_position((int) x);
 }
 
@@ -511,11 +513,11 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
  }
 
 void turn_motor_obs_to_pos_down(int motor, int speed, int height_ob){
+	float pos;
 	set_tacho_stop_action_inx( motor, STOP_ACTION );
  	set_tacho_speed_sp( motor, speed *  MOT_DIR );
  	set_tacho_ramp_up_sp( motor, 0 );
  	set_tacho_ramp_down_sp( motor, 0 );
-	float pos;
 	if(height_ob<3.5 && height_ob!=0) {
 		pos = 120 - (acos(0.5 - (float)height_ob/ARM_LENGTH)*180/M_PI-60);
 		printf("pos = %f\n", pos);
