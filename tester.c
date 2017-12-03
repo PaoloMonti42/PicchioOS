@@ -39,6 +39,7 @@ int main( int argc, char **argv )
 	int span;
 	float val;
 	char go;
+	int turn=0;
 
   if ( ev3_init() == -1 )
 	  return ( 1 );
@@ -55,57 +56,26 @@ int main( int argc, char **argv )
 		my_pos.y = atoi(argv[2]);
 	}
 
-	go = getchar();
+int dddd;
 
-	while(1){
-		if (go == 't'){
-			turn_left(motors, MAX_SPEED/16, 360);
-			millisleep(3000);
-		}
-		if (go == 'd') {
-			turn_motor_obs_to_pos_down(motor_obs, MAX_SPEED/8, 2);
-			wait_motor_stop(motor_obs);
-			stop_motors(&motor_obs);
-		}
-		if (go == 'u') {
-			turn_motor_obs_to_pos_up(motor_obs, MAX_SPEED/8, 0);
-			wait_motor_stop(motor_obs);
-			stop_motors(&motor_obs);
-		}
-		if (go == 'r') {
-			int d;
-			scanf("%d\n", &d);
-			turn_right_gyro(motors, gyro, MAX_SPEED/16, d);
-			millisleep((d/90)*1000);
-		}
-		if (go == 'l') {
-			int d;
-			scanf("%d\n", &d);
-			turn_left_gyro(motors, gyro, MAX_SPEED/16, d);
-			millisleep((d/90)*1000);
-		}
-		if (go == 'o') {
-			printf("%d\n", front_obstacle(dist));
-		}
-		if (go == 'c') {
-			get_color(color, s);
-			printf("%s\n", s);
-		}
-		if (go == 'q') {
-			break;
-		}
-		go = getchar();
+printf("Insert number of turns: ");
+scanf("%d\n", &dddd);
+int cccc = 0;
+	while(cccc++ < dddd){
+		go_forwards_obs(motors, dist, 8, MAX_SPEED/4);
+		scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, 9, 180);
 
-		// set_gyro(gyro);
-    //
-		// scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, 9, 180);
-		// for(i=0;i<9;i++){
-		// 		printf("obastacle[%d]=%d\n", i, obstacles[i]);
-		// 		printf("angle[%d]=%d\n", i, angles[i]);
-		// }
-		// update_map(100, 100, 0, 9, obstacles, angles);
-	  //pthread_join(logger, NULL);
+		update_map(my_pos.x, my_pos.y, my_pos.dir, 9, obstacles, angles);
+
+		if(turn==0){
+			turn_left_gyro(motors, gyro, MAX_SPEED/16, 90);
+			turn=1;
+		} else {
+			turn_right_gyro(motors, gyro, MAX_SPEED/16, 90);
+			turn=0;
+		}
 	}
+	map_print(100, 20, 300, 200);
 
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
