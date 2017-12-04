@@ -15,6 +15,13 @@ typedef struct position {
 
 position my_pos = { .x = START_X, .y = START_Y, .dir = START_DIR };
 
+void picchio_greet() {
+	int c;
+	FILE *fp = fopen("greet.txt", "r");
+	while ((c = getc(fp)) != EOF)
+        putchar(c);
+    fclose(fp);
+}
 
 void update_direction(int deg) {  // TODO test
   int d = my_pos.dir + deg;

@@ -1,14 +1,15 @@
 
 #include <math.h>
 
-#define L 500
+#define L 120
+#define H 200
 #define SURE 0b01
 #define HIT 0b11
 #define MISS 0b10
 #define SURE_HIT 0b1111111111111101
 #define SURE_MISS 0b1010101010101001
 
-uint16_t mat[L][L] = {{0}};
+uint16_t mat[H][L] = {{0}};
 
 void update_map (int x, int y, int dir, int values, int *obstacles, int *angles) {
   int i;
@@ -18,8 +19,8 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
   float height_ob = 1;
   float * obstaclesF;
 
-  x+=L/2;
-  y+=20;
+  // x+=L/2;
+  // y+=20;
 
   printf("(x,y)=(%d,%d)\n", x, y);
   obstaclesF = (float *)malloc(sizeof(float)*values);
@@ -72,16 +73,21 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
     printf("coordinates: (%f, %f), (%f, %f), (%f, %f), (%f, %f)\n", ob_p1x, ob_p1y, ob_p2x, ob_p2y, ob_p3x, ob_p3y, ob_p4x, ob_p4y);
 
 
+    int boundDX = y+t>L-1?L-1:y+t;
+    int boundSX = y-t<0?0:y-t;
 
-    for (r = y+t; r > y-t; r--) {
-      for (c = x-t; c < x+t+1; c++) {
+    int boundUP = x+t+1>H-1?H-1:x+t+1;
+    int boundDW = x-t<0?0:x-t;
+
+    for (r = boundDX; r > boundSX; r--) {
+      for (c = boundDW; c < boundUP; c++) {
         if ( (p2y-p1y)*c - (p2x-p1x)*r + p2x*p1y - p2y*p1x <= 0 &&
              (p3y-p2y)*c - (p3x-p2x)*r + p3x*p2y - p3y*p2x <= 0 &&
              (p4y-p3y)*c - (p4x-p3x)*r + p4x*p3y - p4y*p3x <= 0 &&
              (p1y-p4y)*c - (p1x-p4x)*r + p1x*p4y - p1y*p4x <= 0 ) {
           if ((mat[r][c] & 0b11) != SURE) {
             mat[r][c] = (mat[r][c] << 2) + MISS; // o miss
-            //printf("0 ");
+            printf("0 ");
           }
         } else if (!(heightx==0 && heighty==0) &&(ob_p2y-ob_p1y)*c - (ob_p2x-ob_p1x)*r + ob_p2x*ob_p1y - ob_p2y*ob_p1x <= 0 &&
              (ob_p3y-ob_p2y)*c - (ob_p3x-ob_p2x)*r + ob_p3x*ob_p2y - ob_p3y*ob_p2x <= 0 &&
@@ -89,7 +95,7 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
              (ob_p1y-ob_p4y)*c - (ob_p1x-ob_p4x)*r + ob_p1x*ob_p4y - ob_p1y*ob_p4x <= 0 ) {
             if ((mat[r][c] & 0b11) != SURE) {
               mat[r][c] = (mat[r][c] << 2) + HIT;
-              //printf("1 ");
+              printf("1 ");
             }
        }  else {
           // fuori dal campo visivo, rimane unknown
@@ -159,7 +165,7 @@ void map_fix (int x, int y, int dir, int dist, int value) {
   float p4y = p1y + my;
   // printf("P4 (%f, %f)\n", p4x, p4y);
 
-  for (r = L; r > 0; r--) {
+  for (r = H; r > 0; r--) {
     for (c = 0; c < L; c++) {
       if ( (p2y-p1y)*c - (p2x-p1x)*r + p2x*p1y - p2y*p1x <= 0 &&
            (p3y-p2y)*c - (p3x-p2x)*r + p3x*p2y - p3y*p2x <= 0 &&
