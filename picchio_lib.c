@@ -50,9 +50,9 @@ float time_distance(float time, int speed){
 		d=-1;
 	}
 	d=(float) (speed*M_PI)/180*WHEEL_RADIUS;
-	printf("Speed: %f\n", d);
+	// printf("Speed: %f\n", d);
 	d=d*time;
-	printf("Distance: %f\n", d);
+	// printf("Distance: %f\n", d);
 	return d;
 
 }
@@ -465,7 +465,7 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	ftime(&t1);
 	// TODO valerio
 	time= t1.time - t0.time + ((float) t1.millitm-t0.millitm)/1000;
-	printf("Time: %f\n", time);
+	// printf("Time: %f\n", time);
 	x=time_distance(time, speed)*100;
 	update_position((int) x);
 }
@@ -493,7 +493,6 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 		  obstacles[i] = front_obstacle(dist);
 		  angles[i] = (int)((i)*anglef-(span/2));
 	  }
-		update_direction(90);
 	 }
 	 if (final_dir == -1) {
 		 for (i=(((pos-1)/2)+1);i<pos;i++) {
@@ -507,7 +506,6 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 			 obstacles[((pos-1)/2)-(i+1)] = front_obstacle(dist);
 			 angles[((pos-1)/2)-(i+1)] = (int)((i+1)*(-1)*anglef);
 		 }
-		 update_direction(-90);
 	 }
 	 if (final_dir == 0) {
 		 for (i=0;i<((pos-1)/2);i++) {

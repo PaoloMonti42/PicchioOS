@@ -39,10 +39,11 @@ int main( int argc, char **argv )
 	int span;
 	float val;
 	char go;
-	int turn=0;
+	int turn;
 
   if ( ev3_init() == -1 )
 	  return ( 1 );
+	picchio_greet();
 	printf( "*** ( PICCHIO ) Hello! ***\n" );
 
   pthread_create( &logger, NULL, position_logger, NULL );
@@ -56,26 +57,22 @@ int main( int argc, char **argv )
 		my_pos.y = atoi(argv[2]);
 	}
 
-int dddd;
+	int tttt;
+	int count;
 
-printf("Insert number of turns: ");
-scanf("%d\n", &dddd);
-int cccc = 0;
-	while(cccc++ < dddd){
+	printf("Insert number of turns: ");
+	scanf("%d", &tttt);
+	while(tttt-- > 0){
+		turn = choice_LR(my_pos.x, my_pos.y, my_pos.dir);
 		go_forwards_obs(motors, dist, 8, MAX_SPEED/4);
-		scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, 9, 180);
-
+		// map fix
+		scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, 9, 180, turn);
+		count = (count+turn+2)%4-2;
+		turn_to_angle(motors, gyro, MAX_SPEED/16, turn*90);
 		update_map(my_pos.x, my_pos.y, my_pos.dir, 9, obstacles, angles);
 
-		if(turn==0){
-			turn_left_gyro(motors, gyro, MAX_SPEED/16, 90);
-			turn=1;
-		} else {
-			turn_right_gyro(motors, gyro, MAX_SPEED/16, 90);
-			turn=0;
-		}
 	}
-	map_print(100, 20, 300, 200);
+	map_print(0, 0, 100, 100);
 
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );

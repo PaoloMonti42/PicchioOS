@@ -9,6 +9,15 @@
 #define SURE_HIT 0b1111111111111101
 #define SURE_MISS 0b1010101010101001
 
+#define LEFT -1
+#define RIGHT 1
+#define VERTICAL 0
+#define HORIZONTAL 1
+#define NORTH 0
+#define EAST 1
+#define SOUTH 2
+#define WEST 3
+
 uint16_t mat[H][L] = {{0}};
 
 void update_map (int x, int y, int dir, int values, int *obstacles, int *angles) {
@@ -41,19 +50,19 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
 
     float p1x = x - nx;
     float p1y = y - ny;
-     printf("P1 (%f, %f)\n", p1x, p1y);
+    // printf("P1 (%f, %f)\n", p1x, p1y);
 
     float p2x = x + nx;
     float p2y = y + ny;
-     printf("P2 (%f, %f)\n", p2x, p2y);
+    // printf("P2 (%f, %f)\n", p2x, p2y);
 
     float p3x = p2x + mx;
     float p3y = p2y + my;
-     printf("P3 (%f, %f)\n", p3x, p3y);
+    // printf("P3 (%f, %f)\n", p3x, p3y);
 
     float p4x = p1x + mx;
     float p4y = p1y + my;
-     printf("P4 (%f, %f)\n", p4x, p4y);
+    // printf("P4 (%f, %f)\n", p4x, p4y);
 
     float ob_p1x = p4x;
     float ob_p1y = p4y;
@@ -70,7 +79,7 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
     float ob_p4x = ob_p1x + heightx;
     float ob_p4y = ob_p1y + heighty;
 
-    printf("coordinates: (%f, %f), (%f, %f), (%f, %f), (%f, %f)\n", ob_p1x, ob_p1y, ob_p2x, ob_p2y, ob_p3x, ob_p3y, ob_p4x, ob_p4y);
+    // printf("coordinates: (%f, %f), (%f, %f), (%f, %f), (%f, %f)\n", ob_p1x, ob_p1y, ob_p2x, ob_p2y, ob_p3x, ob_p3y, ob_p4x, ob_p4y);
 
 
     int boundDX = y+t>L-1?L-1:y+t;
@@ -180,4 +189,86 @@ void map_fix (int x, int y, int dir, int dist, int value) {
       }
     }
   }
+}
+
+int empty_cnt(int y, int x){
+  int a=0, k;
+  if((mat[y][x] & 0b11)==0b01){
+    //printf("In y: %d and x: %d found: %d zeros.\n", y, x, a);
+		return 0;
+	}
+  for(k=0; k<7; k++){
+	   if(( (mat[y][x] >> 2*k) & 0b11)==0)
+		   a++;
+  }
+	//printf("In y: %d and x: %d found: %d zeros.\n", y, x, a);
+  return a;
+}
+
+
+int choice_LR(int x, int y, int dir){
+  int i,k,j;
+  uint16_t check1=0, check2=0;
+	int orientation, limit, direction;
+
+	if(dir <= 45 && dir > -45){
+		orientation=VERTICAL;
+		limit=H;
+		direction=NORTH;
+	}else if(dir <= 135 && dir > 45){
+		orientation=HORIZONTAL;
+		limit=L;
+		direction=EAST;
+	}else if(dir <= -135 || dir > 135){
+		orientation=VERTICAL;
+		limit=H;
+		direction=SOUTH;
+	}else{
+		orientation=HORIZONTAL;
+		limit=L;
+		direction=WEST;
+	}
+
+	//VERTICAL SPAN
+	if(orientation==VERTICAL){
+ 		for(i=0; i<limit; i++){
+  	  for(j=0; j<x; j++){
+				//printf("y: %d, x: %d.\n", i, j);
+	      check1+=empty_cnt(i,j);
+ 		  }
+		  for(j=x; j<L; j++){
+        //printf("y: %d, x: %d.\n", i, j);
+  			check2+=empty_cnt(i,j);
+      }
+    }
+	//HORIZONTAL SPAN
+	}else{
+		for(j=0; j<limit; j++){
+			// printf("check1:\n");
+      for(i=0; i<y; i++){
+        check1+=empty_cnt(i,j);
+      }
+			// printf("check2:\n");
+      for(i=y; i<H; i++){
+        check2+=empty_cnt(i,j);
+      }
+    }
+	}
+
+	printf("Check1: %d, check2: %d, direction: %d, orientation: %d.\n", check1, check2, direction, orientation);
+
+  if(check1>check2){
+		if(direction==NORTH || direction==WEST){
+			return LEFT;
+		}else if(direction==SOUTH || direction==EAST){
+			return RIGHT;
+		}
+  }else{
+    if(direction==NORTH || direction==WEST){
+			return RIGHT;
+		}else if(direction==SOUTH || direction==EAST){
+			return LEFT;
+		}
+  }
+  return 0;
 }
