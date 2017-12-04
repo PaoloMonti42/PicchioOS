@@ -38,7 +38,7 @@ float get_value_samples(uint8_t sn, int samples);
 float get_compass_value_samples(uint8_t compass, int samples);
 
 void update_position(int dist);
-
+ 
 void get_color_values(rgb *color_val, uint8_t color);
 
 void turn_right_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg);
@@ -57,7 +57,7 @@ int front_obstacle (uint8_t dist);
 
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed);
 
-void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span);
+void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span, int final_dir);
 
  void scan_for_obstacle_N_pos_head (uint8_t motors, uint8_t dist, int* obstacles, int* angles, int pos, int span);
 
