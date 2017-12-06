@@ -58,21 +58,24 @@ int main( int argc, char **argv )
 	}
 
 	int tttt;
-	int count;
+	int count = 0;
 
 	printf("Insert number of turns: ");
 	scanf("%d", &tttt);
 	while(tttt-- > 0){
-		turn = choice_LR(my_pos.x, my_pos.y, my_pos.dir);
 		go_forwards_obs(motors, dist, 8, MAX_SPEED/4);
 		// map fix
+		turn = choice_LR(my_pos.x, my_pos.y, my_pos.dir);
 		scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, 9, 180, turn);
-		count = (count+turn+2)%4-2;
-		turn_to_angle(motors, gyro, MAX_SPEED/16, turn*90);
-		update_map(my_pos.x, my_pos.y, my_pos.dir, 9, obstacles, angles);
-
+		count = count+turn;
+		if (count > 2) count = count - 4;
+		if (count < -2) count = count + 4;
+		printf("%d\n", my_pos.dir);
+		turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
+		printf("%d\n", my_pos.dir);
+		//update_map(my_pos.x, my_pos.y, my_pos.dir, 9, obstacles, angles);
 	}
-	map_print(0, 0, 100, 100);
+	map_print(0, 0, 120, 120);
 
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );

@@ -2,7 +2,7 @@
 #include <math.h>
 
 #define L 120
-#define H 200
+#define H 100
 #define SURE 0b01
 #define HIT 0b11
 #define MISS 0b10
@@ -96,7 +96,7 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
              (p1y-p4y)*c - (p1x-p4x)*r + p1x*p4y - p1y*p4x <= 0 ) {
           if ((mat[r][c] & 0b11) != SURE) {
             mat[r][c] = (mat[r][c] << 2) + MISS; // o miss
-            printf("0 ");
+            // printf("0 ");
           }
         } else if (!(heightx==0 && heighty==0) &&(ob_p2y-ob_p1y)*c - (ob_p2x-ob_p1x)*r + ob_p2x*ob_p1y - ob_p2y*ob_p1x <= 0 &&
              (ob_p3y-ob_p2y)*c - (ob_p3x-ob_p2x)*r + ob_p3x*ob_p2y - ob_p3y*ob_p2x <= 0 &&
@@ -104,16 +104,16 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
              (ob_p1y-ob_p4y)*c - (ob_p1x-ob_p4x)*r + ob_p1x*ob_p4y - ob_p1y*ob_p4x <= 0 ) {
             if ((mat[r][c] & 0b11) != SURE) {
               mat[r][c] = (mat[r][c] << 2) + HIT;
-              printf("1 ");
+              // printf("1 ");
             }
        }  else {
           // fuori dal campo visivo, rimane unknown
-          printf(". ");
+          // printf(". ");
         }
       }
-      printf("\n");
+      // printf("\n");
     }
-    printf("------------------------------------------------------\n");
+    // printf("------------------------------------------------------\n");
   }
 
 }
@@ -122,11 +122,11 @@ void map_print(int startX, int startY, int endX, int endY) {
   int r, c, i;
 
   FILE * fp = fopen("map.txt", "w+");
-  for (r = endX; r > startX; r--) {
+  for (r = endY; r >= startY; r--) {
     for (c = startX; c < endX; c++) {
       uint16_t tmp = mat[r][c];
-      for (i = 0; i < 8; i++) {
-        switch ((tmp >> (7-i)*2) & 0b11)  {
+      for (i = 7; i >= 0; i--) {
+        switch ((tmp >> i*2) & 0b11)  {
           case (0):
             fprintf(fp, "?");
             break;
@@ -197,8 +197,8 @@ int empty_cnt(int y, int x){
     //printf("In y: %d and x: %d found: %d zeros.\n", y, x, a);
 		return 0;
 	}
-  for(k=0; k<7; k++){
-	   if(( (mat[y][x] >> 2*k) & 0b11)==0)
+  for(k=0; k<8; k++){
+	   if(((mat[y][x] >> (2*k)) & 0b11)==0)
 		   a++;
   }
 	//printf("In y: %d and x: %d found: %d zeros.\n", y, x, a);
@@ -207,43 +207,39 @@ int empty_cnt(int y, int x){
 
 
 int choice_LR(int x, int y, int dir){
-  int i,k,j;
-  uint16_t check1=0, check2=0;
-	int orientation, limit, direction;
+  int i,j;
+  int check1=0, check2=0;
+	int orientation, direction;
 
 	if(dir <= 45 && dir > -45){
 		orientation=VERTICAL;
-		limit=H;
 		direction=NORTH;
 	}else if(dir <= 135 && dir > 45){
 		orientation=HORIZONTAL;
-		limit=L;
 		direction=EAST;
 	}else if(dir <= -135 || dir > 135){
 		orientation=VERTICAL;
-		limit=H;
 		direction=SOUTH;
 	}else{
 		orientation=HORIZONTAL;
-		limit=L;
 		direction=WEST;
 	}
 
 	//VERTICAL SPAN
 	if(orientation==VERTICAL){
- 		for(i=0; i<limit; i++){
+ 		for(i=0; i<H; i++){
   	  for(j=0; j<x; j++){
-				//printf("y: %d, x: %d.\n", i, j);
+				// printf("y: %d, x: %d.\n", i, j);
 	      check1+=empty_cnt(i,j);
  		  }
 		  for(j=x; j<L; j++){
-        //printf("y: %d, x: %d.\n", i, j);
+        // printf("y: %d, x: %d.\n", i, j);
   			check2+=empty_cnt(i,j);
       }
     }
 	//HORIZONTAL SPAN
 	}else{
-		for(j=0; j<limit; j++){
+		for(j=0; j<L; j++){
 			// printf("check1:\n");
       for(i=0; i<y; i++){
         check1+=empty_cnt(i,j);
@@ -255,7 +251,7 @@ int choice_LR(int x, int y, int dir){
     }
 	}
 
-	printf("Check1: %d, check2: %d, direction: %d, orientation: %d.\n", check1, check2, direction, orientation);
+	// printf("Check1: %d, check2: %d, direction: %d, orientation: %d.\n", check1, check2, direction, orientation);
 
   if(check1>check2){
 		if(direction==NORTH || direction==WEST){

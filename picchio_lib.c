@@ -24,6 +24,8 @@ void picchio_greet() {
 }
 
 void update_direction(int deg) {  // TODO test
+	// printf("dir: %d\n", my_pos.dir);
+	// printf("deg: %d\n", deg);
   int d = my_pos.dir + deg;
   if (d > 180) {
     my_pos.dir = ((d - 180) % 360) - 180;
@@ -32,7 +34,7 @@ void update_direction(int deg) {  // TODO test
   } else {
     my_pos.dir = d;
   }
-  //printf("Updated direction to %d!\n", my_pos.dir);
+  // printf("Updated direction to %d!\n", my_pos.dir);
 }
 
 float time_distance(float time, int speed){
@@ -273,6 +275,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
  	multi_set_tacho_ramp_down_sp( motors, 0 );
 
 	a = ((start_pos % 360) + 360) % 360;
+	printf("Deg: %10d SP: %10d a: %10d\n", deg, start_pos, a);
 	if (deg > a) {
 		if ((deg - a) < 180 ) {
 			// turn clockwise
@@ -285,6 +288,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos <= dest);
 		 	stop_motors(motors);
+			printf("Update of: %d\n", deg-a);
 			update_direction(deg-a);
 		}
 		else {
@@ -298,6 +302,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos >= dest);
 		 	stop_motors(motors);
+			printf("Update of: %d\n", deg-a);
 			update_direction(deg-a);
 		}
 	}
@@ -313,6 +318,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos >= dest);
 		 	stop_motors(motors);
+			printf("Update of: %d\n", deg-a);
 			update_direction(deg-a);
 		}
 		else {
@@ -326,6 +332,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	} while(cur_pos <= dest);
 		 	stop_motors(motors);
+			printf("Update of: %d\n", deg-a);
 			update_direction(deg-a);
 		}
 	}
