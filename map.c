@@ -3,6 +3,7 @@
 
 #define L 120
 #define H 100
+#define P 10
 #define SURE 0b01
 #define HIT 0b11
 #define MISS 0b10
@@ -18,7 +19,7 @@
 #define SOUTH 2
 #define WEST 3
 
-uint16_t mat[H][L] = {{0}};
+uint16_t mat[P+H+P][P+L+P] = {{0}};
 
 void update_map (int x, int y, int dir, int values, int *obstacles, int *angles) {
   int i;
@@ -122,7 +123,7 @@ void map_print(int startX, int startY, int endX, int endY) {
   int r, c, i;
 
   FILE * fp = fopen("map.txt", "w+");
-  for (r = endY; r >= startY; r--) {
+  for (r = endY-1; r >= startY; r--) {
     for (c = startX; c < endX; c++) {
       uint16_t tmp = mat[r][c];
       for (i = 7; i >= 0; i--) {
@@ -187,6 +188,16 @@ void map_fix (int x, int y, int dir, int dist, int value) {
          mat[r][c] = SURE_HIT;
        }
       }
+    }
+  }
+}
+
+void add_wall (int startX, int startY, int endX, int endY)
+{
+  int r, c;
+  for (r = endY-1; r >= startY; r--) {
+    for (c = startX; c < endX; c++) {
+      mat[r][c] = SURE_HIT;
     }
   }
 }

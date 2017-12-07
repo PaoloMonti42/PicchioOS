@@ -53,9 +53,14 @@ int main( int argc, char **argv )
 	motor_init( &motors[0], &motors[1], &motor_obs );
 
 	if (argc == 3) { // TODO test
-		my_pos.x = atoi(argv[1]);
-		my_pos.y = atoi(argv[2]);
+		my_pos.x = atoi(argv[1])+P;
+		my_pos.y = atoi(argv[2])+P;
 	}
+
+	add_wall(0, 0, P+L+P, P);							// bottom
+  add_wall(0, 0, P, P+H+P);							// left
+  add_wall(0, P+H, P+L+P, P+H+P);				// top
+  add_wall(P+L, 0, P+L+P, P+H+P);				// right
 
 	int tttt;
 	int count = 0;
@@ -73,9 +78,9 @@ int main( int argc, char **argv )
 		printf("%d\n", my_pos.dir);
 		turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 		printf("%d\n", my_pos.dir);
-		//update_map(my_pos.x, my_pos.y, my_pos.dir, 9, obstacles, angles);
+		update_map(my_pos.x, my_pos.y, my_pos.dir, 9, obstacles, angles);
 	}
-	map_print(0, 0, 120, 120);
+	map_print(0, 0, 120, 100);
 
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );

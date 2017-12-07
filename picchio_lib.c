@@ -13,7 +13,7 @@ typedef struct position {
 	int dir;
 } position;
 
-position my_pos = { .x = START_X, .y = START_Y, .dir = START_DIR };
+position my_pos = { .x = START_X+P, .y = START_Y+P, .dir = START_DIR };
 
 void picchio_greet() {
 	int c;
