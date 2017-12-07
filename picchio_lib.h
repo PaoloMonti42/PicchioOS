@@ -38,7 +38,7 @@ float get_value_samples(uint8_t sn, int samples);
 float get_compass_value_samples(uint8_t compass, int samples);
 
 void update_position(int dist);
- 
+
 void get_color_values(rgb *color_val, uint8_t color);
 
 void turn_right_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg);
@@ -68,3 +68,5 @@ void set_gyro(uint8_t gyro);
 void turn_motor_obs_to_pos_down(int motor, int speed, int height_ob);
 
 void turn_motor_obs_to_pos_up(int motor, int speed, int height_ob);
+
+void realease_obs_routine(int motor, uint8_t * motors, int speed, int height_ob_up, int height_ob_down); 

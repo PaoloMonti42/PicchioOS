@@ -202,6 +202,12 @@ void add_wall (int startX, int startY, int endX, int endY)
   }
 }
 
+void add_my_obstacle(int startX, int startY, int endX, int endY)
+{
+  //add_my_obstacle(my_pos.x-SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION-SIDEY_OBSTACLE, my_pos.x+SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION);
+  add_wall(startX, startY, endX, endY);
+}
+
 int empty_cnt(int y, int x){
   int a=0, k;
   if((mat[y][x] & 0b11)==0b01){
