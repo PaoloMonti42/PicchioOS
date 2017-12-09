@@ -1,7 +1,7 @@
 
 #include <math.h>
 
-#define L 120
+#define L 60
 #define H 100
 #define P 10
 #define SURE 0b01
@@ -192,12 +192,12 @@ void map_fix (int x, int y, int dir, int dist, int value) {
   }
 }
 
-void add_wall (int startX, int startY, int endX, int endY)
+void add_wall (int startX, int startY, int endX, int endY, int value)
 {
   int r, c;
   for (r = endY-1; r >= startY; r--) {
     for (c = startX; c < endX; c++) {
-      mat[r][c] = SURE_HIT;
+      mat[r][c] = value;
     }
   }
 }

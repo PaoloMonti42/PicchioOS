@@ -1,6 +1,6 @@
 #define MY_ID 1
-#define START_X 100
-#define START_Y 30
+#define START_X 50
+#define START_Y 10
 #define START_DIR 0
 
 #define COMP_SX 0.9925

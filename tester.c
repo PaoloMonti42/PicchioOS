@@ -8,8 +8,9 @@
 
 #include <pthread.h>
 #include <math.h>
-#include "picchio_lib.h"
 #include "map.h"
+#include "picchio_lib.h"
+
 
 
 int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist);
@@ -57,10 +58,12 @@ int main( int argc, char **argv )
 		my_pos.y = atoi(argv[2])+P;
 	}
 
-	add_wall(0, 0, P+L+P, P);							// bottom
-  add_wall(0, 0, P, P+H+P);							// left
-  add_wall(0, P+H, P+L+P, P+H+P);				// top
-  add_wall(P+L, 0, P+L+P, P+H+P);				// right
+	add_wall(0, 0, P+L+P, P, SURE_HIT);							// bottom
+  add_wall(0, 0, P, P+H+P, SURE_HIT);							// left
+  add_wall(0, P+H, P+L+P, P+H+P, SURE_HIT);				// top
+  add_wall(P+L, 0, P+L+P, P+H+P, SURE_HIT);				// right
+
+	add_wall(my_pos.x-2, my_pos.y-1, my_pos.x+2, my_pos.y+1, SURE_MISS);				// start pos
 
 	int tttt;
 	int count = 0;
@@ -68,19 +71,19 @@ int main( int argc, char **argv )
 	printf("Insert number of turns: ");
 	scanf("%d", &tttt);
 	while(tttt-- > 0){
-		go_forwards_obs(motors, dist, 8, MAX_SPEED/4);
+		go_forwards_obs(motors, dist, 8, MAX_SPEED/2);
 		// map fix
 		turn = choice_LR(my_pos.x, my_pos.y, my_pos.dir);
 		scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, 9, 180, turn);
 		count = count+turn;
 		if (count > 2) count = count - 4;
 		if (count < -2) count = count + 4;
-		printf("%d\n", my_pos.dir);
+
 		turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
-		printf("%d\n", my_pos.dir);
+		printf("%d, %d\n", my_pos.x, my_pos.y);
 		update_map(my_pos.x, my_pos.y, my_pos.dir, 9, obstacles, angles);
 	}
-	map_print(0, 0, 120, 100);
+	map_print(0, 0, P+L+P, P+H+P);
 
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
