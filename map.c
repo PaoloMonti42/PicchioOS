@@ -9,6 +9,7 @@
 #define MISS 0b10
 #define SURE_HIT 0b1111111111111101
 #define SURE_MISS 0b1010101010101001
+#define DIST_THRESHOLD 150
 
 #define LEFT -1
 #define RIGHT 1
@@ -25,14 +26,14 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
   int i;
   int r, c;
   int w = 4;
-  int t = 13;
+  int t = DIST_THRESHOLD/10;
   float height_ob = 1;
   float * obstaclesF;
 
   // x+=L/2;
   // y+=20;
 
-  printf("(x,y)=(%d,%d)\n", x, y);
+  // printf("(x,y)=(%d,%d)\n", x, y);
   obstaclesF = (float *)malloc(sizeof(float)*values);
 
   for(i=0;i<values;i++){
@@ -83,20 +84,22 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
     // printf("coordinates: (%f, %f), (%f, %f), (%f, %f), (%f, %f)\n", ob_p1x, ob_p1y, ob_p2x, ob_p2y, ob_p3x, ob_p3y, ob_p4x, ob_p4y);
 
 
-    int boundDX = y+t>L-1?L-1:y+t;
-    int boundSX = y-t<0?0:y-t;
+    int boundDX = x+t>P+L-1?P+L-1:x+t;
+    int boundSX = x-t<P?P:x-t;
 
-    int boundUP = x+t+1>H-1?H-1:x+t+1;
-    int boundDW = x-t<0?0:x-t;
+    int boundUP = y+t+1>P+H-1?P+H-1:y+t+1;
+    int boundDW = y-t<P?P:y-t;
 
-    for (r = boundDX; r > boundSX; r--) {
-      for (c = boundDW; c < boundUP; c++) {
+    // printf("dx: %d, sx: %d, up: %d, dw: %d\n",boundDX, boundSX, boundUP, boundDW);
+
+    for (r = boundUP; r > boundDW; r--) {
+      for (c = boundSX; c < boundDX; c++) {
         if ( (p2y-p1y)*c - (p2x-p1x)*r + p2x*p1y - p2y*p1x <= 0 &&
              (p3y-p2y)*c - (p3x-p2x)*r + p3x*p2y - p3y*p2x <= 0 &&
              (p4y-p3y)*c - (p4x-p3x)*r + p4x*p3y - p4y*p3x <= 0 &&
              (p1y-p4y)*c - (p1x-p4x)*r + p1x*p4y - p1y*p4x <= 0 ) {
           if ((mat[r][c] & 0b11) != SURE) {
-            mat[r][c] = (mat[r][c] << 2) + MISS; // o miss
+            mat[r][c] = (mat[r][c] << 2) + MISS;
             // printf("0 ");
           }
         } else if (!(heightx==0 && heighty==0) &&(ob_p2y-ob_p1y)*c - (ob_p2x-ob_p1x)*r + ob_p2x*ob_p1y - ob_p2y*ob_p1x <= 0 &&
@@ -151,7 +154,7 @@ void map_print(int startX, int startY, int endX, int endY) {
 
 void map_fix (int x, int y, int dir, int dist, int value) {
   int r, c;
-  int w = 4;
+  int w = 17;
 
   float mx = dist * sin((dir * M_PI) / 180.0);
   float my = dist * cos((dir * M_PI) / 180.0);
@@ -175,17 +178,14 @@ void map_fix (int x, int y, int dir, int dist, int value) {
   float p4y = p1y + my;
   // printf("P4 (%f, %f)\n", p4x, p4y);
 
-  for (r = H; r > 0; r--) {
-    for (c = 0; c < L; c++) {
+  for (r = P+H+P; r > 0; r--) {
+    for (c = 0; c < P+L+P; c++) {
       if ( (p2y-p1y)*c - (p2x-p1x)*r + p2x*p1y - p2y*p1x <= 0 &&
            (p3y-p2y)*c - (p3x-p2x)*r + p3x*p2y - p3y*p2x <= 0 &&
            (p4y-p3y)*c - (p4x-p3x)*r + p4x*p3y - p4y*p3x <= 0 &&
            (p1y-p4y)*c - (p1x-p4x)*r + p1x*p4y - p1y*p4x <= 0 ) {
-       if (value == MISS) {
-         mat[r][c] = SURE_MISS;
-       }
-       else if (value == HIT) {
-         mat[r][c] = SURE_HIT;
+       if ((mat[r][c] & 0b11) != SURE) {
+         mat[r][c] = value;
        }
       }
     }

@@ -479,6 +479,7 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	time= t1.time - t0.time + ((float) t1.millitm-t0.millitm)/1000;
 	// printf("Time: %f\n", time);
 	x=time_distance(time, speed)*100;
+	map_fix(my_pos.x, my_pos.y, my_pos.dir, x, SURE_MISS);
 	update_position((int) x);
 }
 
@@ -499,7 +500,8 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 		  obstacles[((pos-1)/2)-(i+1)] = front_obstacle(dist);
 		  angles[((pos-1)/2)-(i+1)] = (int)((i+1)*(-1)*anglef);
 	  }
-	  turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
+		turn_right_gyro(motors, gyro, MAX_SPEED/16, span/2);
+	  //turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
 	  for (i=(((pos-1)/2)+1);i<pos;i++) {
 		  turn_right_gyro (motors, gyro, MAX_SPEED/16, angle);
 		  obstacles[i] = front_obstacle(dist);
@@ -513,7 +515,8 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 			 angles[i] = (int)((i)*anglef-(span/2));
 		 }
 		 // printf("%d\n", dir);
-		 turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
+		 turn_left_gyro(motors, gyro, MAX_SPEED/16, span/2);
+		 //turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
 		 for (i=0;i<((pos-1)/2);i++) {
 			 turn_left_gyro (motors, gyro, MAX_SPEED/16, angle); // TODO see if breaks update_direction
 			 obstacles[((pos-1)/2)-(i+1)] = front_obstacle(dist);
@@ -526,7 +529,8 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 			 obstacles[((pos-1)/2)-(i+1)] = front_obstacle(dist);
 			 angles[((pos-1)/2)-(i+1)] = (int)((i+1)*(-1)*anglef);
 		 }
-		 turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
+		 turn_right_gyro(motors, gyro, MAX_SPEED/16, span/2);
+		 //turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
 		 for (i=(((pos-1)/2)+1);i<pos;i++) {
 			 turn_right_gyro (motors, gyro, MAX_SPEED/16, angle);
 			 obstacles[i] = front_obstacle(dist);

@@ -20,9 +20,6 @@
 
 #define TURN360 810
 
-#define DIST_THRESHOLD 150
-
-
 #define EV3_FREQ 697971
 #define WHEEL_RADIUS 0.0275
 #define CORR_DIV2 522
