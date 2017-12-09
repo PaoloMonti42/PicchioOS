@@ -567,7 +567,7 @@ void turn_motor_obs_to_pos_down(int motor, int speed, int height_ob){
  	set_tacho_ramp_up_sp( motor, 0 );
  	set_tacho_ramp_down_sp( motor, 0 );
 	if(height_ob<3.5 && height_ob!=0) {
-		pos = 120 - (acos(0.5 - (float)height_ob/ARM_LENGTH)*180/M_PI-60);
+		pos = 180 - ((acos(0.5 - (float)height_ob/ARM_LENGTH)*180/M_PI)-60);
 		printf("pos = %f\n", pos);
 	} else if(height_ob>=3.5 || height_ob==0){
 	  pos = 60;
@@ -583,7 +583,20 @@ void turn_motor_obs_to_pos_down(int motor, int speed, int height_ob){
   	set_tacho_ramp_down_sp( motor, 0 );
  	float pos;
  		pos=-atan((float)height_ob/3.5)*180/M_PI;
- 		printf("pos = %f\n", pos);
+ 		//printf("pos = %f\n", pos);
   	set_tacho_position_sp( motor, pos );
   	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
   }
+
+void realease_obs_routine(int motor, uint8_t * motors, int speed, int height_ob_up, int height_ob_down)
+{
+	turn_motor_obs_to_pos_down(motor, speed, height_ob_down);
+	wait_motor_stop(motor);
+	add_my_obstacle(my_pos.x-SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION-SIDEY_OBSTACLE, my_pos.x+SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION);
+	go_forwards_cm(motors, 10, speed);
+	wait_motor_stop(motors[0]);
+	wait_motor_stop(motors[1]);
+	turn_motor_obs_to_pos_up(motor, speed, height_ob_up);
+	wait_motor_stop(motor);
+ 
+}

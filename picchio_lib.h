@@ -68,3 +68,5 @@ void set_gyro(uint8_t gyro);
 void turn_motor_obs_to_pos_down(int motor, int speed, int height_ob);
 
 void turn_motor_obs_to_pos_up(int motor, int speed, int height_ob);
+
+void realease_obs_routine(int motor, uint8_t * motors, int speed, int height_ob_up, int height_ob_down); 
