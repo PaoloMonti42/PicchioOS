@@ -561,7 +561,7 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
  }
 
 void turn_motor_obs_to_pos_down(int motor, int speed, int height_ob){
-	float pos;
+	float pos = 0;
 	set_tacho_stop_action_inx( motor, STOP_ACTION );
  	set_tacho_speed_sp( motor, speed *  MOT_DIR );
  	set_tacho_ramp_up_sp( motor, 0 );
@@ -598,5 +598,5 @@ void realease_obs_routine(int motor, uint8_t * motors, int speed, int height_ob_
 	wait_motor_stop(motors[1]);
 	turn_motor_obs_to_pos_up(motor, speed, height_ob_up);
 	wait_motor_stop(motor);
- 
+
 }
