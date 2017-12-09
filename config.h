@@ -22,6 +22,7 @@
 
 #define EV3_FREQ 697971
 #define WHEEL_RADIUS 0.0275
+#define POS_UPDATE_TIMEOUT 1500
 #define CORR_DIV2 522
 #define CORR_DIV4 274
 #define CORR_DIV8 154
