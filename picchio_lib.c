@@ -137,6 +137,7 @@ void go_forwards_cm(uint8_t *motors, int cm, int speed) {
 	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
+	map_fix(my_pos.x, my_pos.y, my_pos.dir, cm, SURE_MISS);
 	update_position(cm);
 }
 
@@ -460,32 +461,38 @@ int front_obstacle(uint8_t dist) {
 }
 
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
-	float d=0, x, time;
-	struct timeb t0, t1, t2;
-	while(d == 0 || d > cm*10){
-		multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
-		set_tacho_speed_sp( motors[0], MOT_DIR * speed * COMP_SX);
-		set_tacho_speed_sp( motors[1], MOT_DIR * speed * COMP_DX);
-		multi_set_tacho_ramp_up_sp( motors, 0 );
-		multi_set_tacho_ramp_down_sp( motors, 0 );
-		multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
-		ftime(&t0);
-		do {
-			ftime(&t2);
-			d = front_obstacle(dist);
-			time=(t2.time-t0.time)*1000+t2.millitm-t0.millitm;
-			printf("%f\n", time);
-		} while ( (d == 0 || d > cm*10) && time<POS_UPDATE_TIMEOUT);
-		stop_motors(motors);
-		ftime(&t1);
-		time= t1.time - t0.time + ((float) t1.millitm-t0.millitm)/1000;
-		// printf("Time: %f\n", time);
-		x=time_distance(time, speed)*100;
-		map_fix(my_pos.x, my_pos.y, my_pos.dir, x, SURE_MISS);
-		update_position((int) x);
-	}
+        float d, x, time;
+        struct timeb t0, t1;
+        int count=0;
+        multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
+        set_tacho_speed_sp( motors[0], MOT_DIR * speed * COMP_SX);
+        set_tacho_speed_sp( motors[1], MOT_DIR * speed * COMP_DX);
+        multi_set_tacho_ramp_up_sp( motors, 0 );
+        multi_set_tacho_ramp_down_sp( motors, 0 );
+        multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
+        ftime(&t0);
+        do {
+                d = front_obstacle(dist);
+                if(count == 10 && (d==0 || d>cm*10)){
+                        ftime(&t1);
+                        time=(t1.time-t0.time)+(t1.millitm-t0.millitm)/1000.0;
+                        ftime(&t0);
+                        x=time_distance(time, speed)*100;
+                        map_fix(my_pos.x, my_pos.y, my_pos.dir, x, SURE_MISS);
+                        update_position((int) x);
+                        count=0;
+                }
+                //printf("%f\n", time);
+                count++;
+        } while ( d == 0 || d > cm*10 );
+        stop_motors(motors);
+        ftime(&t1);
+        time= t1.time - t0.time + ((float) t1.millitm-t0.millitm)/1000;
+        // printf("Time: %f\n", time);
+        x=time_distance(time, speed)*100;
+        map_fix(my_pos.x, my_pos.y, my_pos.dir, x, SURE_MISS);
+        update_position((int) x);
 }
-
 
  void scan_for_obstacle_N_pos(uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span, int final_dir) {
 	 int dir;
@@ -567,14 +574,14 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	 wait_motor_stop(motors);
  }
 
-void turn_motor_obs_to_pos_down(int motor, int speed, int height_ob){
+void turn_motor_obs_to_pos_down(int motor, int speed, float height_ob){
 	float pos = 0;
 	set_tacho_stop_action_inx( motor, STOP_ACTION );
  	set_tacho_speed_sp( motor, speed *  MOT_DIR );
  	set_tacho_ramp_up_sp( motor, 0 );
  	set_tacho_ramp_down_sp( motor, 0 );
 	if(height_ob<3.5 && height_ob!=0) {
-		pos = 180 - ((acos(0.5 - (float)height_ob/ARM_LENGTH)*180/M_PI)-60);
+		pos = 120 - ((acos(0.5 - height_ob/ARM_LENGTH)*180/M_PI)-60);
 		printf("pos = %f\n", pos);
 	} else if(height_ob>=3.5 || height_ob==0){
 	  pos = 60;
@@ -583,20 +590,21 @@ void turn_motor_obs_to_pos_down(int motor, int speed, int height_ob){
  	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
  }
 
- void turn_motor_obs_to_pos_up(int motor, int speed, int height_ob){
+ void turn_motor_obs_to_pos_up(int motor, int speed, float height_ob){
  	  set_tacho_stop_action_inx( motor, STOP_ACTION );
   	set_tacho_speed_sp( motor, speed *  MOT_DIR );
   	set_tacho_ramp_up_sp( motor, 0 );
   	set_tacho_ramp_down_sp( motor, 0 );
  	float pos;
- 		pos=-atan((float)height_ob/3.5)*180/M_PI;
+ 		pos=-atan(height_ob/3.5)*180/M_PI;
  		//printf("pos = %f\n", pos);
   	set_tacho_position_sp( motor, pos );
   	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
   }
 
-void realease_obs_routine(int motor, uint8_t * motors, int speed, int height_ob_up, int height_ob_down)
+void realease_obs_routine(int motor, uint8_t * motors, int speed, float height_ob_up, float height_ob_down)
 {
+  printf("im here...\n");
 	turn_motor_obs_to_pos_down(motor, speed, height_ob_down);
 	wait_motor_stop(motor);
 	add_my_obstacle(my_pos.x-SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION-SIDEY_OBSTACLE, my_pos.x+SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION);
