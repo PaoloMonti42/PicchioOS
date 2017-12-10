@@ -26,6 +26,7 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
   int i;
   int r, c;
   int w = 4;
+  int f = 5;
   int t = DIST_THRESHOLD/10;
   float height_ob = 1;
   float * obstaclesF;
@@ -41,6 +42,8 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
   }
 
   for (i = 0; i < values; i++) {
+    float fx = x + f * sin((angles[i] * M_PI) / 180.0);
+    float fy = y + f * cos((angles[i] * M_PI) / 180.0);
 
     float mx = (obstacles[i] == 0 ? t : obstaclesF[i]) * sin((angles[i] * M_PI) / 180.0);
     float my = (obstacles[i] == 0 ? t : obstaclesF[i]) * cos((angles[i] * M_PI) / 180.0);
@@ -50,12 +53,12 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
     float nx = w/2 * sin(((angles[i]+90) * M_PI) / 180.0);
     float ny = w/2 * cos(((angles[i]+90) * M_PI) / 180.0);
 
-    float p1x = x - nx;
-    float p1y = y - ny;
+    float p1x = fx - nx;
+    float p1y = fy - ny;
     // printf("P1 (%f, %f)\n", p1x, p1y);
 
-    float p2x = x + nx;
-    float p2y = y + ny;
+    float p2x = fx + nx;
+    float p2y = fy + ny;
     // printf("P2 (%f, %f)\n", p2x, p2y);
 
     float p3x = p2x + mx;
@@ -84,11 +87,11 @@ void update_map (int x, int y, int dir, int values, int *obstacles, int *angles)
     // printf("coordinates: (%f, %f), (%f, %f), (%f, %f), (%f, %f)\n", ob_p1x, ob_p1y, ob_p2x, ob_p2y, ob_p3x, ob_p3y, ob_p4x, ob_p4y);
 
 
-    int boundDX = x+t>P+L-1?P+L-1:x+t;
-    int boundSX = x-t<P?P:x-t;
+    int boundDX = fx+t>P+L-1?P+L-1:fx+t;
+    int boundSX = fx-t<P?P:fx-t;
 
-    int boundUP = y+t+1>P+H-1?P+H-1:y+t+1;
-    int boundDW = y-t<P?P:y-t;
+    int boundUP = fy+t+1>P+H-1?P+H-1:fy+t+1;
+    int boundDW = fy-t<P?P:fy-t;
 
     // printf("dx: %d, sx: %d, up: %d, dw: %d\n",boundDX, boundSX, boundUP, boundDW);
 
