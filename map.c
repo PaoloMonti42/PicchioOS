@@ -2,8 +2,8 @@
 #include <math.h>
 #include <stdint.h>
 
-#define L 60
-#define H 100
+#define L 120
+#define H 200
 #define P 10
 #define SURE 0b01
 #define HIT 0b11
@@ -25,7 +25,7 @@
 
 uint16_t mat[P+H+P][P+L+P] = {{0}};
 
-void update_map (int x, int y, int dir, int values, int *obstacles, int *angles) {
+void update_map (int x, int y, float dir, int values, int *obstacles, int *angles) {
   int i;
   int r, c;
   int w = 4;
@@ -159,6 +159,7 @@ void map_print(int startX, int startY, int endX, int endY) {
 }
 
 void map_fix (int x, int y, int dir, int dist, int value) {
+  //printf("%d %d %d %d %d\n", x, y, dir, dist, value);
   int r, c;
   int w = 17;
 
@@ -190,9 +191,9 @@ void map_fix (int x, int y, int dir, int dist, int value) {
            (p3y-p2y)*c - (p3x-p2x)*r + p3x*p2y - p3y*p2x <= 0 &&
            (p4y-p3y)*c - (p4x-p3x)*r + p4x*p3y - p4y*p3x <= 0 &&
            (p1y-p4y)*c - (p1x-p4x)*r + p1x*p4y - p1y*p4x <= 0 ) {
-       if ((mat[r][c] & 0b11) != SURE) {
+        if ((mat[r][c] & 0b11) != SURE || value == SURE_HIT) {
          mat[r][c] = value;
-       }
+        }
       }
     }
   }

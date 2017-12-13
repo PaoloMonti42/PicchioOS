@@ -1,9 +1,9 @@
 #define MY_ID 1
-#define START_X 50
-#define START_Y 10
+#define START_X 90
+#define START_Y 20
 #define START_DIR 0
 
-#define COMP_SX 0.9925
+#define COMP_SX 0.9975
 #define COMP_DX 1.0000
 
 #define MOT_DIR -1

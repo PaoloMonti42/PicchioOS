@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <time.h>
 #include "ev3.h"
 #include "ev3_port.h"
 #include "ev3_tacho.h"
@@ -10,27 +11,36 @@
 #include <math.h>
 #include "map.h"
 #include "picchio_lib.h"
+// #include "bt.h"
 
 
 
 int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist);
 int motor_init(uint8_t *motor0, uint8_t *motor1, uint8_t *motor_obs);
 void *position_logger(void *arg);
+void *bt_client(void *arg);
+void *direction_updater(void *arg);
+void *position_updater(void *arg);
 
+uint8_t motors[2];
+uint8_t gyro;
 
 int main( int argc, char **argv )
 {
 	int i;
 	char s[256];
-	uint8_t motors[2];
+	//TODO
 	uint8_t motor_obs;
 	uint8_t touch;
 	uint8_t color;
 	uint8_t compass;
-	uint8_t gyro;
+	//TODO
 	uint8_t dist;
 	rgb color_val;
-  pthread_t logger;
+	pthread_t logger;
+  pthread_t client;
+	pthread_t direction;
+  pthread_t position;
 
 	char command;
 	int	obstacles[180];
@@ -41,47 +51,85 @@ int main( int argc, char **argv )
 	float val;
 	char go;
 	int turn;
+	srand(time(NULL));
 
   if ( ev3_init() == -1 )
 	  return ( 1 );
 	picchio_greet();
 	printf( "*** ( PICCHIO ) Hello! ***\n" );
 
+	if (argc == 3) {
+		my_pos.x = atoi(argv[1])+P;
+		my_pos.y = atoi(argv[2])+P;
+	} else {
+		my_pos.x = START_X+P;
+		my_pos.y = START_Y+P;
+		my_pos.dir = START_DIR;
+	}
+
   pthread_create( &logger, NULL, position_logger, NULL );
+	// pthread_create( &client, NULL, bt_client, NULL );
+	pthread_create( &logger, NULL, direction_updater, NULL );
+	pthread_create( &logger, NULL, position_updater, NULL );
 
   sensor_init( &touch, &color, &compass, &gyro, &dist );
 
 	motor_init( &motors[0], &motors[1], &motor_obs );
 
-	if (argc == 3) { // TODO test
-		my_pos.x = atoi(argv[1])+P;
-		my_pos.y = atoi(argv[2])+P;
-	}
 
 	add_wall(0, 0, P+L+P, P, SURE_HIT);							// bottom
   add_wall(0, 0, P, P+H+P, SURE_HIT);							// left
   add_wall(0, P+H, P+L+P, P+H+P, SURE_HIT);				// top
   add_wall(P+L, 0, P+L+P, P+H+P, SURE_HIT);				// right
 
-	int tttt;
-	int count = 0;
+	int turns, d;
+	int count = 0, flag = 0;
+	float prevX, prevY, newX, newY;
 
 	printf("Insert number of turns: ");
-	scanf("%d", &tttt);
-	while(tttt-- > 0){
-		go_forwards_obs(motors, dist, 8, MAX_SPEED/2);
-		turn = choice_LR(my_pos.x, my_pos.y, my_pos.dir);
-		scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, 9, 180, turn);
-		count = count+turn;
-		if (count > 2) count = count - 4;
-		if (count < -2) count = count + 4;
+	scanf("%d", &turns);
+	for (i = 0; i < turns; i++) {
 
-		turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
-		printf("%d, %d\n", my_pos.x, my_pos.y);
-		update_map(my_pos.x, my_pos.y, my_pos.dir, 9, obstacles, angles);
+		if (i > 3 && rand()%10 >= 5 && flag >= 1) {
+			count = count+turn;
+			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
+
+			d = d/2;
+			go_forwards_cm(motors, d, MAX_SPEED/2);
+			map_fix(prevX, prevY, d, my_pos.dir, SURE_MISS);
+
+			wait_motor_stop(motors[0]);
+			wait_motor_stop(motors[1]);
+
+			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
+			count = count+turn;
+			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
+
+			flag = 0; //se lascio il commento, non può fare due "movimenti in mezzo" di fila
+			//farei che non li poò fare, ma ha un'altra probabilità di farli =~ 80%
+
+		} else {
+			prevX = my_pos.x; prevY = my_pos.y;
+			go_forwards_obs(motors, dist, 8, MAX_SPEED/2); //TODO check con color = rosso?
+			newX = my_pos.x; newY = my_pos.y;
+			d = (int)point_distance(prevX, prevY, newX, newY);
+			map_fix(prevX, prevY, my_pos.dir, d, SURE_MISS);
+
+			// printf("Distance ran: %d\n", d);
+
+			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
+			count = count+turn;
+
+			scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, 9, 180, turn);
+			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
+
+			update_map((int)my_pos.x, (int)my_pos.y, my_pos.dir, 9, obstacles, angles);
+
+			flag++;
+		}
 	}
 	map_print(0, 0, P+L+P, P+H+P);
-	map_average();
+	map_average(); //TODO fix
 
 
 
@@ -171,15 +219,74 @@ int motor_init(uint8_t *motor0, uint8_t* motor1, uint8_t* motor_obs) {
 	return all_ok;
 }
 
+void *direction_updater(void *arg)
+{
+	int samples = 5;
+	int d;
+	for ( ; ; ) {
+	  d = (int)get_value_samples(gyro, samples);
+		d = (( d % 360 ) + 360 ) % 360;
+		if (d > 180) {
+			d = d - 360;
+		}
+		my_pos.dir = d;
+		millisleep(10);
+  }
+	return NULL;
+}
+
+void *position_updater(void *arg)
+{
+	int sp0, sp1;
+	float dx = 0, dir, speed, dt;
+	struct timeb t0, t1;
+	ftime(&t0); ftime(&t1);
+	for ( ; ; ) {
+	  get_tacho_speed(motors[0], &sp0);
+		get_tacho_speed(motors[1], &sp1);
+		sp0 = sp0 * MOT_DIR;
+		sp1 = sp1 * MOT_DIR;
+		ftime(&t1);
+		if ((sp0 > 0 && sp1 > 0) || (sp0 < 0 && sp1 < 0)) {
+			float speed = (sp0 + sp1) / 2.0;
+			dt = (t1.time-t0.time)*1000+(t1.millitm-t0.millitm);
+			dx = (speed*M_PI)/180*WHEEL_RADIUS*0.1*dt;
+			dir = my_pos.dir;
+			my_pos.x += dx * sin((dir * M_PI) / 180.0);
+			my_pos.y += dx * cos((dir * M_PI) / 180.0);
+		}
+		t0 = t1;
+		millisleep(10);
+  }
+	return NULL;
+}
+
 void *position_logger(void *arg)
 {
 	FILE* fp = fopen("log.txt", "w+");
 	int i;
 	for ( ; ; ) {
-	  fprintf( fp, "ID = %d    x = %+.4d    y = %+.4d    dir = %.3d\n", MY_ID, my_pos.x, my_pos.y, my_pos.dir );
+	  fprintf( fp, "ID = %d    x = %+.4f    y = %+.4f    dir = %.3f\n", MY_ID, my_pos.x, my_pos.y, my_pos.dir );
+		//printf("log!\n");
 		millisleep(100);
   }
 	fprintf( stdout, "Finished logging!\n" );
 	fclose( fp );
 	return NULL;
 }
+
+// void *bt_client(void *arg)
+// {
+// 	printf("Bluetooth client starting up...\n");
+//   sleep(2);
+// 	while (bt_init() != 0);
+// 	printf("Successful server connection!\n");
+// 	sleep(5);
+// 	robot();
+// 	for ( ; ; ) {
+// 	  send_pos();
+// 		millisleep(1900);
+//   }
+// 	printf("Client returning...\n");
+// 	return NULL;
+// }
