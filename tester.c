@@ -130,25 +130,36 @@ int main( int argc, char **argv )
 	}
 	map_print(0, 0, P+L+P, P+H+P);
 	map_average(); //TODO fix
+/*
+
+/*
 
 
+while(1){
+	 	go=getchar();
+/*
+		if(go=='g'){
+			turn_left_gyro(motors, gyro, MAX_SPEED/16, 360);
 
+		} else {
+			turn_right_gyro(motors, gyro, MAX_SPEED/16, 360);
+		}
+	 if(go=='u'){
+	 	turn_motor_obs_to_pos_up(motor_obs, MAX_SPEED/16, 0);
+	 	wait_motor_stop(motor_obs);
+	 }
+	 else if (go=='d'){
+	 	turn_motor_obs_to_pos_down(motor_obs, MAX_SPEED/16, 3);
+	 	wait_motor_stop(motor_obs);
+	 } else if (go=='r'){
+	 	realease_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 3.4);
+	 }
+ }
 
-	// 	go=getchar();
-	// if(go=='u'){
-	// 	turn_motor_obs_to_pos_up(motor_obs, MAX_SPEED/16, 0);
-	// 	wait_motor_stop(motor_obs);
-	// }
-	// else if (go=='d'){
-	// 	turn_motor_obs_to_pos_down(motor_obs, MAX_SPEED/16, 3);
-	// 	wait_motor_stop(motor_obs);
-	// } else if (go=='r'){
-	// 	realease_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 3.4);
-	// }
-	//
-	// 	add_my_obstacle(my_pos.x-SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION-SIDEY_OBSTACLE, my_pos.x+SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION);
-	// 	map_print(0, 0, P+L+P, P+H+P);
-	// 	map_average();
+	 	add_my_obstacle(my_pos.x-SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION-SIDEY_OBSTACLE, my_pos.x+SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION);
+	*/
+	 //	map_print(0, 0, P+L+P, P+H+P);
+	 //	map_average();
 
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );

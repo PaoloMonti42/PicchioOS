@@ -6,9 +6,9 @@
 #define COMP_SX 0.9975
 #define COMP_DX 1.0000
 
-#define MOT_DIR -1
-#define MOT_SX 68
-#define MOT_DX 65
+#define MOT_DIR 1
+#define MOT_SX 66
+#define MOT_DX 68
 #define MOT_OBS 67
 #define MAX_SPEED 1050
 #define STOP_ACTION TACHO_BRAKE  // TODO decide how to deal with it
