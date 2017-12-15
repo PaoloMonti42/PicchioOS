@@ -34,6 +34,9 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
   float height_ob = 3;
   float * obstaclesF;
 
+  float fx = x + f * sin((angles[values/2] * M_PI) / 180.0);
+  float fy = y + f * cos((angles[values/2] * M_PI) / 180.0);
+
   // x+=L/2;
   // y+=20;
 
@@ -45,8 +48,9 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
   }
 
   for (i = 0; i < values; i++) {
-    float fx = x + f * sin((angles[i] * M_PI) / 180.0);
-    float fy = y + f * cos((angles[i] * M_PI) / 180.0);
+    if (obstacles[i] == -1) {
+      continue;
+    }
 
     float mx = (obstacles[i] == 0 ? t : obstaclesF[i]) * sin((angles[i] * M_PI) / 180.0);
     float my = (obstacles[i] == 0 ? t : obstaclesF[i]) * cos((angles[i] * M_PI) / 180.0);
@@ -158,10 +162,9 @@ void map_print(int startX, int startY, int endX, int endY) {
   fclose(fp);
 }
 
-void map_fix (int x, int y, int dir, int dist, int value) {
+void map_fix (int x, int y, int dir, int dist, int w, int value) {
   //printf("%d %d %d %d %d\n", x, y, dir, dist, value);
   int r, c;
-  int w = 17;
 
   float mx = dist * sin((dir * M_PI) / 180.0);
   float my = dist * cos((dir * M_PI) / 180.0);
@@ -326,7 +329,7 @@ void map_average(){
                   //printf("FULL HERE\n");
                 } else if((((mat[row_int][col_int] >> (2*k)) & 0b11))==MISS){
                   //average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]-=1;
-                  flag=1;
+                  //flag=1;
                 }
               }
             }

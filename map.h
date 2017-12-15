@@ -4,7 +4,7 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
 
 void map_print(int startX, int startY, int endX, int endY);
 
-void map_fix (int x, int y, int dir, int dist, int value);
+void map_fix (int x, int y, int dir, int dist, int w, int value);
 
 int empty_cnt(int y, int x);
 

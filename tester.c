@@ -16,7 +16,7 @@
 
 
 int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist);
-int motor_init(uint8_t *motor0, uint8_t *motor1, uint8_t *motor_obs);
+int motor_init(uint8_t *motor0, uint8_t *motor1, uint8_t *motor_obs, uint8_t *motor_head);
 void *position_logger(void *arg);
 void *bt_client(void *arg);
 void *direction_updater(void *arg);
@@ -31,6 +31,7 @@ int main( int argc, char **argv )
 	char s[256];
 	//TODO
 	uint8_t motor_obs;
+	uint8_t motor_head;
 	uint8_t touch;
 	uint8_t color;
 	uint8_t compass;
@@ -74,7 +75,9 @@ int main( int argc, char **argv )
 
   sensor_init( &touch, &color, &compass, &gyro, &dist );
 
-	motor_init( &motors[0], &motors[1], &motor_obs );
+	motor_init( &motors[0], &motors[1], &motor_obs, &motor_head);
+
+	printf("%d %d %d %d\n", motors[0], motors[1], motor_obs, motor_head);
 
 
 	add_wall(0, 0, P+L+P, P, SURE_HIT);							// bottom
@@ -82,21 +85,21 @@ int main( int argc, char **argv )
   add_wall(0, P+H, P+L+P, P+H+P, SURE_HIT);				// top
   add_wall(P+L, 0, P+L+P, P+H+P, SURE_HIT);				// right
 
-	int turns, d;
+	int turns, d, rev;
 	int count = 0, flag = 0;
 	float prevX, prevY, newX, newY;
 
-	printf("Insert number of turns: ");
+	/*printf("Insert number of turns: ");
 	scanf("%d", &turns);
 	for (i = 0; i < turns; i++) {
 
-		if (i > 3 && rand()%10 >= 5 && flag >= 1) {
+		if (i > 3 && rand()%10 >= 8 && flag >= 1) {
 			count = count+turn;
 			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 
 			d = d/2;
 			go_forwards_cm(motors, d, MAX_SPEED/2);
-			map_fix(prevX, prevY, d, my_pos.dir, SURE_MISS);
+			map_fix(prevX, prevY, d, my_pos.dir, 17, SURE_MISS);
 
 			wait_motor_stop(motors[0]);
 			wait_motor_stop(motors[1]);
@@ -110,56 +113,113 @@ int main( int argc, char **argv )
 
 		} else {
 			prevX = my_pos.x; prevY = my_pos.y;
-			go_forwards_obs(motors, dist, 8, MAX_SPEED/2); //TODO check con color = rosso?
+			go_forwards_obs(motors, dist, 7, MAX_SPEED/2); //TODO check con color = rosso?
 			newX = my_pos.x; newY = my_pos.y;
 			d = (int)point_distance(prevX, prevY, newX, newY);
-			map_fix(prevX, prevY, my_pos.dir, d, SURE_MISS);
+			map_fix(prevX, prevY, my_pos.dir, d, 17, SURE_MISS);
 
 			// printf("Distance ran: %d\n", d);
 
 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
 			count = count+turn;
 
-			scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, 9, 180, turn);
+			scan_for_obstacle_N_pos(motors, dist, gyro, obstacles, angles, 9, 180, 0, MAX_SPEED/16);
+			go_backwards_cm(motors, 5, MAX_SPEED/2);
+			wait_motor_stop(motors[0]);
+			wait_motor_stop(motors[1]);
 			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 
 			update_map((int)my_pos.x, (int)my_pos.y, my_pos.dir, 9, obstacles, angles);
 
 			flag++;
 		}
-	}
-	map_print(0, 0, P+L+P, P+H+P);
-	map_average(); //TODO fix
-/*
+	}*/
 
-/*
+// 	printf("Insert number of turns: ");
+// 	scanf("%d", &turns);
+// 	for (i = 0; i < turns; i++) {
+// /*
+// 		if (i > 3 && rand()%10 >= 8 && flag >= 1) {
+// 			count = count+turn;
+// 			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
+//
+// 			d = d/2;
+// 			go_forwards_cm(motors, d, MAX_SPEED/2);
+// 			map_fix(prevX, prevY, d, my_pos.dir, 17, SURE_MISS);
+//
+// 			wait_motor_stop(motors[0]);
+// 			wait_motor_stop(motors[1]);
+//
+// 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
+// 			count = count+turn;
+// 			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
+//
+// 			flag = 0; //se lascio il commento, non può fare due "movimenti in mezzo" di fila
+// 			//farei che non li poò fare, ma ha un'altra probabilità di farli =~ 80%
+//
+// 		} else {*/
+// 			prevX = my_pos.x; prevY = my_pos.y;
+// 			go_forwards_obs(motors, dist, 7, MAX_SPEED/2);
+// 			check_ball(dist, my_pos.dir);
+// 			newX = my_pos.x; newY = my_pos.y;
+// 			d = (int)point_distance(prevX, prevY, newX, newY);
+// 			map_fix(prevX, prevY, my_pos.dir, d, 17, SURE_MISS);
+//
+// 			scan_for_obstacle_N_pos_head(motor_head, dist, gyro, obstacles, angles, 9, 180, 0, MAX_SPEED/16);
+//
+// 			//turn logic
+// 			if (bloccato in entrambi i lati) {
+//
+// 			} else if (bloccato a sinistra) {
+//
+// 			} else if (bloccato a destra) {
+//
+// 			} else {
+// 				rev = 5
+// 				go_backwards_cm(motors, rev, MAX_SPEED/2);
+// 			}
+//
+// 			update_map((int)my_pos.x, (int)my_pos.y, my_pos.dir, 9, obstacles, angles);
+// 			wait_motor_stop(motors[0]);
+// 			wait_motor_stop(motors[1]);
+//
+// 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
+// 			count = count+turn;
+// 			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
+//
+// 			flag++;
+// 		}
+// 	}
+// 	map_print(0, 0, P+L+P, P+H+P);
+// 	map_average(); //TODO fix
 
+	printf( "*** ( PICCHIO ) H! ***\n" );
 
-while(1){
-	 	go=getchar();
-/*
-		if(go=='g'){
+	while(1){
+	go=getchar();
+	go_forwards_cm(motors, 10, MAX_SPEED/8);
+
+		if(go=='z'){
 			turn_left_gyro(motors, gyro, MAX_SPEED/16, 360);
-
-		} else {
-			turn_right_gyro(motors, gyro, MAX_SPEED/16, 360);
+		} else if(go=='x') {
+	   turn_right_gyro(motors, gyro, MAX_SPEED/16, 360);
+		} else if(go=='u'){
+		 	turn_motor_obs_to_pos_up(motor_obs, MAX_SPEED/16, 0);
+		 	wait_motor_stop(motor_obs);
+		} else if (go=='d'){
+		 	turn_motor_obs_to_pos_down(motor_obs, MAX_SPEED/16, 3);
+		 	wait_motor_stop(motor_obs);
+		} else if (go=='r'){
+		 	release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 3.4);
+		} else if (go=='s') {
+		  scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 9, 180, MAX_SPEED/16);
 		}
-	 if(go=='u'){
-	 	turn_motor_obs_to_pos_up(motor_obs, MAX_SPEED/16, 0);
-	 	wait_motor_stop(motor_obs);
-	 }
-	 else if (go=='d'){
-	 	turn_motor_obs_to_pos_down(motor_obs, MAX_SPEED/16, 3);
-	 	wait_motor_stop(motor_obs);
-	 } else if (go=='r'){
-	 	realease_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 3.4);
-	 }
- }
+	}
 
-	 	add_my_obstacle(my_pos.x-SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION-SIDEY_OBSTACLE, my_pos.x+SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION);
-	*/
-	 //	map_print(0, 0, P+L+P, P+H+P);
-	 //	map_average();
+	add_my_obstacle(my_pos.x-SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION-SIDEY_OBSTACLE, my_pos.x+SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION);
+
+	map_print(0, 0, P+L+P, P+H+P);
+	map_average();
 
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
@@ -197,7 +257,7 @@ int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro,
 	return all_ok;
 }
 
-int motor_init(uint8_t *motor0, uint8_t* motor1, uint8_t* motor_obs) {
+int motor_init(uint8_t *motor0, uint8_t* motor1, uint8_t* motor_obs, uint8_t* motor_head) {
 	int all_ok = 1;
 	ev3_tacho_init();
 	if ( !ev3_search_tacho_plugged_in( MOT_SX, 0, motor0, 0 )) {
@@ -222,10 +282,19 @@ int motor_init(uint8_t *motor0, uint8_t* motor1, uint8_t* motor_obs) {
 		set_tacho_command_inx( *motor_obs, TACHO_STOP );
 		set_tacho_position( *motor_obs, 0 );
 	}
+	if ( !ev3_search_tacho_plugged_in( MOT_HEAD, 0, motor_head, 0 )) {
+		fprintf( stderr, "Motor HEAD not found!\n" );
+		set_tacho_command_inx( *motor_head, TACHO_STOP );
+		all_ok = 0;
+	} else {
+		set_tacho_command_inx( *motor_head, TACHO_STOP );
+		set_tacho_position( *motor_head, 0 );
+	}
 	if (all_ok){
 		stop_motors(motor0);
 		stop_motors(motor1);
 		stop_motors(motor_obs);
+		stop_motors(motor_head);
 	}
 	return all_ok;
 }
@@ -241,7 +310,7 @@ void *direction_updater(void *arg)
 			d = d - 360;
 		}
 		my_pos.dir = d;
-		millisleep(10);
+		millisleep(5);
   }
 	return NULL;
 }

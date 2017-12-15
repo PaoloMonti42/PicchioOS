@@ -55,13 +55,15 @@ int get_main_color(rgb *color_val, char * main_color2);
 
 int get_color(uint8_t color, char * buf);
 
+void check_ball(uint8_t dist, uint8_t color, int angle);
+
 int front_obstacle (uint8_t dist);
 
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed);
 
-void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span, int final_dir);
+void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span, int final_dir, int sp);
 
-void scan_for_obstacle_N_pos_head (uint8_t motors, uint8_t dist, int* obstacles, int* angles, int pos, int span);
+void scan_for_obstacle_N_pos_head (uint8_t motors, uint8_t dist, int* obstacles, int* angles, int pos, int span, int sp);
 
 void init_gyro(uint8_t *motors, uint8_t gyro, int speed);
 
@@ -71,4 +73,4 @@ void turn_motor_obs_to_pos_down(int motor, int speed, float height_ob);
 
 void turn_motor_obs_to_pos_up(int motor, int speed, float height_ob);
 
-void realease_obs_routine(int motor, uint8_t * motors, int speed, float height_ob_up, float height_ob_down);
+void release_obs_routine(int motor, uint8_t * motors, int speed, float height_ob_up, float height_ob_down);
