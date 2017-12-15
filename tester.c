@@ -27,7 +27,7 @@ uint8_t gyro;
 
 int main( int argc, char **argv )
 {
-	int i;
+	int i,j;
 	char s[256];
 	//TODO
 	uint8_t motor_obs;
@@ -88,6 +88,7 @@ int main( int argc, char **argv )
 	float prevX, prevY, newX, newY;
 	printf("Insert number of turns: ");
 	scanf("%d", &turns);
+	release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 3.4);
 	for (i = 0; i < turns; i++) {
 /*
 		if (i > 3 && rand()%10 >= 8 && flag >= 1) {
@@ -116,7 +117,10 @@ int main( int argc, char **argv )
 			d = (int)point_distance(prevX, prevY, newX, newY);
 			map_fix(prevX, prevY, my_pos.dir, d, ROBOT_WIDTH, SURE_MISS);
 
-			scan_for_obstacle_N_pos_head(motor_head, dist, gyro, obstacles, angles, 7, 160, 0, MAX_SPEED/16);
+			scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 7, 160, MAX_SPEED/16);
+			for (j = 0; j < 7; j++) {
+				printf("%d\n", obstacles[j]);
+			}
 
 			//turn logic
 			//if (bloccato in entrambi i lati) {

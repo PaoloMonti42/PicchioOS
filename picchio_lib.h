@@ -71,4 +71,4 @@ void turn_motor_obs_to_pos_down(int motor, int speed, float height_ob);
 
 void turn_motor_obs_to_pos_up(int motor, int speed, float height_ob);
 
-void realease_obs_routine(int motor, uint8_t * motors, int speed, float height_ob_up, float height_ob_down);
+void release_obs_routine(int motor, uint8_t * motors, int speed, float height_ob_up, float height_ob_down);

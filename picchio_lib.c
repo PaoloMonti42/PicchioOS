@@ -76,6 +76,12 @@ typedef struct rgb {
  	float b;
  } rgb;
 
+ void wait_motor_stop(uint8_t motor) {
+ 	FLAGS_T state;
+ 	do {
+ 		get_tacho_state_flags( motor, &state );
+ 	} while ( state );
+ }
 
 void turn_motor_time(uint8_t motor, int speed, int time, int ramp_up, int ramp_down) {
 	set_tacho_stop_action_inx( motor, STOP_ACTION );
@@ -182,13 +188,6 @@ void turn_left(uint8_t *motors, int speed, int deg) {
 	set_tacho_position_sp( motors[1], MOT_DIR*(TURN360*deg)/360 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
 	//update_direction(-deg);
-}
-
-void wait_motor_stop(uint8_t motor) { // sometimes don't work properly, TODO fix
-	FLAGS_T state;
-	do {
-		get_tacho_state_flags( motor, &state );
-	} while ( state );
 }
 
 void stop_motors(uint8_t *motors) {
@@ -669,7 +668,7 @@ void turn_motor_obs_to_pos_down(int motor, int speed, float height_ob){
   	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
   }
 
-void realease_obs_routine(int motor, uint8_t * motors, int speed, float height_ob_up, float height_ob_down)
+void release_obs_routine(int motor, uint8_t * motors, int speed, float height_ob_up, float height_ob_down)
 {
 	int x = (int)my_pos.x, y = (int)my_pos.x;
   // printf("im here...\n");

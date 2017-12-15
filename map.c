@@ -325,7 +325,7 @@ void map_average(){
                   //printf("FULL HERE\n");
                 } else if((((mat[row_int][col_int] >> (2*k)) & 0b11))==MISS){
                   //average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]-=1;
-                  flag=1;
+                  //flag=1;
                 }
               }
             }
