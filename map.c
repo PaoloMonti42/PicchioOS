@@ -29,7 +29,7 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
   int i;
   int r, c;
   int w = 4;
-  int f = 5;
+  int f = 10;
   int t = DIST_THRESHOLD/10;
   float height_ob = 3;
   float * obstaclesF;
@@ -158,10 +158,9 @@ void map_print(int startX, int startY, int endX, int endY) {
   fclose(fp);
 }
 
-void map_fix (int x, int y, int dir, int dist, int value) {
+void map_fix (int x, int y, int dir, int dist, int w, int value) {
   //printf("%d %d %d %d %d\n", x, y, dir, dist, value);
   int r, c;
-  int w = 17;
 
   float mx = dist * sin((dir * M_PI) / 180.0);
   float my = dist * cos((dir * M_PI) / 180.0);
@@ -211,7 +210,7 @@ void add_wall (int startX, int startY, int endX, int endY, int value)
 
 void add_my_obstacle(int startX, int startY, int endX, int endY)
 {
-  //add_my_obstacle(my_pos.x-SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION-SIDEY_OBSTACLE, my_pos.x+SIDEX_OBSTACLE/2, my_pos.y-TAIL_CORRECTION);
+  //add_my_obstacle(my_pos.x-SIDEX_OBSTACLE/2, my_pos.y-TAIL-SIDEY_OBSTACLE, my_pos.x+SIDEX_OBSTACLE/2, my_pos.y-TAIL);
   //printf("startx:%d, starty:%d, endx:%d, endy:%d\n", startX, startY, endX, endY);
   add_wall(startX, startY, endX, endY, SURE_HIT);
 }

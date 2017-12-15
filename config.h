@@ -7,9 +7,10 @@
 #define COMP_DX 1.0000
 
 #define MOT_DIR 1
-#define MOT_SX 66
+#define MOT_SX 67
 #define MOT_DX 68
-#define MOT_OBS 67
+#define MOT_OBS 66
+#define MOT_HEAD 65
 #define MAX_SPEED 1050
 #define STOP_ACTION TACHO_BRAKE  // TODO decide how to deal with it
 
@@ -35,4 +36,6 @@
 #define SIDEX_OBSTACLE  8
 #define SIDEY_OBSTACLE  8
 
-#define TAIL_CORRECTION 10
+#define ROBOT_WIDTH 15
+#define TAIL 10
+#define FACE 10

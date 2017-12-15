@@ -143,6 +143,8 @@ void go_forwards_cm(uint8_t *motors, int cm, int speed) {
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
 	//map_fix((int)my_pos.x, (int)my_pos.y, my_pos.dir, cm, SURE_MISS);
 	//update_position(cm);
+	wait_motor_stop(motors[0]);
+	wait_motor_stop(motors[1]);
 }
 
 void go_backwards_cm(uint8_t *motors, int cm, int speed) {
@@ -156,6 +158,8 @@ void go_backwards_cm(uint8_t *motors, int cm, int speed) {
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
 	//update_position(cm * -1);
+	wait_motor_stop(motors[0]);
+	wait_motor_stop(motors[1]);
 }
 
 void turn_right(uint8_t *motors, int speed, int deg) {
@@ -290,9 +294,10 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 			dest = start_pos - a + deg;
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 			cur_pos = start_pos;
+			// while(my_pos.dir < dest);// {
 		 	while(cur_pos < dest) {
 		 		cur_pos = (int)get_value_single(gyro);
-		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
+		 		// printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	}
 		 	stop_motors(motors);
 			//printf("Update of: %d\n", cur_pos-start_pos);
@@ -306,8 +311,9 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 			cur_pos = start_pos;
 		 	while(cur_pos > dest) {
+			// while(my_pos.dir > dest);// {
 		 		cur_pos = (int)get_value_single(gyro);
-		 		//printf("cur_pos_reinitializing=%d\n", cur_pos);
+		 		// printf("cur_pos_reinitializing=%d\n", cur_pos);
 		 	}
 		 	stop_motors(motors);
 			//printf("Update of: %d\n", cur_pos-start_pos);
@@ -523,84 +529,115 @@ void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
 	//update_position((int) x);
 }
 
- void scan_for_obstacle_N_pos(uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span, int final_dir) {
-	 int dir;
+void check_ball(uint8_t dist, uint8_t color, int angle) {
+	char s[10];
+ 	int d = front_obstacle(dist)+1;
+ 	float x = my_pos.x, y = my_pos.y;
+ 	get_color(color, s);
+ 	if (d > 1 && strcpy(s, "RED") == 0) {
+ 			float xb = x + dist * sin((angle * M_PI) / 180.0);
+ 			float yb = y + dist * cos((angle * M_PI) / 180.0);
+ 			map_fix(xb, yb, angle, 5, 5, SURE_MISS);
+ 	}
+}
+
+
+void scan_for_obstacle_N_pos(uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span, int final_dir, int sp) {
+	 int dir, d;
 	 int angle, i;
 	 float anglef;
 	 dir = (int)get_value_single(gyro) % 360;
 	 //printf("initial direction %d\n", dir);
 	 anglef = (float)(span) / (pos-1);
 	 angle = (int) (anglef);
-	 obstacles[(pos-1)/2] = front_obstacle(dist);
+	 d = front_obstacle(dist);
+	 obstacles[(pos-1)/2] = d;
+	 //check_ball(d, my_pos.dir);
 	 angles[(pos-1)/2] = 0;
 	 if (final_dir == 1) {
 	  for (i=0;i<((pos-1)/2);i++) {
-		  turn_left_gyro (motors, gyro, MAX_SPEED/16, angle); // TODO see if breaks update_direction
-		  obstacles[((pos-1)/2)-(i+1)] = front_obstacle(dist);
+		  turn_left_gyro (motors, gyro, sp, angle); // TODO see if breaks update_direction
+		  d = front_obstacle(dist);
+			obstacles[((pos-1)/2)-(i+1)] = d;
 		  angles[((pos-1)/2)-(i+1)] = (int)((i+1)*(-1)*anglef);
+			//check_ball(d, my_pos.dir);
 	  }
 		turn_right_gyro(motors, gyro, MAX_SPEED/16, span/2);
 	  //turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
 	  for (i=(((pos-1)/2)+1);i<pos;i++) {
-		  turn_right_gyro (motors, gyro, MAX_SPEED/16, angle);
-		  obstacles[i] = front_obstacle(dist);
+		  turn_right_gyro (motors, gyro, sp, angle);
+			d = front_obstacle(dist);
+		  obstacles[i] = d;
 		  angles[i] = (int)((i)*anglef-(span/2));
+			//check_ball(d, my_pos.dir);
 	  }
 	 }
 	 if (final_dir == -1) {
 		 for (i=(((pos-1)/2)+1);i<pos;i++) {
-			 turn_right_gyro (motors, gyro, MAX_SPEED/16, angle);
-			 obstacles[i] = front_obstacle(dist);
+			 turn_right_gyro (motors, gyro, sp, angle);
+			 d = front_obstacle(dist);
+			 obstacles[i] = d;
 			 angles[i] = (int)((i)*anglef-(span/2));
+			 //check_ball(d, my_pos.dir);
 		 }
 		 // printf("%d\n", dir);
 		 turn_left_gyro(motors, gyro, MAX_SPEED/16, span/2);
 		 //turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
 		 for (i=0;i<((pos-1)/2);i++) {
-			 turn_left_gyro (motors, gyro, MAX_SPEED/16, angle); // TODO see if breaks update_direction
-			 obstacles[((pos-1)/2)-(i+1)] = front_obstacle(dist);
+			 turn_left_gyro (motors, gyro, sp, angle); // TODO see if breaks update_direction
+			 d = front_obstacle(dist);
+			 obstacles[((pos-1)/2)-(i+1)] = d;
 			 angles[((pos-1)/2)-(i+1)] = (int)((i+1)*(-1)*anglef);
+			 //check_ball(d, my_pos.dir);
 		 }
 	 }
 	 if (final_dir == 0) {
 		 for (i=0;i<((pos-1)/2);i++) {
-			 turn_left_gyro (motors, gyro, MAX_SPEED/16, angle); // TODO see if breaks update_direction
-			 obstacles[((pos-1)/2)-(i+1)] = front_obstacle(dist);
+			 turn_left_gyro (motors, gyro, sp, angle); // TODO see if breaks update_direction
+			 d = front_obstacle(dist);
+			 obstacles[((pos-1)/2)-(i+1)] = d;
 			 angles[((pos-1)/2)-(i+1)] = (int)((i+1)*(-1)*anglef);
+			 //check_ball(d, my_pos.dir);
 		 }
 		 turn_right_gyro(motors, gyro, MAX_SPEED/16, span/2);
 		 //turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
 		 for (i=(((pos-1)/2)+1);i<pos;i++) {
-			 turn_right_gyro (motors, gyro, MAX_SPEED/16, angle);
-			 obstacles[i] = front_obstacle(dist);
+			 turn_right_gyro (motors, gyro, sp, angle);
+			 d = front_obstacle(dist);
+			 obstacles[i] = d;
 			 angles[i] = (int)((i)*anglef-(span/2));
+			 //check_ball(d, my_pos.dir);
 		 }
 		 turn_to_angle (motors, gyro, MAX_SPEED/16, dir);
 	 }
  }
 
- void scan_for_obstacle_N_pos_head(uint8_t motors, uint8_t dist, int* obstacles, int* angles, int pos, int span) {
+ void scan_for_obstacle_N_pos_head(uint8_t motor, uint8_t dist, int* obstacles, int* angles, int pos, int span, int sp) {
 	 int angle, i;
 	 float anglef;
 	 anglef = (float)(span) / (pos-1);
 	 angle = (int) (anglef);
 	 obstacles[(pos-1)/2] = front_obstacle(dist);
 	 for (i=0;i<((pos-1)/2);i++) {
-		 turn_motor_deg(motors, MAX_SPEED/16, angle);
-		 wait_motor_stop(motors);
+		 //turn_motor_deg(motor, MAX_SPEED/16, angle);
+		 turn_motor_to_pos(motor, sp, (i+1)*(-1)*anglef);
+		 wait_motor_stop(motor);
 		 obstacles[((pos-1)/2)-(i+1)] = front_obstacle(dist);
 		 angles[((pos-1)/2)-(i+1)] = (int)((i+1)*(-1)*anglef);
 	 }
-	 turn_motor_deg(motors, MAX_SPEED/16, ((-1)*(span/2)));
-	 wait_motor_stop(motors);
+	 //turn_motor_deg(motor, MAX_SPEED/16, ((-1)*(span/2)));
+	 turn_motor_to_pos(motor, sp, 0);
+	 wait_motor_stop(motor);
 	 for (i=(((pos-1)/2)+1);i<pos;i++) {
-		 turn_motor_deg(motors, MAX_SPEED/16, ((-1)*angle));
-		 wait_motor_stop(motors);
+		 //turn_motor_deg(motor, MAX_SPEED/16, ((-1)*angle));
+		 turn_motor_to_pos(motor, sp, (i)*anglef-(span/2));
+		 wait_motor_stop(motor);
 		 obstacles[i] = front_obstacle(dist);
 		 angles[i] = (int)((i)*anglef-(span/2));
 	 }
-	 turn_motor_deg(motors, MAX_SPEED/16, (span/2));
-	 wait_motor_stop(motors);
+	 //turn_motor_deg(motor, MAX_SPEED/16, (span/2));
+	 turn_motor_to_pos(motor, sp, 0);
+	 wait_motor_stop(motor);
  }
 
 void turn_motor_obs_to_pos_down(int motor, int speed, float height_ob){
@@ -611,10 +648,11 @@ void turn_motor_obs_to_pos_down(int motor, int speed, float height_ob){
  	set_tacho_ramp_down_sp( motor, 0 );
 	if(height_ob<3.5 && height_ob!=0) {
 		pos = 120 - ((acos(0.5 - height_ob/ARM_LENGTH)*180/M_PI)-60);
-		printf("pos = %f\n", pos);
+		// printf("pos = %f\n", pos);
 	} else if(height_ob>=3.5 || height_ob==0){
 	  pos = 60;
 	}
+	pos=-pos;
  	set_tacho_position_sp( motor, pos );
  	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
  }
@@ -634,10 +672,10 @@ void turn_motor_obs_to_pos_down(int motor, int speed, float height_ob){
 void realease_obs_routine(int motor, uint8_t * motors, int speed, float height_ob_up, float height_ob_down)
 {
 	int x = (int)my_pos.x, y = (int)my_pos.x;
-  printf("im here...\n");
+  // printf("im here...\n");
 	turn_motor_obs_to_pos_down(motor, speed, height_ob_down);
 	wait_motor_stop(motor);
-	add_my_obstacle(x-SIDEX_OBSTACLE/2, y-TAIL_CORRECTION-SIDEY_OBSTACLE, x+SIDEX_OBSTACLE/2, y-TAIL_CORRECTION);
+	add_my_obstacle(x-SIDEX_OBSTACLE/2, y-TAIL-SIDEY_OBSTACLE, x+SIDEX_OBSTACLE/2, y-TAIL);
 	go_forwards_cm(motors, 10, speed);
 	wait_motor_stop(motors[0]);
 	wait_motor_stop(motors[1]);
