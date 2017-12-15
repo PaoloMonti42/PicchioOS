@@ -14,7 +14,6 @@
 // #include "bt.h"
 
 
-
 int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist);
 int motor_init(uint8_t *motor0, uint8_t *motor1, uint8_t *motor_obs, uint8_t *motor_head);
 void *position_logger(void *arg);
@@ -22,20 +21,19 @@ void *bt_client(void *arg);
 void *direction_updater(void *arg);
 void *position_updater(void *arg);
 
-uint8_t motors[2];
-uint8_t gyro;
 
 int main( int argc, char **argv )
 {
 	int i,j;
 	char s[256];
-	//TODO
 	uint8_t motor_obs;
 	uint8_t motor_head;
 	uint8_t touch;
 	uint8_t color;
 	uint8_t compass;
-	//TODO
+	uint8_t gyro;
+	uint8_t motors[2];
+	struct thread_arguments thread_args;
 	uint8_t dist;
 	rgb color_val;
 	pthread_t logger;
@@ -68,14 +66,17 @@ int main( int argc, char **argv )
 		my_pos.dir = START_DIR;
 	}
 
-  pthread_create( &logger, NULL, position_logger, NULL );
-	// pthread_create( &client, NULL, bt_client, NULL );
-	pthread_create( &logger, NULL, direction_updater, NULL );
-	pthread_create( &logger, NULL, position_updater, NULL );
-
   sensor_init( &touch, &color, &compass, &gyro, &dist );
 
 	motor_init( &motors[0], &motors[1], &motor_obs, &motor_head );
+
+	thread_args.motor0=motors[0];
+	thread_args.motor1=motors[1];
+
+	pthread_create( &logger, NULL, position_logger, NULL);
+	// pthread_create( &client, NULL, bt_client, NULL );
+	pthread_create( &logger, NULL, direction_updater, (void *)&gyro);
+	pthread_create( &logger, NULL, position_updater, (void *)&thread_args);
 
 
 	add_wall(0, 0, P+L+P, P, SURE_HIT);							// bottom
@@ -83,12 +84,12 @@ int main( int argc, char **argv )
   add_wall(0, P+H, P+L+P, P+H+P, SURE_HIT);				// top
   add_wall(P+L, 0, P+L+P, P+H+P, SURE_HIT);				// right
 
-	int turns, d, rev;
+	int turns, d, rev, ball;
 	int count = 0, flag = 0;
 	float prevX, prevY, newX, newY;
 	printf("Insert number of turns: ");
 	scanf("%d", &turns);
-	release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 3.4);
+	// release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 3.4);
 	for (i = 0; i < turns; i++) {
 /*
 		if (i > 3 && rand()%10 >= 8 && flag >= 1) {
@@ -112,68 +113,59 @@ int main( int argc, char **argv )
 		} else {*/
 			prevX = my_pos.x; prevY = my_pos.y;
 			go_forwards_obs(motors, dist, 7, MAX_SPEED/2);
-			check_ball(dist, color, my_pos.dir);
+			ball = check_ball(dist, color, my_pos.dir); //TODO soglia
 			newX = my_pos.x; newY = my_pos.y;
 			d = (int)point_distance(prevX, prevY, newX, newY);
 			map_fix(prevX, prevY, my_pos.dir, d, ROBOT_WIDTH, SURE_MISS);
 
-			scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 7, 160, MAX_SPEED/16);
-			for (j = 0; j < 7; j++) {
-				printf("%d\n", obstacles[j]);
+			while(1) {
+				scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 7, 160, MAX_SPEED/16);
+				update_map(my_pos.x, my_pos.y, my_pos.dir, 7, obstacles, angles);
+				//if (bloccato in entrambi i lati) {
+				if (obstacles[0] != 0 && obstacles[0] < ROT_THRESHOLD && obstacles[6] != 0 && obstacles[6] < ROT_THRESHOLD) {
+					rev = 20;
+					go_backwards_cm(motors, rev, MAX_SPEED/4);
+				//} else if (bloccato a sinistra) {
+				} else if (obstacles[0] != 0 && obstacles[0] < ROT_THRESHOLD) {
+					rev = 15;
+					turn_left_gyro(motors, gyro, MAX_SPEED/16, 45);
+					go_backwards_cm(motors, rev, MAX_SPEED/4);
+					turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
+				//} else if (bloccato a destra) {
+				} else if (obstacles[6] != 0 && obstacles[6] < ROT_THRESHOLD) {
+					rev = 15;
+					turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
+					go_backwards_cm(motors, rev, MAX_SPEED/4);
+					turn_left_gyro(motors, gyro, MAX_SPEED/16, 45);
+				} else {
+					rev = 5;
+					go_backwards_cm(motors, rev, MAX_SPEED/4);
+					break;
+				}
 			}
-
-			//turn logic
-			//if (bloccato in entrambi i lati) {
-			if (0) {
-				rev = 20;
-				go_backwards_cm(motors, rev, MAX_SPEED/4);
-			//} else if (bloccato a sinistra) {
-			} else if (1) {
-				rev = 15;
-				turn_left_gyro(motors, gyro, MAX_SPEED/16, 45);
-				go_backwards_cm(motors, rev, MAX_SPEED/4);
-				turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
-			//} else if (bloccato a destra) {
-			} else if (0) {
-				rev = 15;
-				turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
-				go_backwards_cm(motors, rev, MAX_SPEED/4);
-				turn_left_gyro(motors, gyro, MAX_SPEED/16, 45);
-			} else {
-				rev = 5;
-				go_backwards_cm(motors, rev, MAX_SPEED/4);
-			}
-
-			update_map((int)my_pos.x, (int)my_pos.y, my_pos.dir, 7, obstacles, angles);
 
 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
 			if (turn == 1) {
-			  turn_right_gyro(motors, gyro, MAX_SPEED/16, 90);
+			  turn_right_gyro(motors, gyro, MAX_SPEED/16, 90); //TODO fix
 			} else {
-				turn_left_gyro(motors, gyro, MAX_SPEED/16, 90);
+				turn_left_gyro(motors, gyro, MAX_SPEED/16, 90);  //TODO fix
 			}
-			// count = count+turn;
-			// turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 
-			flag++;
+			flag++; //TODO evaluate
 		//}
 	}
 	map_print(0, 0, P+L+P, P+H+P);
-	map_average(); //TODO fix
-/*
-
-	map_print(0, 0, P+L+P, P+H+P);
-	map_average(); //TODO fix
+	map_average();
 
 
+  //
 	// int deg = 90;
-  // while(1){
+  // while(0){
 	// 	go=getchar();
 	// 	printf("%d\n", deg);
   //   turn_to_angle(motors, gyro, MAX_SPEED/16, deg);
-	// 	turn_left_gyro(motors, gyro, MAX_SPEED/16, deg);
-		// deg += 90;
-		// if (deg > 180) deg = deg - 360;
+	// 	//turn_right_gyro(motors, gyro, MAX_SPEED/16, 90);
+	// 	deg += 90;
 
 		// if(go=='u'){
 		//   turn_motor_obs_to_pos_up(motor_obs, MAX_SPEED/16, 0);
@@ -194,9 +186,6 @@ int main( int argc, char **argv )
 		// }
 	// }
 
-	map_print(0, 0, P+L+P, P+H+P);
-  map_average();
-*/
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
 	return ( 0 );
@@ -276,6 +265,7 @@ int motor_init(uint8_t *motor0, uint8_t* motor1, uint8_t* motor_obs, uint8_t *mo
 
 void *direction_updater(void *arg)
 {
+	uint8_t gyro = * (uint8_t *) arg;
 	int samples = 5;
 	int d;
 	for ( ; ; ) {
@@ -285,13 +275,20 @@ void *direction_updater(void *arg)
 			d = d - 360;
 		}
 		my_pos.dir = d;
+		// printf("%d\n", d);
 		millisleep(10);
   }
 	return NULL;
 }
 
-void *position_updater(void *arg)
+void *position_updater(void * thread_args)
 {
+
+	struct thread_arguments * args;
+	args = (struct thread_arguments *) thread_args;
+	uint8_t motors[2];
+	motors[0]=args->motor0;
+	motors[1]=args->motor1;
 	int sp0, sp1;
 	float dx = 0, dir, speed, dt;
 	struct timeb t0, t1;

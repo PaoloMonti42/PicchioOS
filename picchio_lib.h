@@ -57,11 +57,13 @@ int get_color(uint8_t color, char * buf);
 
 int front_obstacle (uint8_t dist);
 
+int check_ball(uint8_t dist, uint8_t color, int angle);
+
 void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed);
 
 void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span, int final_dir, int sp);
 
-void scan_for_obstacle_N_pos_head (uint8_t motor, uint8_t dist, int* obstacles, int* angles, int pos, int span, int sp);
+void scan_for_obstacle_N_pos_head (uint8_t motor, uint8_t dist, int* obstacles, int* angles, int pos, int span, int speed);
 
 void init_gyro(uint8_t *motors, uint8_t gyro, int speed);
 

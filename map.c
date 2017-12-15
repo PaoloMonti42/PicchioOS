@@ -34,8 +34,11 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
   float height_ob = 3;
   float * obstaclesF;
 
-  // x+=L/2;
-  // y+=20;
+  //TODO better eyes precision
+  float fx = x + f * sin((angles[values/2] * M_PI) / 180.0);
+  float fy = y + f * cos((angles[values/2] * M_PI) / 180.0);
+
+  // printf("%d %d %f %f %d %d %d\n", x, y, fx, fy, values/2, angles[values/2], obstacles[values/2]);
 
   // printf("(x,y)=(%d,%d)\n", x, y);
   obstaclesF = (float *)malloc(sizeof(float)*values);
@@ -45,8 +48,7 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
   }
 
   for (i = 0; i < values; i++) {
-    float fx = x + f * sin((angles[i] * M_PI) / 180.0);
-    float fy = y + f * cos((angles[i] * M_PI) / 180.0);
+
 
     float mx = (obstacles[i] == 0 ? t : obstaclesF[i]) * sin((angles[i] * M_PI) / 180.0);
     float my = (obstacles[i] == 0 ? t : obstaclesF[i]) * cos((angles[i] * M_PI) / 180.0);
@@ -295,7 +297,6 @@ int choice_LR(int x, int y, int dir){
 
 void map_average(){
   int row_ext, col_ext, row_int, col_int, k;
-  int fill, empty;
   int average[MAP_SQUARE][MAP_SQUARE]={{0}};
   int average_square=0;
   int flag=0;

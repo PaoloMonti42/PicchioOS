@@ -36,6 +36,8 @@
 #define SIDEX_OBSTACLE  8
 #define SIDEY_OBSTACLE  8
 
-#define ROBOT_WIDTH 15
-#define TAIL 10
+#define ROBOT_WIDTH 14
 #define FACE 10
+#define TAIL 10
+
+#define ROT_THRESHOLD 85
