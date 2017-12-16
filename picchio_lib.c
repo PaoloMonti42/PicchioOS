@@ -467,8 +467,12 @@ int get_main_color(rgb * color_val, char * main_color){
   } else {
   	valid = 1;
   }
-  float main_color_val = color_val->r;
-  strcpy(main_color, "RED");
+	float main_color_val = 20;
+	strcpy(main_color, "BLACK");
+	if(color_val->r > main_color_val){
+  	float main_color_val = color_val->r;
+  	strcpy(main_color, "RED");
+	}
   if(color_val->g > main_color_val){
   	main_color_val = color_val->g;
   	strcpy(main_color, "GREEN");
@@ -483,6 +487,7 @@ int get_main_color(rgb * color_val, char * main_color){
 int get_color(uint8_t color, char * buf){
   rgb color_val;
 	get_color_values(&color_val, color);
+	printf("%f\n", color_val.r);
 	return get_main_color(&color_val, buf);
 }
 
@@ -558,6 +563,7 @@ int check_ball(uint8_t dist, uint8_t color, int angle) {
  	int d = front_obstacle(dist);
  	float x = my_pos.x, y = my_pos.y;
  	get_color(color, s);
+	printf("%s\n", s);
  	if (d > 0 && strcmp(s, "RED") == 0) {
 			float dx = d/10.0 + FACE;
  			float xb = x + dx * sin((angle * M_PI) / 180.0);
