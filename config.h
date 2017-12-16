@@ -1,5 +1,5 @@
 #define MY_ID 1
-#define START_X 90
+#define START_X 60
 #define START_Y 20
 #define START_DIR 0
 

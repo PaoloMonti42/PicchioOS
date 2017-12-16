@@ -49,6 +49,8 @@ void turn_left_gyro(uint8_t *motors, uint8_t gyro, int speed, int deg);
 
 void reinit_pos_gyro(uint8_t *motors, uint8_t gyro, int speed);
 
+int translate_angle(int angle, int a);
+
 void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg);
 
 int get_main_color(rgb *color_val, char * main_color2);
