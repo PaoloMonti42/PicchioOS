@@ -87,6 +87,7 @@ int main( int argc, char **argv )
 	int turns, d, rev, ball;
 	int count = 0, flag = 0;
 	float prevX, prevY, newX, newY;
+	/*
 	printf("Insert number of turns: ");
 	scanf("%d", &turns);
 	// release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 3.4);
@@ -111,6 +112,7 @@ int main( int argc, char **argv )
 			//farei che non li poò fare, ma ha un'altra probabilità di farli =~ 80%
 
 		} else {*/
+		/*
 			prevX = my_pos.x; prevY = my_pos.y;
 			go_forwards_obs(motors, dist, 7, MAX_SPEED/2);
 			ball = check_ball(dist, color, my_pos.dir); //TODO soglia
@@ -156,35 +158,38 @@ int main( int argc, char **argv )
 	}
 	map_print(0, 0, P+L+P, P+H+P);
 	map_average();
-
+*/
 
   //
 	// int deg = 90;
-  // while(0){
-	// 	go=getchar();
+   while(1){
+	 	go=getchar();
 	// 	printf("%d\n", deg);
   //   turn_to_angle(motors, gyro, MAX_SPEED/16, deg);
 	// 	//turn_right_gyro(motors, gyro, MAX_SPEED/16, 90);
 	// 	deg += 90;
 
-		// if(go=='u'){
-		//   turn_motor_obs_to_pos_up(motor_obs, MAX_SPEED/16, 0);
-		//  	wait_motor_stop(motor_obs);
-		// } else if (go=='w'){
-		//  	go_forwards_cm(motors, 10, 200);
-		// } else if (go=='d'){
-		//  	turn_motor_obs_to_pos_down(motor_obs, MAX_SPEED/16, 3);
+		 if(go=='u'){
+		   turn_motor_obs_to_pos_up(motor_obs, MAX_SPEED/16, 0);
+		  	wait_motor_stop(motor_obs);
+		 } else if (go=='w'){
+		  	go_forwards_cm(motors, 10, 200);
+		 } else if (go=='d'){
+		  	turn_motor_obs_to_pos_down(motor_obs, MAX_SPEED/8, 6);
 		//  	wait_motor_stop(motor_obs);
 		// } else if (go=='s'){
 		//  	scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 9, 160, MAX_SPEED/16);
 		// 	for (i = 0; i < 9; i++) {
 		// 	  printf("%d\n", obstacles[i]);
 		// 	}
-		// } else if (go=='r'){
-		//  	realease_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 3.4);
-		// 	break;
-		// }
-	// }
+		 } else if (go=='r'){
+		  	release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 4);
+		  	break;
+		 } else if (go=='c'){
+			 go_forwards_obs(motors, dist, 7, MAX_SPEED/2);
+ 			 ball = check_ball(dist, color, my_pos.dir);
+		 }
+	 }
 
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
