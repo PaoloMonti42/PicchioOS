@@ -29,12 +29,12 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
   int i;
   int r, c;
   int w = 4;
-  int f = 10;
+  int f = 8;
   int t = DIST_THRESHOLD/10;
   float height_ob = 3;
   float * obstaclesF;
 
-  //TODO better eyes precision
+  // rotation point of eyes
   float fx = x + f * sin((angles[values/2] * M_PI) / 180.0);
   float fy = y + f * cos((angles[values/2] * M_PI) / 180.0);
 
@@ -49,6 +49,9 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
 
   for (i = 0; i < values; i++) {
 
+    // exact point of eyes
+    float ex = fx + 2 * sin((angles[i] * M_PI) / 180.0);
+    float ey = fy + 2 * cos((angles[i] * M_PI) / 180.0);
 
     float mx = (obstacles[i] == 0 ? t : obstaclesF[i]) * sin((angles[i] * M_PI) / 180.0);
     float my = (obstacles[i] == 0 ? t : obstaclesF[i]) * cos((angles[i] * M_PI) / 180.0);
@@ -58,12 +61,12 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
     float nx = w/2 * sin(((angles[i]+90) * M_PI) / 180.0);
     float ny = w/2 * cos(((angles[i]+90) * M_PI) / 180.0);
 
-    float p1x = fx - nx;
-    float p1y = fy - ny;
+    float p1x = ex - nx;
+    float p1y = ey - ny;
     // printf("P1 (%f, %f)\n", p1x, p1y);
 
-    float p2x = fx + nx;
-    float p2y = fy + ny;
+    float p2x = ex + nx;
+    float p2y = ey + ny;
     // printf("P2 (%f, %f)\n", p2x, p2y);
 
     float p3x = p2x + mx;
@@ -92,11 +95,11 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
     // printf("coordinates: (%f, %f), (%f, %f), (%f, %f), (%f, %f)\n", ob_p1x, ob_p1y, ob_p2x, ob_p2y, ob_p3x, ob_p3y, ob_p4x, ob_p4y);
 
 
-    int boundDX = fx+t>P+L-1?P+L-1:fx+t;
-    int boundSX = fx-t<P?P:fx-t;
+    int boundDX = ex+t>P+L-1?P+L-1:ex+t;
+    int boundSX = ex-t<P?P:ex-t;
 
-    int boundUP = fy+t+1>P+H-1?P+H-1:fy+t+1;
-    int boundDW = fy-t<P?P:fy-t;
+    int boundUP = ey+t+1>P+H-1?P+H-1:ey+t+1;
+    int boundDW = ey-t<P?P:ey-t;
 
     // printf("dx: %d, sx: %d, up: %d, dw: %d\n",boundDX, boundSX, boundUP, boundDW);
 

@@ -11,7 +11,7 @@
 #include <math.h>
 #include "map.h"
 #include "picchio_lib.h"
-// #include "bt.h"
+#include "bt.h"
 
 
 int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist);
@@ -57,65 +57,118 @@ int main( int argc, char **argv )
 	picchio_greet();
 	printf( "*** ( PICCHIO ) Hello! ***\n" );
 
-	if (argc == 3) {
-		my_pos.x = atoi(argv[1])+P;
-		my_pos.y = atoi(argv[2])+P;
-	} else {
-		my_pos.x = START_X+P;
-		my_pos.y = START_Y+P;
-		my_pos.dir = START_DIR;
-	}
-
-  sensor_init( &touch, &color, &compass, &gyro, &dist );
-
+	sensor_init( &touch, &color, &compass, &gyro, &dist );
 	motor_init( &motors[0], &motors[1], &motor_obs, &motor_head );
 
-	thread_args.motor0=motors[0];
-	thread_args.motor1=motors[1];
+	int turns, released, bluetooth, timeout, rot_th;
+	int d, rev;
+	struct timeb t0, t1;
+	int count = 0, flag = 0;
+	float prevX, prevY, newX, newY;
+
+	my_pos.dir = START_DIR;
+	if (argc > 1) {
+		my_pos.x = START_X+P;
+		my_pos.y = START_Y+P;
+		released = 1;
+		rot_th = ROT_THRESHOLD;
+		bluetooth = 0;
+		turns = 10;
+		timeout = -1;
+	} else {
+		int tmp;
+		char c;
+		printf("What is my starting x coordinate? \n");
+		scanf("%d", &tmp);
+		my_pos.x = tmp;
+
+		printf("What is my starting y coordinate? \n");
+		scanf("%d", &tmp);
+		my_pos.y = tmp;
+
+		printf("Will I release the obstacle? \n");
+		scanf("%s", s);
+		if (s[0] == 'y' || s[0] == 'Y') {
+			released = 0;
+			rot_th = ROT_THRESHOLD+5;
+		} else {
+			released = 1;
+			rot_th = ROT_THRESHOLD;
+		}
+
+		printf("Will I connect to the bluetooth server? \n");
+		scanf("%s", s);
+		if (s[0] == 'y' || s[0] == 'Y') {
+			bluetooth = 1;
+		} else {
+			bluetooth = 0;
+		}
+
+		printf("How many turns will I perform? \n");
+		scanf("%d", &tmp);
+		turns = tmp;
+
+		printf("After how many seconds will I stop? \n");
+		scanf("%d", &tmp);
+		if (tmp < 0) {
+			timeout = -1;
+		} else {
+		timeout = tmp;
+		}
+	}
+
+	printf("Ok, I'm ready to start!\n");
 
 	pthread_create( &logger, NULL, position_logger, NULL);
-	// pthread_create( &client, NULL, bt_client, NULL );
+
+	if(bluetooth) {
+		pthread_create( &client, NULL, bt_client, NULL );
+	}
+
 	pthread_create( &logger, NULL, direction_updater, (void *)&gyro);
+	thread_args.motor0 = motors[0];
+	thread_args.motor1 = motors[1];
+
 	pthread_create( &logger, NULL, position_updater, (void *)&thread_args);
 
+	ftime(&t0);
 
 	add_wall(0, 0, P+L+P, P, SURE_HIT);							// bottom
   add_wall(0, 0, P, P+H+P, SURE_HIT);							// left
   add_wall(0, P+H, P+L+P, P+H+P, SURE_HIT);				// top
   add_wall(P+L, 0, P+L+P, P+H+P, SURE_HIT);				// right
 
-	int turns, d, rev, ball;
-	int count = 0, flag = 0;
-	float prevX, prevY, newX, newY;
-	/*
-	printf("Insert number of turns: ");
-	scanf("%d", &turns);
-	// release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 3.4);
+
 	for (i = 0; i < turns; i++) {
-/*
-		if (i > 3 && rand()%10 >= 8 && flag >= 1) {
+
+		if (i > 3 && rand()%10 >= 0 && flag >= 2) { //TODO evaluate rand & flag
+
 			count = count+turn;
 			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 
-			d = d/2;
-			go_forwards_cm(motors, d, MAX_SPEED/2);
-			map_fix(prevX, prevY, d, my_pos.dir, SURE_MISS);
+			if (d > 40 && !released) {
+				go_forwards_cm(motors, 10, MAX_SPEED/2);
+				release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 4); //TODO thread
+				d = d - 15;
+				released = 1;
+				rot_th -= ROT_THRESHOLD;
+			}
 
-			wait_motor_stop(motors[0]);
-			wait_motor_stop(motors[1]);
+			d = d/2;
+			prevX = my_pos.x; prevY = my_pos.y;
+			go_forwards_cm(motors, d, MAX_SPEED/2);
+			map_fix(prevX, prevY, my_pos.dir, d, ROBOT_WIDTH, SURE_MISS);
 
 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
 			count = count+turn;
 			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 
-			flag = 0; //se lascio il commento, non può fare due "movimenti in mezzo" di fila
-			//farei che non li poò fare, ma ha un'altra probabilità di farli =~ 80%
+			flag = 0;
 
-		} else {*/
-		/*
+		} else {
 			prevX = my_pos.x; prevY = my_pos.y;
 			go_forwards_obs(motors, dist, 7, MAX_SPEED/2);
-			ball = check_ball(dist, color, my_pos.dir); //TODO soglia
+			check_ball(dist, color, my_pos.dir);
 			newX = my_pos.x; newY = my_pos.y;
 			d = (int)point_distance(prevX, prevY, newX, newY);
 			map_fix(prevX, prevY, my_pos.dir, d, ROBOT_WIDTH, SURE_MISS);
@@ -123,18 +176,18 @@ int main( int argc, char **argv )
 			while(1) {
 				scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 7, 160, MAX_SPEED/16);
 				update_map(my_pos.x, my_pos.y, my_pos.dir, 7, obstacles, angles);
-				//if (bloccato in entrambi i lati) {
-				if (obstacles[0] != 0 && obstacles[0] < ROT_THRESHOLD && obstacles[6] != 0 && obstacles[6] < ROT_THRESHOLD) {
+				// blocked in both directions
+				if (obstacles[0] != 0 && obstacles[0] < rot_th && obstacles[6] != 0 && obstacles[6] < rot_th) {
 					rev = 20;
 					go_backwards_cm(motors, rev, MAX_SPEED/4);
-				//} else if (bloccato a sinistra) {
-				} else if (obstacles[0] != 0 && obstacles[0] < ROT_THRESHOLD) {
+				// blocked to the left
+				} else if (obstacles[0] != 0 && obstacles[0] < rot_th) {
 					rev = 15;
 					turn_left_gyro(motors, gyro, MAX_SPEED/16, 45);
 					go_backwards_cm(motors, rev, MAX_SPEED/4);
 					turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
-				//} else if (bloccato a destra) {
-				} else if (obstacles[6] != 0 && obstacles[6] < ROT_THRESHOLD) {
+			// blocked to the right
+				} else if (obstacles[6] != 0 && obstacles[6] < rot_th) {
 					rev = 15;
 					turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
 					go_backwards_cm(motors, rev, MAX_SPEED/4);
@@ -147,49 +200,19 @@ int main( int argc, char **argv )
 			}
 
 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
-			if (turn == 1) {
-			  turn_right_gyro(motors, gyro, MAX_SPEED/16, 90); //TODO fix
-			} else {
-				turn_left_gyro(motors, gyro, MAX_SPEED/16, 90);  //TODO fix
-			}
+			count += turn;
+			millisleep(50);
+			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 
 			flag++; //TODO evaluate
-		//}
+		}
+		ftime(&t1);
+		if (timeout > 0 && t1.time-t0.time > timeout)
+		 	break;
 	}
+
 	map_print(0, 0, P+L+P, P+H+P);
 	map_average();
-*/
-
-  //
-	// int deg = 90;
-   while(1){
-	 	go=getchar();
-	// 	printf("%d\n", deg);
-  //   turn_to_angle(motors, gyro, MAX_SPEED/16, deg);
-	// 	//turn_right_gyro(motors, gyro, MAX_SPEED/16, 90);
-	// 	deg += 90;
-
-		 if(go=='u'){
-		   turn_motor_obs_to_pos_up(motor_obs, MAX_SPEED/16, 0);
-		  	wait_motor_stop(motor_obs);
-		 } else if (go=='w'){
-		  	go_forwards_cm(motors, 10, 200);
-		 } else if (go=='d'){
-		  	turn_motor_obs_to_pos_down(motor_obs, MAX_SPEED/8, 6);
-		//  	wait_motor_stop(motor_obs);
-		// } else if (go=='s'){
-		//  	scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 9, 160, MAX_SPEED/16);
-		// 	for (i = 0; i < 9; i++) {
-		// 	  printf("%d\n", obstacles[i]);
-		// 	}
-		 } else if (go=='r'){
-		  	release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 4);
-		  	break;
-		 } else if (go=='c'){
-			 go_forwards_obs(motors, dist, 7, MAX_SPEED/2);
- 			 ball = check_ball(dist, color, my_pos.dir);
-		 }
-	 }
 
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
@@ -332,18 +355,19 @@ void *position_logger(void *arg)
 	return NULL;
 }
 
-// void *bt_client(void *arg)
-// {
-// 	printf("Bluetooth client starting up...\n");
-//   sleep(2);
-// 	while (bt_init() != 0);
-// 	printf("Successful server connection!\n");
-// 	sleep(5);
-// 	robot();
-// 	for ( ; ; ) {
-// 	  send_pos();
-// 		millisleep(1900);
-//   }
-// 	printf("Client returning...\n");
-// 	return NULL;
-// }
+void *bt_client(void *arg)
+{
+	printf("Bluetooth client starting up...\n");
+  sleep(2);
+	while (bt_init() != 0);
+	printf("Successful server connection!\n");
+	//sleep(5);
+	for ( ; ; ) {
+	  send_pos();
+		millisleep(1900);
+  }
+	printf("Client returning...\n");
+	return NULL;
+}
+
+// TODO signal CtrlC
