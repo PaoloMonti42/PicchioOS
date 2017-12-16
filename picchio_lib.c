@@ -198,6 +198,10 @@ void stop_motors(uint8_t *motors) {
 	multi_set_tacho_command_inx( motors, TACHO_STOP );
 }
 
+void stop_motor(uint8_t motor) {
+	set_tacho_command_inx( motor, TACHO_STOP );
+}
+
 float get_value_single(uint8_t sensor) {
 	float val;
 	get_sensor_value0( sensor, &val );

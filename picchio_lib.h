@@ -33,6 +33,8 @@ void wait_motor_stop(uint8_t motor);
 
 void stop_motors(uint8_t *motors);
 
+void stop_motor(uint8_t motor);
+
 float get_value_single(uint8_t sn);
 
 float get_value_samples(uint8_t sn, int samples);

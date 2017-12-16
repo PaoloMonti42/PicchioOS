@@ -9,6 +9,7 @@
 
 #include <pthread.h>
 #include <math.h>
+#include <signal.h>
 #include "map.h"
 #include "picchio_lib.h"
 #include "bt.h"
@@ -20,26 +21,28 @@ void *position_logger(void *arg);
 void *bt_client(void *arg);
 void *direction_updater(void *arg);
 void *position_updater(void *arg);
+static void kill_all(int signo);
 
+int flag_killer=0;
+uint8_t motor_obs;
+uint8_t motor_head;
+uint8_t motors[2];
+pthread_t logger;
+pthread_t client;
+pthread_t direction;
+pthread_t position_thread;
 
 int main( int argc, char **argv )
 {
 	int i,j;
 	char s[256];
-	uint8_t motor_obs;
-	uint8_t motor_head;
 	uint8_t touch;
 	uint8_t color;
 	uint8_t compass;
 	uint8_t gyro;
-	uint8_t motors[2];
 	struct thread_arguments thread_args;
 	uint8_t dist;
 	rgb color_val;
-	pthread_t logger;
-  pthread_t client;
-	pthread_t direction;
-  pthread_t position;
 
 	char command;
 	int	obstacles[180];
@@ -54,6 +57,12 @@ int main( int argc, char **argv )
 
   if ( ev3_init() == -1 )
 	  return ( 1 );
+
+	if (signal(SIGINT, kill_all) == SIG_ERR) {
+        	fputs("An error occurred while setting a signal handler.\n", stderr);
+        	return EXIT_FAILURE;
+   	 }
+
 	picchio_greet();
 	printf( "*** ( PICCHIO ) Hello! ***\n" );
 
@@ -125,11 +134,11 @@ int main( int argc, char **argv )
 		pthread_create( &client, NULL, bt_client, NULL );
 	}
 
-	pthread_create( &logger, NULL, direction_updater, (void *)&gyro);
+	pthread_create( &direction, NULL, direction_updater, (void *)&gyro);
 	thread_args.motor0 = motors[0];
 	thread_args.motor1 = motors[1];
 
-	pthread_create( &logger, NULL, position_updater, (void *)&thread_args);
+	pthread_create( &position_thread, NULL, position_updater, (void *)&thread_args);
 
 	ftime(&t0);
 
@@ -284,9 +293,10 @@ int motor_init(uint8_t *motor0, uint8_t* motor1, uint8_t* motor_obs, uint8_t *mo
 		set_tacho_position( *motor_head, 0 );
 	}
 	if (all_ok){
-		stop_motors(motor0);
-		stop_motors(motor1);
-		stop_motors(motor_obs);
+		stop_motor(*motor0);
+		stop_motor(*motor1);
+		stop_motor(*motor_obs);
+		stop_motor(*motor_head);
 	}
 	return all_ok;
 }
@@ -296,7 +306,7 @@ void *direction_updater(void *arg)
 	uint8_t gyro = * (uint8_t *) arg;
 	int samples = 5;
 	int d;
-	for ( ; ; ) {
+	for ( ; flag_killer==0; ) {
 	  d = (int)get_value_samples(gyro, samples);
 		d = (( d % 360 ) + 360 ) % 360;
 		if (d > 180) {
@@ -321,7 +331,7 @@ void *position_updater(void * thread_args)
 	float dx = 0, dir, speed, dt;
 	struct timeb t0, t1;
 	ftime(&t0); ftime(&t1);
-	for ( ; ; ) {
+	for ( ; flag_killer==0; ) {
 	  get_tacho_speed(motors[0], &sp0);
 		get_tacho_speed(motors[1], &sp1);
 		sp0 = sp0 * MOT_DIR;
@@ -345,7 +355,7 @@ void *position_logger(void *arg)
 {
 	FILE* fp = fopen("log.txt", "w+");
 	int i;
-	for ( ; ; ) {
+	for ( ; flag_killer==0; ) {
 	  fprintf( fp, "ID = %d    x = %+.4f    y = %+.4f    dir = %.3f\n", MY_ID, my_pos.x, my_pos.y, my_pos.dir );
 		//printf("log!\n");
 		millisleep(100);
@@ -368,6 +378,32 @@ void *bt_client(void *arg)
   }
 	printf("Client returning...\n");
 	return NULL;
+}
+
+static void kill_all(int signo) {
+	void **dir;
+	void **pos;
+	void **log;
+	void **bt;
+
+    	puts("Stopping the motors and pausing the threads.\n");
+
+	stop_motor(motors[0]);
+	stop_motor(motors[1]);
+	stop_motor(motor_obs);
+	stop_motor(motor_head);
+	flag_killer=1;
+
+	pthread_join(direction, dir);
+	pthread_join(position_thread, pos);
+	pthread_join(logger, log);
+	pthread_join(client, bt);
+
+	map_print(0, 0, P+L+P, P+H+P);
+	map_average();
+	ev3_uninit();
+
+	exit(EXIT_SUCCESS);
 }
 
 // TODO signal CtrlC
