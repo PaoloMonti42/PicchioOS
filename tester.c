@@ -36,6 +36,7 @@ pthread_t obstacle_thread;
 int main( int argc, char **argv )
 {
 	int i,j;
+	//LALALALAL
 	char s[256];
 	uint8_t touch;
 	uint8_t color;
