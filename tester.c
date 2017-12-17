@@ -222,6 +222,9 @@ int main( int argc, char **argv )
 
 	map_print(0, 0, P+L+P, P+H+P);
 	map_average();
+	if (bluetooth) {
+		send_map();
+	}
 
 	ev3_uninit();
 	printf( "*** ( PICCHIO ) Bye! ***\n" );
@@ -367,26 +370,22 @@ void *position_logger(void *arg)
 
 void *bt_client(void *arg)
 {
-	printf("Bluetooth client starting up...\n");
+	printf("[BT] - Bluetooth client starting up...\n");
   sleep(2);
 	while (bt_init() != 0);
-	printf("Successful server connection!\n");
+	printf("[BT] - Successful server connection!\n");
 	//sleep(5);
-	for ( ; ; ) {
+	for ( ; flag_killer==0; ) {
 	  send_pos();
 		millisleep(1900);
   }
-	printf("Client returning...\n");
+	printf("[BT] - Client returning...\n");
 	return NULL;
 }
 
 static void kill_all(int signo) {
-	void **dir;
-	void **pos;
-	void **log;
-	void **bt;
 
-    	puts("Stopping the motors and pausing the threads.\n");
+  puts("Stopping the motors and pausing the threads.\n");
 
 	stop_motor(motors[0]);
 	stop_motor(motors[1]);
@@ -394,16 +393,15 @@ static void kill_all(int signo) {
 	stop_motor(motor_head);
 	flag_killer=1;
 
-	pthread_join(direction, dir);
-	pthread_join(position_thread, pos);
-	pthread_join(logger, log);
-	pthread_join(client, bt);
+	pthread_join(direction, NULL);
+	pthread_join(position_thread, NULL);
+	pthread_join(logger, NULL);
+	pthread_join(client, NULL);
 
 	map_print(0, 0, P+L+P, P+H+P);
 	map_average();
+	send_map();
 	ev3_uninit();
 
 	exit(EXIT_SUCCESS);
 }
-
-// TODO signal CtrlC

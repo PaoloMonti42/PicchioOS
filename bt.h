@@ -9,3 +9,5 @@ void robot ();
 int bt_init();
 
 void send_pos();
+
+void send_map();
