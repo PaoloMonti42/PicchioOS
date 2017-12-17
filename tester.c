@@ -18,7 +18,7 @@
 int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist);
 int motor_init(uint8_t *motor0, uint8_t *motor1, uint8_t *motor_obs, uint8_t *motor_head);
 void *position_logger(void *arg);
-void *bt_client(void *arg);
+void * bt_client(void *arg);
 void *direction_updater(void *arg);
 void *position_updater(void *arg);
 static void kill_all(int signo);
@@ -31,6 +31,7 @@ pthread_t logger;
 pthread_t client;
 pthread_t direction;
 pthread_t position_thread;
+pthread_t obstacle_thread;
 
 int main( int argc, char **argv )
 {
@@ -41,6 +42,7 @@ int main( int argc, char **argv )
 	uint8_t compass;
 	uint8_t gyro;
 	struct thread_arguments thread_args;
+	struct obstacle_thread_arguments obs_args;
 	uint8_t dist;
 	rgb color_val;
 
@@ -150,14 +152,22 @@ int main( int argc, char **argv )
 
 	for (i = 0; i < turns; i++) {
 
-		if (i > 3 && rand()%10 >= 0 && flag >= 2) { //TODO evaluate rand & flag
+		if (i > 3 && rand()%10 >= 5 && flag>=1) { //TODO evaluate rand & flag
 
 			count = count+turn;
 			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 
 			if (d > 40 && !released) {
 				go_forwards_cm(motors, 10, MAX_SPEED/2);
-				release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 4); //TODO thread
+				//release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 4);
+				obs_args.motor = motor_obs;
+				obs_args.motor0 = motors[0];
+				obs_args.motor1 = motors[1];
+				obs_args.speed = MAX_SPEED/16;
+				obs_args.height_ob_down = 4;
+				obs_args.height_ob_up = 0;
+				pthread_create(&obstacle_thread, NULL, release_obs_routine, (void *)&obs_args);
+				sleep(4);
 				d = d - 15;
 				released = 1;
 				rot_th -= ROT_THRESHOLD;
@@ -177,6 +187,7 @@ int main( int argc, char **argv )
 		} else {
 			prevX = my_pos.x; prevY = my_pos.y;
 			go_forwards_obs(motors, dist, 7, MAX_SPEED/2);
+			millisleep(100);
 			check_ball(dist, color, my_pos.dir);
 			newX = my_pos.x; newY = my_pos.y;
 			d = (int)point_distance(prevX, prevY, newX, newY);
@@ -242,6 +253,7 @@ int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro,
 		fprintf( stderr, "Color sensor not found...\n" );
 		all_ok = 0;
 	} else {
+		//set_sensor_mode_inx(*color, COLOR_COL_COLOR);
 		set_sensor_mode_inx(*color, COLOR_RGB_RAW);
 	}
 	// if ( !ev3_search_sensor( HT_NXT_COMPASS, compass, 0 )) {
@@ -368,6 +380,7 @@ void *position_logger(void *arg)
 	return NULL;
 }
 
+
 void *bt_client(void *arg)
 {
 	printf("[BT] - Bluetooth client starting up...\n");
@@ -382,6 +395,7 @@ void *bt_client(void *arg)
 	printf("[BT] - Client returning...\n");
 	return NULL;
 }
+
 
 static void kill_all(int signo) {
 

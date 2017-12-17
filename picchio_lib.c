@@ -80,6 +80,15 @@ typedef struct rgb {
  	uint8_t motor1;
  };
 
+ struct obstacle_thread_arguments{
+	 int motor;
+	 uint8_t motor0;
+   uint8_t motor1;
+	 int speed;
+	 float height_ob_up;
+	 float height_ob_down;
+ };
+
  void wait_motor_stop(uint8_t motor) {
  	FLAGS_T state;
  	do {
@@ -477,12 +486,13 @@ int get_main_color(rgb * color_val, char * main_color){
   } else {
   	valid = 1;
   }
-	float main_color_val = 20;
+	float main_color_val = 5;
 	strcpy(main_color, "BLACK");
-	if(color_val->r > main_color_val){
+	if(color_val->r > 5 && color_val->r > 3*color_val->g && color_val->r > 3*color_val->b){
   	float main_color_val = color_val->r;
   	strcpy(main_color, "RED");
 	}
+	main_color_val = 20;
   if(color_val->g > main_color_val){
   	main_color_val = color_val->g;
   	strcpy(main_color, "GREEN");
@@ -497,7 +507,7 @@ int get_main_color(rgb * color_val, char * main_color){
 int get_color(uint8_t color, char * buf){
   rgb color_val;
 	get_color_values(&color_val, color);
-	printf("%f\n", color_val.r);
+	//printf("r = %f, g = %f, b = %f\n", color_val.r, color_val.g, color_val.b);
 	return get_main_color(&color_val, buf);
 }
 
@@ -573,7 +583,7 @@ int check_ball(uint8_t dist, uint8_t color, int angle) {
  	int d = front_obstacle(dist);
  	float x = my_pos.x, y = my_pos.y;
  	get_color(color, s);
-	printf("%s\n", s);
+	//printf("%s\n", s);
 	float dx = d/10.0 + FACE;
 	float xb = x + dx * sin((angle * M_PI) / 180.0);
 	float yb = y + dx * cos((angle * M_PI) / 180.0);
@@ -587,7 +597,6 @@ int check_ball(uint8_t dist, uint8_t color, int angle) {
 	}
 	return 0;
 }
-
 
 void scan_for_obstacle_N_pos(uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span, int final_dir, int sp) {
 	 int dir, d;
@@ -716,8 +725,18 @@ void turn_motor_obs_to_pos_down(int motor, int speed, float height_ob){
   	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
   }
 
-void release_obs_routine(int motor, uint8_t * motors, int speed, float height_ob_up, float height_ob_down)
-{
+void * release_obs_routine(void * thread_args){
+
+	struct obstacle_thread_arguments * args;
+	args = (struct obstacle_thread_arguments *) thread_args;
+	int motor = args->motor;
+	uint8_t motors[2];
+	motors[0] = args->motor0;
+	motors[1] = args->motor1;
+	int speed = args->speed;
+	int height_ob_down = args->height_ob_down;
+	int height_ob_up = args->height_ob_up;
+
 	int x = (int)my_pos.x, y = (int)my_pos.y;
   // printf("im here...\n");
 	turn_motor_obs_to_pos_down(motor, speed, height_ob_down);
@@ -728,5 +747,7 @@ void release_obs_routine(int motor, uint8_t * motors, int speed, float height_ob
 	go_forwards_cm(motors, 5, speed*2);
 	turn_motor_obs_to_pos_up(motor, speed, height_ob_up);
 	wait_motor_stop(motor);
+
+		return NULL;
 
 }
