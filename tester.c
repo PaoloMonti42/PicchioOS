@@ -24,6 +24,7 @@ void *position_updater(void *arg);
 static void kill_all(int signo);
 
 int flag_killer=0;
+int bluetooth;
 uint8_t motor_obs;
 uint8_t motor_head;
 uint8_t motors[2];
@@ -36,7 +37,6 @@ pthread_t obstacle_thread;
 int main( int argc, char **argv )
 {
 	int i,j;
-	//LALALALAL
 	char s[256];
 	uint8_t touch;
 	uint8_t color;
@@ -72,7 +72,7 @@ int main( int argc, char **argv )
 	sensor_init( &touch, &color, &compass, &gyro, &dist );
 	motor_init( &motors[0], &motors[1], &motor_obs, &motor_head );
 
-	int turns, released, bluetooth, timeout, rot_th;
+	int turns, released, timeout, rot_th;
 	int d, rev;
 	struct timeb t0, t1;
 	int count = 0, flag = 0;
@@ -415,7 +415,8 @@ static void kill_all(int signo) {
 
 	map_print(0, 0, P+L+P, P+H+P);
 	map_average();
-	send_map();
+	if(bluetooth==1)
+		send_map();
 	ev3_uninit();
 
 	exit(EXIT_SUCCESS);
