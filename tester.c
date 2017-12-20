@@ -24,7 +24,6 @@ void *position_updater(void *arg);
 static void kill_all(int signo);
 
 int flag_killer=0;
-int bluetooth;
 uint8_t motor_obs;
 uint8_t motor_head;
 uint8_t motors[2];
@@ -72,7 +71,7 @@ int main( int argc, char **argv )
 	sensor_init( &touch, &color, &compass, &gyro, &dist );
 	motor_init( &motors[0], &motors[1], &motor_obs, &motor_head );
 
-	int turns, released, timeout, rot_th;
+	int turns, released, timeout, rot_th, bluetooth;
 	int d, rev;
 	struct timeb t0, t1;
 	int count = 0, flag = 0;
@@ -130,6 +129,7 @@ int main( int argc, char **argv )
 	}
 
 	printf("Ok, I'm ready to start!\n");
+
 
 	pthread_create( &logger, NULL, position_logger, NULL);
 
@@ -393,6 +393,7 @@ void *bt_client(void *arg)
 	  send_pos();
 		millisleep(1900);
   }
+	send_map();
 	printf("[BT] - Client returning...\n");
 	return NULL;
 }
@@ -415,8 +416,6 @@ static void kill_all(int signo) {
 
 	map_print(0, 0, P+L+P, P+H+P);
 	map_average();
-	if(bluetooth==1)
-		send_map();
 	ev3_uninit();
 
 	exit(EXIT_SUCCESS);

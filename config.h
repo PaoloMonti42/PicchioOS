@@ -9,8 +9,8 @@
 #define MOT_DIR 1
 #define MOT_SX 67
 #define MOT_DX 68
-#define MOT_OBS 65
-#define MOT_HEAD 66
+#define MOT_OBS 66
+#define MOT_HEAD 65
 #define MAX_SPEED 1050
 #define STOP_ACTION TACHO_BRAKE
 

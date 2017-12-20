@@ -7,7 +7,8 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
 
-#define SERV_ADDR   "40:e2:30:50:e9:4c"     /* Whatever the address of the server is */
+//#define SERV_ADDR   "40:e2:30:50:e9:4c"     /* Valerio */
+#define SERV_ADDR   "00:1a:7d:da:71:06"     /* Letitia */
 #define TEAM_ID     1                       /* Your team ID */
 
 #define MSG_ACK     0
@@ -38,7 +39,7 @@ int read_from_server (int sock, char *buffer, size_t maxSize) {
   int bytes_read = read (sock, buffer, maxSize);
 
   if (bytes_read <= 0) {
-    fprintf (stderr, "[BT] - Server unexpectedly closed connection...\n");
+    fprintf (stderr, "[BT] -  Server unexpectedly closed connection...\n");
     close (bt_sock);
     exit (EXIT_FAILURE);
   }
@@ -226,9 +227,9 @@ void send_map(){
 			string[2] = TEAM_ID;
 	    string[3] = 0xFF;
 	    string[4] = MSG_MAPDATA;
-    	string[5] = row_ext/5;          /* x */
+    	string[5] = col_ext/5;          /* x */
 			string[6] = 0x00;
-    	string[7] = col_ext/5;		     /* y */
+    	string[7] = row_ext/5;		     /* y */
 			string[8]= 0x00;
       //printf("average of the square is: %d\n", average_square);
       if(average_square>0 && average_square<=25){

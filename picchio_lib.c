@@ -305,6 +305,8 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 
 	if (dest > cur_pos) {
 		if ((dest - cur_pos) < 180 ) {
+			dest -= 6;
+			if (dest < -180) dest = 180;
 			//printf("turning clockwise\n");
 			set_tacho_speed_sp( motors[0], MOT_DIR * speed);
 	 		set_tacho_speed_sp( motors[1], -MOT_DIR * speed);
@@ -324,7 +326,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 		}
 		else {
 			//printf("turning counterclockwise\n");
-			dest += 6;
+			dest += 3;
 			if (dest > 180) dest = 180;
 			set_tacho_speed_sp( motors[0], -MOT_DIR * speed);
 	 		set_tacho_speed_sp( motors[1], MOT_DIR * speed);
@@ -353,7 +355,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 	else {
 		if ((cur_pos - dest) < 180) {
 			//printf("turning counterclockwise\n");
-			dest += 6;
+			dest += 3;
 			if (dest > 180) dest = 180;
 			set_tacho_speed_sp( motors[0], -MOT_DIR * speed);
 	 		set_tacho_speed_sp( motors[1], MOT_DIR * speed);
@@ -371,6 +373,8 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 			//update_direction(cur_pos-start_pos);
 		}
 		else {
+			dest -= 6;
+			if (dest < -180) dest = 180;
 			//printf("turning clockwise\n");
 			set_tacho_speed_sp( motors[0], MOT_DIR * speed);
 	 		set_tacho_speed_sp( motors[1], -MOT_DIR * speed);
