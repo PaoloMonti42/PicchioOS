@@ -9,8 +9,8 @@
 #define MOT_DIR 1
 #define MOT_SX 67
 #define MOT_DX 68
-#define MOT_OBS 66
-#define MOT_HEAD 65
+#define MOT_OBS 65
+#define MOT_HEAD 66
 #define MAX_SPEED 1050
 #define STOP_ACTION TACHO_BRAKE
 
@@ -38,6 +38,6 @@
 
 #define ROBOT_WIDTH 14
 #define FACE 10
-#define TAIL 10
+#define TAIL 8
 
 #define ROT_THRESHOLD 85

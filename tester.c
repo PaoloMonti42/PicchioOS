@@ -77,6 +77,7 @@ int main( int argc, char **argv )
 	int count = 0, flag = 0;
 	float prevX, prevY, newX, newY;
 
+
 	my_pos.dir = START_DIR;
 	if (argc > 1) {
 		my_pos.x = START_X+P;
@@ -87,6 +88,12 @@ int main( int argc, char **argv )
 		turns = 10;
 		timeout = -1;
 	} else {
+
+		// printf("%f\n", my_pos.dir);
+		// angle_recal(motors, dist, gyro, MAX_SPEED/32, 10);
+		// printf("%f\n", my_pos.dir);
+		// return 0;
+
 		int tmp;
 		char c;
 		printf("What is my starting x coordinate? \n");
@@ -150,6 +157,50 @@ int main( int argc, char **argv )
   add_wall(0, P+H, P+L+P, P+H+P, SURE_HIT);				// top
   add_wall(P+L, 0, P+L+P, P+H+P, SURE_HIT);				// right
 
+	d = 80;
+
+	prevX = my_pos.x; prevY = my_pos.y;
+	go_forwards_cm(motors, d, MAX_SPEED/4);
+	newX = my_pos.x; newY = my_pos.y;
+	printf("Started from (%f, %f)\n", prevX, prevY);
+	printf("Arrived at (%f, %f)\n", newX, newY);
+	float fx = prevX + FACE * sin((my_pos.dir * M_PI) / 180.0);
+  float fy = prevY + FACE * cos((my_pos.dir * M_PI) / 180.0);
+	float tx = prevX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
+  float ty = prevY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
+	printf("My face was at (%f, %f)\n", fx, fy);
+	printf("My tail was at (%f, %f)\n", tx, ty);
+	fx = newX + FACE * sin((my_pos.dir * M_PI) / 180.0);
+  fy = newY + FACE * cos((my_pos.dir * M_PI) / 180.0);
+	tx = newX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
+  ty = newY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
+	printf("My face is at (%f, %f)\n", fx, fy);
+	printf("My tail is at (%f, %f)\n", tx, ty);
+	printf("Moved %5.2f cm, should have moved %d\n", point_distance(prevX, prevY, newX, newY), d);
+	millisleep(100);
+	turn_to_angle(motors, gyro, MAX_SPEED/16, 90);
+	turn_to_angle(motors, gyro, MAX_SPEED/16, 0);
+	millisleep(100);
+	prevX = my_pos.x; prevY = my_pos.y;
+	go_backwards_cm(motors, d, MAX_SPEED/4);
+	newX = my_pos.x; newY = my_pos.y;
+	printf("Started from (%f, %f)\n", prevX, prevY);
+	printf("Arrived at (%f, %f)\n", newX, newY);
+	fx = newX + FACE * sin((my_pos.dir * M_PI) / 180.0);
+  fy = newY + FACE * cos((my_pos.dir * M_PI) / 180.0);
+	tx = newX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
+  ty = newY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
+	printf("My face was at (%f, %f)\n", fx, fy);
+	printf("My tail was at (%f, %f)\n", tx, ty);
+	fx = newX + FACE * sin((my_pos.dir * M_PI) / 180.0);
+  fy = newY + FACE * cos((my_pos.dir * M_PI) / 180.0);
+	tx = newX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
+  ty = newY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
+	printf("My face is at (%f, %f)\n", fx, fy);
+	printf("My tail is at (%f, %f)\n", tx, ty);
+	printf("Moved %5.2f cm, should have moved %d\n", point_distance(prevX, prevY, newX, newY), d);
+
+	return 0;
 
 	for (i = 0; i < turns; i++) {
 
@@ -187,7 +238,7 @@ int main( int argc, char **argv )
 
 		} else {
 			prevX = my_pos.x; prevY = my_pos.y;
-			go_forwards_obs(motors, dist, 7, MAX_SPEED/2);
+			go_forwards_obs(motors, motor_head, dist, 7, MAX_SPEED/4);
 			millisleep(100);
 			check_ball(dist, color, my_pos.dir);
 			newX = my_pos.x; newY = my_pos.y;
@@ -195,7 +246,7 @@ int main( int argc, char **argv )
 			map_fix(prevX, prevY, my_pos.dir, d, ROBOT_WIDTH, SURE_MISS);
 
 			while(1) {
-				scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 7, 160, MAX_SPEED/16);
+				scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 7, 150, MAX_SPEED/16);
 				update_map(my_pos.x, my_pos.y, my_pos.dir, 7, obstacles, angles);
 				// blocked in both directions
 				if (obstacles[0] != 0 && obstacles[0] < rot_th && obstacles[6] != 0 && obstacles[6] < rot_th) {
@@ -356,7 +407,7 @@ void *position_updater(void * thread_args)
 		if ((sp0 > 0 && sp1 > 0) || (sp0 < 0 && sp1 < 0)) {
 			float speed = (sp0 + sp1) / 2.0;
 			dt = (t1.time-t0.time)*1000+(t1.millitm-t0.millitm);
-			dx = (speed*M_PI)/180*WHEEL_RADIUS*0.1*dt;
+			dx = (speed*M_PI)/180*WHEEL_RADIUS*0.1*dt*1.048;
 			dir = my_pos.dir;
 			my_pos.x += dx * sin((dir * M_PI) / 180.0);
 			my_pos.y += dx * cos((dir * M_PI) / 180.0);

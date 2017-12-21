@@ -3,7 +3,7 @@
 
 void picchio_greet();
 
-float point_distance (int Ax, int Ay, int Bx, int By);
+float point_distance (float Ax, float Ay, float Bx, float By);
 
 void turn_motor_time(uint8_t motor, int speed, int time, int ramp_up, int ramp_down);
 
@@ -63,7 +63,7 @@ int front_obstacle (uint8_t dist);
 
 int check_ball(uint8_t dist, uint8_t color, int angle);
 
-void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed);
+void go_forwards_obs(uint8_t *motors, uint8_t motor_head, uint8_t dist, int cm, int speed);
 
 void scan_for_obstacle_N_pos (uint8_t *motors, uint8_t dist, uint8_t gyro, int* obstacles, int* angles, int pos, int span, int final_dir, int sp);
 
@@ -73,8 +73,10 @@ void init_gyro(uint8_t *motors, uint8_t gyro, int speed);
 
 void set_gyro(uint8_t gyro);
 
-void turn_motor_obs_to_pos_down(int motor, int speed, float height_ob);
+void turn_motor_obs_to_pos_down(uint8_t motor, int speed, float height_ob);
 
-void turn_motor_obs_to_pos_up(int motor, int speed, float height_ob);
+void turn_motor_obs_to_pos_up(uint8_t motor, int speed, float height_ob);
+
+void angle_recal(uint8_t *motors, uint8_t dist, uint8_t gyro, int speed, int th);
 
 //void release_obs_routine(int motor, uint8_t * motors, int speed, float height_ob_up, float height_ob_down);

@@ -23,7 +23,7 @@ void picchio_greet() {
     fclose(fp);
 }
 
-float point_distance (int Ax, int Ay, int Bx, int By) {
+float point_distance (float Ax, float Ay, float Bx, float By) {
 	//printf("ax: %d ay: %d bx: %d by: %d\n", Ax, Ay, Bx, By);
 	return sqrt( (Ax-Bx)*(Ax-Bx) + (Ay-By)*(Ay-By) );
 }
@@ -565,19 +565,38 @@ int front_obstacle(uint8_t dist) {
 // 				return sum+delta;
 // }
 
-void go_forwards_obs(uint8_t *motors, uint8_t dist, int cm, int speed) {
+void * scan_around(void * arg) {
+	uint8_t motor_head = * (uint8_t *) arg;
+	for (;;) {
+		turn_motor_to_pos(motor_head, MAX_SPEED/4, -45);
+		wait_motor_stop(motor_head);
+		turn_motor_to_pos(motor_head, MAX_SPEED/4, 0);
+		wait_motor_stop(motor_head);
+		turn_motor_to_pos(motor_head, MAX_SPEED/4, 45);
+		wait_motor_stop(motor_head);
+		turn_motor_to_pos(motor_head, MAX_SPEED/4, 0);
+		wait_motor_stop(motor_head);
+	}
+}
+
+void go_forwards_obs(uint8_t *motors, uint8_t motor_head ,uint8_t dist, int cm, int speed) {
 	int d;
+	pthread_t scanner;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	set_tacho_speed_sp( motors[0], MOT_DIR * speed * COMP_SX);
 	set_tacho_speed_sp( motors[1], MOT_DIR * speed * COMP_DX);
 	multi_set_tacho_ramp_up_sp( motors, 0 );
 	multi_set_tacho_ramp_down_sp( motors, 0 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
+	pthread_create( &scanner, NULL, scan_around, (void *)&motor_head);
 	do {
 		d = front_obstacle(dist);
 		// printf("%f\n", d);
 	} while (d == 0 || d > cm*10.0);
 	stop_motors(motors);
+	pthread_cancel(scanner);
+	turn_motor_to_pos(motor_head, speed, 0);
+	wait_motor_stop(motor_head);
 	//map_fix(my_pos.x, my_pos.y, my_pos.dir, x, SURE_MISS);
 	//update_position((int) x);
 }
@@ -700,7 +719,7 @@ void scan_for_obstacle_N_pos(uint8_t *motors, uint8_t dist, uint8_t gyro, int* o
 	 wait_motor_stop(motor);
  }
 
-void turn_motor_obs_to_pos_down(int motor, int speed, float height_ob){
+void turn_motor_obs_to_pos_down(uint8_t motor, int speed, float height_ob){
 	float pos = 0;
 	set_tacho_stop_action_inx( motor, STOP_ACTION );
  	set_tacho_speed_sp( motor, speed *  MOT_DIR );
@@ -717,17 +736,42 @@ void turn_motor_obs_to_pos_down(int motor, int speed, float height_ob){
  	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
  }
 
- void turn_motor_obs_to_pos_up(int motor, int speed, float height_ob){
- 	  set_tacho_stop_action_inx( motor, STOP_ACTION );
-  	set_tacho_speed_sp( motor, speed *  MOT_DIR );
-  	set_tacho_ramp_up_sp( motor, 0 );
-  	set_tacho_ramp_down_sp( motor, 0 );
- 	float pos;
- 		pos=-atan(height_ob/3.5)*180/M_PI;
- 		//printf("pos = %f\n", pos);
-  	set_tacho_position_sp( motor, pos );
-  	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
-  }
+ void turn_motor_obs_to_pos_up(uint8_t motor, int speed, float height_ob){
+  set_tacho_stop_action_inx( motor, STOP_ACTION );
+	set_tacho_speed_sp( motor, speed *  MOT_DIR );
+	set_tacho_ramp_up_sp( motor, 0 );
+	set_tacho_ramp_down_sp( motor, 0 );
+	float pos;
+	pos=-atan(height_ob/3.5)*180/M_PI;
+	//printf("pos = %f\n", pos);
+	set_tacho_position_sp( motor, pos );
+	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
+}
+
+void angle_recal(uint8_t *motors, uint8_t dist, uint8_t gyro, int speed, int th) {
+	int start = (int)front_obstacle(dist);
+	if (start == 0) {
+		printf("I see nothing!\n");
+		return;
+	}
+	printf("I see %d\n", start);
+	int i,j;
+	int values[100];
+
+	turn_left_gyro(motors, gyro, speed, th);
+
+	for (i = 0; i < th/2; i++) {
+		turn_right_gyro(motors, gyro, speed, 2);
+		values[i] = (int)front_obstacle(dist);
+		printf("I see %d\n", values[i]);
+	}
+	printf("Done clockwise\n");
+	for (j = i; j < th; j++) {
+		turn_right_gyro(motors, gyro, speed, 2);
+		values[j] = (int)front_obstacle(dist);
+		printf("I see %d\n", values[j]);
+	}
+}
 
 void * release_obs_routine(void * thread_args){
 
