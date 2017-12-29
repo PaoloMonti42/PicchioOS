@@ -34,6 +34,12 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
   float height_ob = 3;
   float * obstaclesF;
 
+  for(i=0;i<values;i++){
+      angles[i] = angles[i]+dir;
+      if (angles[i] > 180) angles[i] -= 360;
+      if (angles[i] < - 180) angles[i] += 360;
+  }
+
   // rotation point of eyes
   float fx = x + f * sin((angles[values/2] * M_PI) / 180.0);
   float fy = y + f * cos((angles[values/2] * M_PI) / 180.0);
@@ -330,6 +336,74 @@ void map_average(){
                 } else if((((mat[row_int][col_int] >> (2*k)) & 0b11))==MISS){
                   //average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]-=1;
                   //flag=1;
+                }
+              }
+            }
+                //printf("average=%d\n", average[row_int][col_int]);
+                if(flag==0){
+                  average_square=0;
+                }
+                else if(average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]>=0){
+                  average_square+=1;
+                  } else {
+                    average_square-=1;
+                  }
+                average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]=0;
+                flag=0;
+            }
+        }
+      //printf("average of the square is: %d\n", average_square);
+      if(average_square>0 && average_square<=25){
+        //printf("average_square=%d\n", average_square);
+        printf("@ ");
+      } else if (average_square<0) {
+          printf("_ ");
+      } else {
+        printf("? ");
+      }
+
+      average_square=0;
+      }
+        printf("\n");
+    }
+
+  //printf("finish\n");
+  return;
+}
+
+
+void map_average_w(float w){
+  int row_ext, col_ext, row_int, col_int, k;
+  float average[MAP_SQUARE][MAP_SQUARE]={{0}};
+  int average_square=0;
+  int flag=0;
+
+  for (row_ext = P+H+P; row_ext > 0; row_ext-=5) {
+    //printf("row_ext=%d\n", row_ext);
+    for (col_ext = 0; col_ext < P+L+P; col_ext+=5) {
+      //printf("col_ext=%d\n", col_ext);
+      for(row_int=row_ext-MAP_SQUARE; row_int<row_ext; row_int++){
+        //printf("row_int=%d\n", row_int);
+        for(col_int=col_ext; col_int < col_ext+MAP_SQUARE; col_int++){
+          //printf("col_int=%d\n", col_int);
+            if((mat[row_int][col_int] & 0b11)==0b01){
+              if((((mat[row_int][col_int] >> 2) & 0b11))==HIT){
+                average[row_int % MAP_SQUARE][col_int % MAP_SQUARE]=8;
+                flag=1;
+              } else {
+                average[row_int % MAP_SQUARE][col_int % MAP_SQUARE]=-8;
+                flag=1;
+              }
+            } else {
+              for(k=0; k<8; k++){
+                //printf("a\n");
+                if((((mat[row_int][col_int] >> (2*k)) & 0b11))==HIT){
+                  average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]+=1;
+                  flag=1;
+                  //printf("FULL HERE\n");
+                } else if((((mat[row_int][col_int] >> (2*k)) & 0b11))==MISS){
+                  average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]-=w;
+                  flag=1;
                 }
               }
             }

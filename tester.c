@@ -23,6 +23,8 @@ void *direction_updater(void *arg);
 void *position_updater(void *arg);
 static void kill_all(int signo);
 
+int offset = 0;
+pthread_mutex_t gyro_lock;
 int flag_killer=0;
 uint8_t motor_obs;
 uint8_t motor_head;
@@ -144,10 +146,11 @@ int main( int argc, char **argv )
 		pthread_create( &client, NULL, bt_client, NULL );
 	}
 
+	pthread_mutex_init(&gyro_lock, NULL);
 	pthread_create( &direction, NULL, direction_updater, (void *)&gyro);
+
 	thread_args.motor0 = motors[0];
 	thread_args.motor1 = motors[1];
-
 	pthread_create( &position_thread, NULL, position_updater, (void *)&thread_args);
 
 	ftime(&t0);
@@ -157,60 +160,79 @@ int main( int argc, char **argv )
   add_wall(0, P+H, P+L+P, P+H+P, SURE_HIT);				// top
   add_wall(P+L, 0, P+L+P, P+H+P, SURE_HIT);				// right
 
-	d = 80;
+	// d = 80;
+  //
+	// prevX = my_pos.x; prevY = my_pos.y;
+	// go_forwards_cm(motors, d, MAX_SPEED/4);
+	// newX = my_pos.x; newY = my_pos.y;
+	// printf("Started from (%f, %f)\n", prevX, prevY);
+	// printf("Arrived at (%f, %f)\n", newX, newY);
+	// float fx = prevX + FACE * sin((my_pos.dir * M_PI) / 180.0);
+  // float fy = prevY + FACE * cos((my_pos.dir * M_PI) / 180.0);
+	// float tx = prevX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
+  // float ty = prevY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
+	// printf("My face was at (%f, %f)\n", fx, fy);
+	// printf("My tail was at (%f, %f)\n", tx, ty);
+	// fx = newX + FACE * sin((my_pos.dir * M_PI) / 180.0);
+  // fy = newY + FACE * cos((my_pos.dir * M_PI) / 180.0);
+	// tx = newX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
+  // ty = newY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
+	// printf("My face is at (%f, %f)\n", fx, fy);
+	// printf("My tail is at (%f, %f)\n", tx, ty);
+	// printf("Moved %5.2f cm, should have moved %d\n", point_distance(prevX, prevY, newX, newY), d);
+	// millisleep(100);
+	// turn_to_angle(motors, gyro, MAX_SPEED/16, 90);
+	// turn_to_angle(motors, gyro, MAX_SPEED/16, 0);
+	// millisleep(100);
+	// prevX = my_pos.x; prevY = my_pos.y;
+	// go_backwards_cm(motors, d, MAX_SPEED/4);
+	// newX = my_pos.x; newY = my_pos.y;
+	// printf("Started from (%f, %f)\n", prevX, prevY);
+	// printf("Arrived at (%f, %f)\n", newX, newY);
+	// fx = newX + FACE * sin((my_pos.dir * M_PI) / 180.0);
+  // fy = newY + FACE * cos((my_pos.dir * M_PI) / 180.0);
+	// tx = newX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
+  // ty = newY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
+	// printf("My face was at (%f, %f)\n", fx, fy);
+	// printf("My tail was at (%f, %f)\n", tx, ty);
+	// fx = newX + FACE * sin((my_pos.dir * M_PI) / 180.0);
+  // fy = newY + FACE * cos((my_pos.dir * M_PI) / 180.0);
+	// tx = newX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
+  // ty = newY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
+	// printf("My face is at (%f, %f)\n", fx, fy);
+	// printf("My tail is at (%f, %f)\n", tx, ty);
+	// printf("Moved %5.2f cm, should have moved %d\n", point_distance(prevX, prevY, newX, newY), d);
 
-	prevX = my_pos.x; prevY = my_pos.y;
-	go_forwards_cm(motors, d, MAX_SPEED/4);
-	newX = my_pos.x; newY = my_pos.y;
-	printf("Started from (%f, %f)\n", prevX, prevY);
-	printf("Arrived at (%f, %f)\n", newX, newY);
-	float fx = prevX + FACE * sin((my_pos.dir * M_PI) / 180.0);
-  float fy = prevY + FACE * cos((my_pos.dir * M_PI) / 180.0);
-	float tx = prevX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
-  float ty = prevY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
-	printf("My face was at (%f, %f)\n", fx, fy);
-	printf("My tail was at (%f, %f)\n", tx, ty);
-	fx = newX + FACE * sin((my_pos.dir * M_PI) / 180.0);
-  fy = newY + FACE * cos((my_pos.dir * M_PI) / 180.0);
-	tx = newX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
-  ty = newY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
-	printf("My face is at (%f, %f)\n", fx, fy);
-	printf("My tail is at (%f, %f)\n", tx, ty);
-	printf("Moved %5.2f cm, should have moved %d\n", point_distance(prevX, prevY, newX, newY), d);
-	millisleep(100);
-	turn_to_angle(motors, gyro, MAX_SPEED/16, 90);
-	turn_to_angle(motors, gyro, MAX_SPEED/16, 0);
-	millisleep(100);
-	prevX = my_pos.x; prevY = my_pos.y;
-	go_backwards_cm(motors, d, MAX_SPEED/4);
-	newX = my_pos.x; newY = my_pos.y;
-	printf("Started from (%f, %f)\n", prevX, prevY);
-	printf("Arrived at (%f, %f)\n", newX, newY);
-	fx = newX + FACE * sin((my_pos.dir * M_PI) / 180.0);
-  fy = newY + FACE * cos((my_pos.dir * M_PI) / 180.0);
-	tx = newX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
-  ty = newY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
-	printf("My face was at (%f, %f)\n", fx, fy);
-	printf("My tail was at (%f, %f)\n", tx, ty);
-	fx = newX + FACE * sin((my_pos.dir * M_PI) / 180.0);
-  fy = newY + FACE * cos((my_pos.dir * M_PI) / 180.0);
-	tx = newX - TAIL * sin((my_pos.dir * M_PI) / 180.0);
-  ty = newY - TAIL * cos((my_pos.dir * M_PI) / 180.0);
-	printf("My face is at (%f, %f)\n", fx, fy);
-	printf("My tail is at (%f, %f)\n", tx, ty);
-	printf("Moved %5.2f cm, should have moved %d\n", point_distance(prevX, prevY, newX, newY), d);
-
-	return 0;
+	// for (i = 1; i < 20; i++) {
+	// 	turn_to_angle(motors, gyro, MAX_SPEED/16, 90*i);
+	// 	printf("%d\n",i);
+  //
+	// 	millisleep(100);
+	// 	pthread_mutex_lock(&gyro_lock);
+	// 	offset = my_pos.dir;
+	// 	set_gyro(gyro);
+	// 	pthread_mutex_unlock(&gyro_lock);
+	// 	millisleep(100);
+	// }
+  //
+	// return 0;
 
 	for (i = 0; i < turns; i++) {
 
 		if (i > 3 && rand()%10 >= 5 && flag>=1) { //TODO evaluate rand & flag
 
+			millisleep(50);
+			pthread_mutex_lock(&gyro_lock);
+			offset = my_pos.dir;
+			set_gyro(gyro);
+			pthread_mutex_unlock(&gyro_lock);
+			millisleep(50);
+
 			count = count+turn;
 			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 
 			if (d > 40 && !released) {
-				go_forwards_cm(motors, 10, MAX_SPEED/2);
+				go_forwards_cm(motors, 10, MAX_SPEED/4);
 				//release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 4);
 				obs_args.motor = motor_obs;
 				obs_args.motor0 = motors[0];
@@ -227,8 +249,15 @@ int main( int argc, char **argv )
 
 			d = d/2;
 			prevX = my_pos.x; prevY = my_pos.y;
-			go_forwards_cm(motors, d, MAX_SPEED/2);
+			go_forwards_cm(motors, d, MAX_SPEED/4);
 			map_fix(prevX, prevY, my_pos.dir, d, ROBOT_WIDTH, SURE_MISS);
+
+			millisleep(50);
+			pthread_mutex_lock(&gyro_lock);
+			offset = my_pos.dir;
+			set_gyro(gyro);
+			pthread_mutex_unlock(&gyro_lock);
+			millisleep(50);
 
 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
 			count = count+turn;
@@ -271,9 +300,15 @@ int main( int argc, char **argv )
 				}
 			}
 
+			millisleep(50);
+			pthread_mutex_lock(&gyro_lock);
+			offset = my_pos.dir;
+			set_gyro(gyro);
+			pthread_mutex_unlock(&gyro_lock);
+			millisleep(50);
+
 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
 			count += turn;
-			millisleep(50);
 			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 
 			flag++; //TODO evaluate
@@ -285,6 +320,7 @@ int main( int argc, char **argv )
 
 	map_print(0, 0, P+L+P, P+H+P);
 	map_average();
+	// for (i=1; i <=10; i++) map_average_w(i/10.0);
 	if (bluetooth) {
 		send_map();
 	}
@@ -374,13 +410,15 @@ void *direction_updater(void *arg)
 	int samples = 5;
 	int d;
 	for ( ; flag_killer==0; ) {
+		pthread_mutex_lock(&gyro_lock);
 	  d = (int)get_value_samples(gyro, samples);
-		d = (( d % 360 ) + 360 ) % 360;
+		d = (( (d + offset) % 360 ) + 360 ) % 360;
 		if (d > 180) {
 			d = d - 360;
 		}
 		my_pos.dir = d;
 		// printf("%d\n", d);
+		pthread_mutex_unlock(&gyro_lock);
 		millisleep(10);
   }
 	return NULL;
@@ -461,6 +499,7 @@ static void kill_all(int signo) {
 	flag_killer=1;
 
 	pthread_join(direction, NULL);
+	pthread_mutex_destroy(&gyro_lock);
 	pthread_join(position_thread, NULL);
 	pthread_join(logger, NULL);
 	pthread_join(client, NULL);

@@ -13,3 +13,7 @@ int choice_LR(int x, int y, int dir);
 void add_wall (int startX, int startY, int endX, int endY, int value);
 
 void add_my_obstacle(int startX, int startY, int endX, int endY);
+
+void map_average();
+
+void map_average_w(float w);
