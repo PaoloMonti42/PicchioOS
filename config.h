@@ -3,7 +3,7 @@
 #define START_Y 20
 #define START_DIR 0
 
-#define COMP_SX 1//0.9975
+#define COMP_SX 1.017//0.9975
 #define COMP_DX 1.0000
 
 #define MOT_DIR 1
@@ -19,7 +19,7 @@
 #define MOV_RAMP_UP 0
 #define MOV_RAMP_DOWN 0
 
-#define TURN360 810
+#define TURN360 655
 
 #define EV3_FREQ 697971
 #define WHEEL_RADIUS 0.0275

@@ -44,7 +44,7 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
   float fx = x + f * sin((angles[values/2] * M_PI) / 180.0);
   float fy = y + f * cos((angles[values/2] * M_PI) / 180.0);
 
-  // printf("%d %d %f %f %d %d %d\n", x, y, fx, fy, values/2, angles[values/2], obstacles[values/2]);
+  // printf("%d %d %f %f %f %d %d %d\n", x, y, dir, fx, fy, values/2, angles[values/2], obstacles[values/2]);
 
   // printf("(x,y)=(%d,%d)\n", x, y);
   obstaclesF = (float *)malloc(sizeof(float)*values);
@@ -55,9 +55,11 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
 
   for (i = 0; i < values; i++) {
 
+
     // exact point of eyes
     float ex = fx + 2 * sin((angles[i] * M_PI) / 180.0);
     float ey = fy + 2 * cos((angles[i] * M_PI) / 180.0);
+    // printf("angles[%d] = %d, fx = %f fy = %f, ex = %f, ey = %f\n", i, angles[i], fx-P, fy-P, ex-P, ey-P);
 
     float mx = (obstacles[i] == 0 ? t : obstaclesF[i]) * sin((angles[i] * M_PI) / 180.0);
     float my = (obstacles[i] == 0 ? t : obstaclesF[i]) * cos((angles[i] * M_PI) / 180.0);

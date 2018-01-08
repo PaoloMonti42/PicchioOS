@@ -160,11 +160,13 @@ void go_forwards_cm(uint8_t *motors, int cm, int speed) {
 	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
-	//map_fix((int)my_pos.x, (int)my_pos.y, my_pos.dir, cm, SURE_MISS);
+	//map((int)my_pos.x, (int)my_pos.y, my_pos.dir, cm, SURE_MISS);
 	//update_position(cm);
 	wait_motor_stop(motors[0]);
 	wait_motor_stop(motors[1]);
 }
+
+
 
 void go_backwards_cm(uint8_t *motors, int cm, int speed) {
 	float deg = (360.0*cm*10)/(M_PI*WHEEL_DIAM);
@@ -192,6 +194,15 @@ void turn_right(uint8_t *motors, int speed, int deg) {
 	//update_direction(deg);
 }
 
+void turn_right_motors(uint8_t *motors, int speed, int deg) {
+	turn_right(motors, speed, deg);
+	wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
+	my_pos.dir = ((((int)my_pos.dir + deg) % 360 ) + 360 ) % 360;
+	if (my_pos.dir > 180) {
+		my_pos.dir -= 360;
+	}
+}
+
 void turn_left(uint8_t *motors, int speed, int deg) {
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, speed );
@@ -201,6 +212,15 @@ void turn_left(uint8_t *motors, int speed, int deg) {
 	set_tacho_position_sp( motors[1], MOT_DIR*(TURN360*deg)/360 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
 	//update_direction(-deg);
+}
+
+void turn_left_motors(uint8_t *motors, int speed, int deg) {
+	turn_left(motors, speed, deg);
+	wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
+	my_pos.dir = ((((int)my_pos.dir - deg) % 360 ) + 360 ) % 360;
+	if (my_pos.dir > 180) {
+		my_pos.dir -= 360;
+	}
 }
 
 void stop_motors(uint8_t *motors) {
@@ -224,7 +244,7 @@ float get_value_samples(uint8_t sensor, int samples) {
 		get_sensor_value0( sensor, &val );
 		sum  += val;
 	}
-	return sum/samples;
+	return sum/(float)samples;
 }
 
 float get_compass_value_samples(uint8_t compass, int samples) {
@@ -428,8 +448,8 @@ void turn_fix(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 					// }
 				//}
 				stop_motors(motors);
-				set_tacho_speed_sp( motors[0], -MOT_DIR * speed/8);
-		 		set_tacho_speed_sp( motors[1], MOT_DIR * speed/8);
+				set_tacho_speed_sp( motors[0], -MOT_DIR * speed/4);
+		 		set_tacho_speed_sp( motors[1], MOT_DIR * speed/4);
 				multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 				while(my_pos.dir > 0);// {
 					// cur_pos = my_pos.dir;
@@ -454,8 +474,8 @@ void turn_fix(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 					// }
 				// }
 				stop_motors(motors);
-				set_tacho_speed_sp( motors[0], MOT_DIR * speed/8);
-		 		set_tacho_speed_sp( motors[1], -MOT_DIR * speed/8);
+				set_tacho_speed_sp( motors[0], MOT_DIR * speed/4);
+		 		set_tacho_speed_sp( motors[1], -MOT_DIR * speed/4);
 				multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 				while(my_pos.dir < 0);// {
 					// cur_pos = my_pos.dir;
@@ -484,8 +504,8 @@ void turn_fix(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 					// }
 				// }
 				stop_motors(motors);
-				set_tacho_speed_sp( motors[0], -MOT_DIR * speed/8);
-				set_tacho_speed_sp( motors[1], MOT_DIR * speed/8);
+				set_tacho_speed_sp( motors[0], -MOT_DIR * speed/4);
+				set_tacho_speed_sp( motors[1], MOT_DIR * speed/4);
 				multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 				while(my_pos.dir > 90) ;//{
 					// cur_pos = my_pos.dir;
@@ -510,8 +530,8 @@ void turn_fix(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 					// }
 				// }
 				stop_motors(motors);
-				set_tacho_speed_sp( motors[0], MOT_DIR * speed/8);
-				set_tacho_speed_sp( motors[1], -MOT_DIR * speed/8);
+				set_tacho_speed_sp( motors[0], MOT_DIR * speed/4);
+				set_tacho_speed_sp( motors[1], -MOT_DIR * speed/4);
 				multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 				while(my_pos.dir < 90);// {
 					// cur_pos = my_pos.dir;
@@ -540,8 +560,8 @@ void turn_fix(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 					// }
 				// }
 				stop_motors(motors);
-				set_tacho_speed_sp( motors[0], -MOT_DIR * speed/8);
-				set_tacho_speed_sp( motors[1], MOT_DIR * speed/8);
+				set_tacho_speed_sp( motors[0], -MOT_DIR * speed/4);
+				set_tacho_speed_sp( motors[1], MOT_DIR * speed/4);
 				multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 				while(my_pos.dir < 0);// {
 					// cur_pos = my_pos.dir;
@@ -566,8 +586,8 @@ void turn_fix(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 					// }
 				// }
 				stop_motors(motors);
-				set_tacho_speed_sp( motors[0], MOT_DIR * speed/8);
-				set_tacho_speed_sp( motors[1], -MOT_DIR * speed/8);
+				set_tacho_speed_sp( motors[0], MOT_DIR * speed/4);
+				set_tacho_speed_sp( motors[1], -MOT_DIR * speed/4);
 				multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 				while(my_pos.dir > 0);// {
 					// cur_pos = my_pos.dir;
@@ -596,8 +616,8 @@ void turn_fix(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 					// }
 				// }
 				stop_motors(motors);
-				set_tacho_speed_sp( motors[0], -MOT_DIR * speed/8);
-				set_tacho_speed_sp( motors[1], MOT_DIR * speed/8);
+				set_tacho_speed_sp( motors[0], -MOT_DIR * speed/4);
+				set_tacho_speed_sp( motors[1], MOT_DIR * speed/4);
 				multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 				while(my_pos.dir > -90);// {
 					// cur_pos = my_pos.dir;
@@ -622,8 +642,8 @@ void turn_fix(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 					// }
 				// }
 				stop_motors(motors);
-				set_tacho_speed_sp( motors[0], MOT_DIR * speed/8);
-				set_tacho_speed_sp( motors[1], -MOT_DIR * speed/8);
+				set_tacho_speed_sp( motors[0], MOT_DIR * speed/4);
+				set_tacho_speed_sp( motors[1], -MOT_DIR * speed/4);
 				multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 				while(my_pos.dir < -90);// {
 					// cur_pos = my_pos.dir;
@@ -819,8 +839,8 @@ void * scan_around(void * arg) {
 	}
 }
 
-void go_forwards_obs(uint8_t *motors, uint8_t motor_head ,uint8_t dist, int cm, int speed) {
-	int d;
+int go_forwards_obs(uint8_t *motors, uint8_t motor_head ,uint8_t dist, uint8_t touch, int cm, int speed) {
+	int c, d, p, ret = 0;
 	pthread_t scanner;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	set_tacho_speed_sp( motors[0], MOT_DIR * speed * COMP_SX);
@@ -831,14 +851,21 @@ void go_forwards_obs(uint8_t *motors, uint8_t motor_head ,uint8_t dist, int cm, 
 	pthread_create( &scanner, NULL, scan_around, (void *)&motor_head);
 	do {
 		d = front_obstacle(dist);
-		// printf("%f\n", d);
-	} while (d == 0 || d > cm*10.0);
+		get_tacho_position(motor_head, &p);
+		c = get_value_single(touch);
+		// printf("%d\n", c);
+	} while ((d == 0 || d > cm*10.0) && c == 0);
+	if (c == 0) {
+		ret = p;
+		printf("%d\n", p);
+	}
 	stop_motors(motors);
 	pthread_cancel(scanner);
 	turn_motor_to_pos(motor_head, speed, 0);
 	wait_motor_stop(motor_head);
 	//map_fix(my_pos.x, my_pos.y, my_pos.dir, x, SURE_MISS);
 	//update_position((int) x);
+	return ret;
 }
 
 int check_ball(uint8_t dist, uint8_t color, int angle) {
@@ -852,11 +879,11 @@ int check_ball(uint8_t dist, uint8_t color, int angle) {
 	float yb = y + dx * cos((angle * M_PI) / 180.0);
 
  	if (d > 0 && strcmp(s, "RED") == 0) {
-		printf("----------   Movable obstacle found at %5.1f, %5.1f   ----------\n", xb, yb);
+		printf("----------   Movable obstacle found at %5.1f, %5.1f   ----------\n", xb-P, yb-P);
 		map_fix(xb, yb, angle, 5, 5, SURE_MISS);
 		return 1;
  	} else if (d > 0) {
-		printf("---------- Non movable obstacle found at %5.1f, %5.1f ----------\n", xb, yb);
+		printf("---------- Non movable obstacle found at %5.1f, %5.1f ----------\n", xb-P, yb-P);
 	}
 	return 0;
 }
@@ -935,8 +962,12 @@ void scan_for_obstacle_N_pos(uint8_t *motors, uint8_t dist, uint8_t gyro, int* o
 	 int i;
 	 float anglef;
 	 anglef = (float)(span) / (pos-1);
+	 printf("%f\n", anglef);
 	 // angle = (int) (anglef);
+	 turn_motor_to_pos(motor, speed, 0);
+	 wait_motor_stop(motor);
 	 obstacles[(pos-1)/2] = front_obstacle(dist);
+	 angles[(pos-1)/2] = 0;
 	 for (i=0;i<((pos-1)/2);i++) {
 		 //turn_motor_deg(motor, MAX_SPEED/16, angle);
 		 turn_motor_to_pos(motor, speed, (i+1)*anglef);
@@ -1013,6 +1044,56 @@ void angle_recal(uint8_t *motors, uint8_t dist, uint8_t gyro, int speed, int th)
 	}
 }
 
+void angle_recal2(uint8_t *motors, uint8_t head, uint8_t dist, uint8_t gyro, int samples, int deg, int th, pthread_mutex_t *gyro_lock) {
+	int dir = my_pos.dir;
+	if (abs(dir) > th) {
+		return;
+	}
+	int cnt = 0, best = 0;
+	int i;
+	int d, min = 3000.0;
+  int pos = ((samples-1)/2)*deg*-1;
+	// printf("%d\n", pos);
+	for (i = 0; i < samples; i++) {
+		turn_motor_to_pos(head, MAX_SPEED/32, -pos);
+		wait_motor_stop(head);
+		d = front_obstacle(dist);
+		printf("Dist: %d %d\n", d, pos);
+		if (d < min && d != 0) {
+			min = d;
+			best = pos;
+			cnt = 1;
+		}
+		else if (d == min) {
+			cnt++;
+		}
+		pos += deg;
+	}
+	best = (best*2 + (cnt-1)*deg)/2;
+	turn_motor_to_pos(head, MAX_SPEED/32, 0);
+	wait_motor_stop(head);
+	printf("%d %d\n", best,cnt);
+	if (cnt == 0 ){//|| abs(best) < 7) {
+	 	return;
+	}
+	if (best > 0) {
+		turn_right(motors, MAX_SPEED/16, best);
+		wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
+		my_pos.dir = 0;
+		// turn_right_gyro(motors, gyro, MAX_SPEED/16, best);
+	} else {
+		turn_right(motors, MAX_SPEED/16, best);
+		wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
+		my_pos.dir = 0;
+		// turn_left_gyro(motors, gyro, MAX_SPEED/16, -best);
+	}
+	millisleep(50);
+	pthread_mutex_lock(gyro_lock);
+	set_gyro(gyro);
+	pthread_mutex_unlock(gyro_lock);
+	millisleep(50);
+}
+
 void * release_obs_routine(void * thread_args){
 
 	struct obstacle_thread_arguments * args;
@@ -1038,4 +1119,38 @@ void * release_obs_routine(void * thread_args){
 
 		return NULL;
 
+}
+
+int go_forwards_cm_obs(uint8_t *motors, uint8_t motor_head, uint8_t dist, uint8_t touch, int cm, int max_dist, int speed) {
+	float deg = (360.0*cm*10)/(M_PI*WHEEL_DIAM);
+	FLAGS_T state0, state1;
+	int c, d, p, ret = 0;
+	pthread_t scanner;
+	//printf("%f\n", deg);
+	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
+	set_tacho_speed_sp( motors[0], speed * COMP_SX);
+	set_tacho_speed_sp( motors[1], speed * COMP_DX);
+	multi_set_tacho_position_sp( motors, MOT_DIR * deg );
+	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
+	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
+	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
+	pthread_create( &scanner, NULL, scan_around, (void *)&motor_head);
+
+	do {
+		get_tacho_state_flags( motors[0], &state0 );
+		get_tacho_state_flags( motors[1], &state1 );
+		d = front_obstacle(dist);
+		get_tacho_position(motor_head, &p);
+		c = get_value_single(touch);
+	} while ((d == 0 || d > max_dist*10.0) && c == 0 && state0 && state1);
+
+	if (state0 || state1) {
+		ret = 1;
+	}
+
+	stop_motors(motors);
+	pthread_cancel(scanner);
+	turn_motor_to_pos(motor_head, speed, 0);
+	wait_motor_stop(motor_head);
+	return ret;
 }

@@ -24,6 +24,7 @@ void *position_updater(void *arg);
 static void kill_all(int signo);
 
 int offset = 0;
+float gyro_val = 0;
 pthread_mutex_t gyro_lock;
 int flag_killer=0;
 uint8_t motor_obs;
@@ -57,6 +58,7 @@ int main( int argc, char **argv )
 	float val;
 	char go;
 	int turn;
+	int recal_flag = 1;
 	srand(time(NULL));
 
   if ( ev3_init() == -1 )
@@ -91,20 +93,15 @@ int main( int argc, char **argv )
 		timeout = -1;
 	} else {
 
-		// printf("%f\n", my_pos.dir);
-		// angle_recal(motors, dist, gyro, MAX_SPEED/32, 10);
-		// printf("%f\n", my_pos.dir);
-		// return 0;
-
 		int tmp;
 		char c;
 		printf("What is my starting x coordinate? \n");
 		scanf("%d", &tmp);
-		my_pos.x = tmp;
+		my_pos.x = tmp+P;
 
 		printf("What is my starting y coordinate? \n");
 		scanf("%d", &tmp);
-		my_pos.y = tmp;
+		my_pos.y = tmp+P;
 
 		printf("Will I release the obstacle? \n");
 		scanf("%s", s);
@@ -216,24 +213,41 @@ int main( int argc, char **argv )
 	// }
   //
 	// return 0;
+	if (argc == 4) {
+		int bump = go_forwards_cm_obs(motors, motor_head, dist, touch, 100, 12, MAX_SPEED/4);
+		if (bump) {
+			go_backwards_cm(motors, 10, MAX_SPEED/4);
+		}
+		// turn_right_motors(motors, MAX_SPEED/16, 360);
+		// wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
+		// millisleep(2000);
+		// turn_left_motors(motors, MAX_SPEED/16, 360);
+		// wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
+
+		return 0;
+	}
 
 	for (i = 0; i < turns; i++) {
 
 		if (i > 3 && rand()%10 >= 5 && flag>=1) { //TODO evaluate rand & flag
 
+			// count = count+turn;
+			// turn_fix(motors, gyro, MAX_SPEED/16, count*90);
+			if (turn > 0) {
+				turn_right_motors(motors, MAX_SPEED/16, 90);
+			} else {
+				turn_left_motors(motors, MAX_SPEED/16, 90);
+			}
+
 			millisleep(50);
 			pthread_mutex_lock(&gyro_lock);
-			offset = my_pos.dir;
+			offset = ((count*90 + 180) % 360 + 360) % 360 - 180;
 			set_gyro(gyro);
 			pthread_mutex_unlock(&gyro_lock);
 			millisleep(50);
 
-			count = count+turn;
-			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
-
 			if (d > 40 && !released) {
 				go_forwards_cm(motors, 10, MAX_SPEED/4);
-				//release_obs_routine(motor_obs, motors, MAX_SPEED/16, 0, 4);
 				obs_args.motor = motor_obs;
 				obs_args.motor0 = motors[0];
 				obs_args.motor1 = motors[1];
@@ -249,31 +263,43 @@ int main( int argc, char **argv )
 
 			d = d/2;
 			prevX = my_pos.x; prevY = my_pos.y;
-			go_forwards_cm(motors, d, MAX_SPEED/4);
-			map_fix(prevX, prevY, my_pos.dir, d, ROBOT_WIDTH, SURE_MISS);
+			int bump = go_forwards_cm_obs(motors, motor_head, dist, touch, d, 12, MAX_SPEED/4);
+			newX = my_pos.x; newY = my_pos.y;
+			d = (int)point_distance(prevX, prevY, newX, newY);
+			map_fix(prevX, prevY, my_pos.dir, d+FACE, ROBOT_WIDTH, SURE_MISS);
+			if (bump && d > 10) {
+				go_backwards_cm(motors, 10, MAX_SPEED/4);
+		  }
+			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
+			// count = count+turn;
+			// turn_fix(motors, gyro, MAX_SPEED/16, count*90);
+			if (turn > 0) {
+				turn_right_motors(motors, MAX_SPEED/16, 90);
+			} else {
+				turn_left_motors(motors, MAX_SPEED/16, 90);
+			}
 
 			millisleep(50);
 			pthread_mutex_lock(&gyro_lock);
-			offset = my_pos.dir;
+			offset = ((count*90 + 180) % 360 + 360) % 360 - 180;
 			set_gyro(gyro);
 			pthread_mutex_unlock(&gyro_lock);
 			millisleep(50);
-
-			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
-			count = count+turn;
-			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 
 			flag = 0;
 
 		} else {
 			prevX = my_pos.x; prevY = my_pos.y;
-			go_forwards_obs(motors, motor_head, dist, 7, MAX_SPEED/4);
+			int head_pos = go_forwards_obs(motors, motor_head, dist, touch, 7, MAX_SPEED/4);
 			millisleep(100);
 			check_ball(dist, color, my_pos.dir);
 			newX = my_pos.x; newY = my_pos.y;
 			d = (int)point_distance(prevX, prevY, newX, newY);
-			map_fix(prevX, prevY, my_pos.dir, d, ROBOT_WIDTH, SURE_MISS);
-
+			map_fix(prevX, prevY, my_pos.dir, d+FACE, ROBOT_WIDTH, SURE_MISS);
+			if (abs(head_pos) < 40 && recal_flag == 1) {
+				angle_recal2(motors, motor_head, dist, gyro, 15, 6, 20, &gyro_lock);
+		  }
+			recal_flag = 1;
 			while(1) {
 				scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 7, 150, MAX_SPEED/16);
 				update_map(my_pos.x, my_pos.y, my_pos.dir, 7, obstacles, angles);
@@ -284,15 +310,19 @@ int main( int argc, char **argv )
 				// blocked to the left
 				} else if (obstacles[0] != 0 && obstacles[0] < rot_th) {
 					rev = 15;
-					turn_left_gyro(motors, gyro, MAX_SPEED/16, 45);
+					turn_left_motors(motors, MAX_SPEED/16, 45);
+					// turn_left_gyro(motors, gyro, MAX_SPEED/16, 45);
 					go_backwards_cm(motors, rev, MAX_SPEED/4);
-					turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
-			// blocked to the right
+					turn_right_motors(motors, MAX_SPEED/16, 45);
+					// turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
+			  // blocked to the right
 				} else if (obstacles[6] != 0 && obstacles[6] < rot_th) {
 					rev = 15;
-					turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
+					turn_right_motors(motors, MAX_SPEED/16, 45);
+					// turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
 					go_backwards_cm(motors, rev, MAX_SPEED/4);
-					turn_left_gyro(motors, gyro, MAX_SPEED/16, 45);
+					// turn_left_gyro(motors, gyro, MAX_SPEED/16, 45);
+					turn_left_motors(motors, MAX_SPEED/16, 45);
 				} else {
 					rev = 5;
 					go_backwards_cm(motors, rev, MAX_SPEED/4);
@@ -300,16 +330,21 @@ int main( int argc, char **argv )
 				}
 			}
 
+			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
+			// count += turn;
+			// turn_fix(motors, gyro, MAX_SPEED/16, count*90);
+			if (turn > 0) {
+				turn_right_motors(motors, MAX_SPEED/16, 90);
+			} else {
+				turn_left_motors(motors, MAX_SPEED/16, 90);
+			}
+
 			millisleep(50);
 			pthread_mutex_lock(&gyro_lock);
-			offset = my_pos.dir;
+			offset = ((count*90 + 180) % 360 + 360) % 360 - 180;
 			set_gyro(gyro);
 			pthread_mutex_unlock(&gyro_lock);
 			millisleep(50);
-
-			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
-			count += turn;
-			turn_to_angle(motors, gyro, MAX_SPEED/16, count*90);
 
 			flag++; //TODO evaluate
 		}
@@ -320,7 +355,11 @@ int main( int argc, char **argv )
 
 	map_print(0, 0, P+L+P, P+H+P);
 	map_average();
-	// for (i=1; i <=10; i++) map_average_w(i/10.0);
+	for (i=1; i <=10; i++) {
+		printf("[[[%f]]]\n", i/10.0);
+		map_average_w(i/10.0);
+	}
+
 	if (bluetooth) {
 		send_map();
 	}
@@ -333,10 +372,10 @@ int main( int argc, char **argv )
 int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist) {
 	int all_ok = 1;
 	ev3_sensor_init();
-	// if ( !ev3_search_sensor( LEGO_EV3_TOUCH, touch, 0 )) {
-	// 	fprintf( stderr, "Touch sensor not found...\n" );
-	// 	all_ok = 0;
-	// }
+	if ( !ev3_search_sensor( LEGO_EV3_TOUCH, touch, 0 )) {
+		fprintf( stderr, "Touch sensor not found...\n" );
+		all_ok = 0;
+	}
 	if ( !ev3_search_sensor( LEGO_EV3_COLOR, color, 0 )) {
 		fprintf( stderr, "Color sensor not found...\n" );
 		all_ok = 0;
@@ -416,7 +455,8 @@ void *direction_updater(void *arg)
 		if (d > 180) {
 			d = d - 360;
 		}
-		my_pos.dir = d;
+		gyro_val = d;
+		// my_pos.dir = d;
 		// printf("%d\n", d);
 		pthread_mutex_unlock(&gyro_lock);
 		millisleep(10);
@@ -445,10 +485,24 @@ void *position_updater(void * thread_args)
 		if ((sp0 > 0 && sp1 > 0) || (sp0 < 0 && sp1 < 0)) {
 			float speed = (sp0 + sp1) / 2.0;
 			dt = (t1.time-t0.time)*1000+(t1.millitm-t0.millitm);
-			dx = (speed*M_PI)/180*WHEEL_RADIUS*0.1*dt*1.048;
+			dx = (speed*M_PI)/180*WHEEL_RADIUS*0.1*dt*1.05;
 			dir = my_pos.dir;
-			my_pos.x += dx * sin((dir * M_PI) / 180.0);
-			my_pos.y += dx * cos((dir * M_PI) / 180.0);
+			float tx = my_pos.x + dx * sin((dir * M_PI) / 180.0);
+			if (tx < P) {
+				my_pos.x = P + ROBOT_WIDTH/2;
+			} else if (tx > P + L) {
+				my_pos.x = P + L - ROBOT_WIDTH/2;
+			} else {
+				my_pos.x = tx;
+			}
+			float ty = my_pos.y + dx * cos((dir * M_PI) / 180.0);
+			if (ty < P) {
+				my_pos.y = P + ROBOT_WIDTH/2;
+			} else if (ty > P + H) {
+				my_pos.y = P + H - ROBOT_WIDTH/2;
+			} else {
+				my_pos.y = ty;
+			}
 		}
 		t0 = t1;
 		millisleep(10);
@@ -461,8 +515,7 @@ void *position_logger(void *arg)
 	FILE* fp = fopen("log.txt", "w+");
 	int i;
 	for ( ; flag_killer==0; ) {
-	  fprintf( fp, "ID = %d    x = %+.4f    y = %+.4f    dir = %.3f\n", MY_ID, my_pos.x, my_pos.y, my_pos.dir );
-		//printf("log!\n");
+	  fprintf( fp, "ID = %d    x = %+.4f    y = %+.4f    dir = %.3f    gyro = %.3f\n", MY_ID, my_pos.x, my_pos.y, my_pos.dir, gyro_val );
 		millisleep(100);
   }
 	fprintf( stdout, "Finished logging!\n" );
@@ -477,7 +530,6 @@ void *bt_client(void *arg)
   sleep(2);
 	while (bt_init() != 0);
 	printf("[BT] - Successful server connection!\n");
-	//sleep(5);
 	for ( ; flag_killer==0; ) {
 	  send_pos();
 		millisleep(1900);
