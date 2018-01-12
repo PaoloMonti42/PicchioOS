@@ -19,7 +19,8 @@
 #define MOV_RAMP_UP 0
 #define MOV_RAMP_DOWN 0
 
-#define TURN360 655
+#define TURN360 670
+// 644 655 670
 
 #define EV3_FREQ 697971
 #define WHEEL_RADIUS 0.0275

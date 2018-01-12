@@ -18,6 +18,7 @@
 #define MSG_POSITION 4
 #define MSG_MAPDATA 	5
 #define MSG_MAPDONE 6
+#define MSG_OBSTACLE 7
 
 
 void debug (const char *fmt, ...) {
@@ -167,6 +168,24 @@ void send_pos () {
   string[6] = 0x00;
   string[7] = (int)(my_pos.y-P)/5;		/* y */
   string[8]= 0x00;
+  write(bt_sock, string, 9);
+}
+
+void send_obs () {
+  char string[58];
+  printf ("[BT] - I released my obstacle...\n");
+  int x = (int)my_pos.x, y = (int)my_pos.y;
+  string[0] = msgId % 0xFF;
+  string[1] = msgId >> 8;
+  msgId++;
+  string[2] = TEAM_ID;
+  string[3] = 0xFF;
+  string[4] = MSG_OBSTACLE;
+  string[5] = 0x00; //obstacle dropped
+  string[6] = (int)(my_pos.x-P)/5;          /* x */ //TODO
+  string[7] = 0x00;
+  string[8] = (int)(my_pos.y-P)/5;		/* y */ //TODO
+  string[9] = 0x00;
   write(bt_sock, string, 9);
 }
 

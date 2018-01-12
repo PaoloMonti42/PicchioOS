@@ -14,6 +14,7 @@ typedef struct position {
 } position;
 
 position my_pos;
+float gyro_val = 0;
 
 void picchio_greet() {
 	int c;
@@ -311,7 +312,7 @@ void turn_left_compass(uint8_t *motors, uint8_t compass, int speed, int deg) {
 }
 
 void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
- 	int cur_pos = my_pos.dir;
+ 	int cur_pos = gyro_val;//my_pos.dir;
 	int dest = ((deg + 180) % 360 + 360) % 360 - 180;
 	if (dest == -180) dest = 180;
 	// dest += 6; //TODO
@@ -327,32 +328,32 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 		if ((dest - cur_pos) < 180 ) {
 			dest -= 6;
 			if (dest < -180) dest = 180;
-			//printf("turning clockwise\n");
+			// printf("turning clockwise\n");
 			set_tacho_speed_sp( motors[0], MOT_DIR * speed);
 	 		set_tacho_speed_sp( motors[1], -MOT_DIR * speed);
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 			// while(my_pos.dir < dest);// {
 		 	while(cur_pos < dest) {
-				cur_pos = my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
 				// }
-				//printf("1 %d\n", cur_pos);
+				// printf("1 %d\n", cur_pos);
 			}
 		 	stop_motors(motors);
 			//printf("Update of: %d\n", cur_pos-start_pos);
 			//update_direction(cur_pos-start_pos);
 		}
 		else {
-			//printf("turning counterclockwise\n");
+			// printf("turning counterclockwise\n");
 			dest += 7;
 			if (dest > 180) dest = 180;
 			set_tacho_speed_sp( motors[0], -MOT_DIR * speed);
 	 		set_tacho_speed_sp( motors[1], MOT_DIR * speed);
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 			while(cur_pos < 0) {
-				cur_pos = my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
@@ -360,7 +361,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 				// printf("2 %d\n", cur_pos);
 			}
 			while(cur_pos > dest) {
-				cur_pos = my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
@@ -368,20 +369,20 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 				// printf("3 %d\n", cur_pos);
 			}
 		 	stop_motors(motors);
-			//printf("Update of: %d\n", cur_pos-start_pos);
+			// printf("Update of: %d\n", cur_pos-start_pos);
 			//update_direction(cur_pos-start_pos);
 		}
 	}
 	else {
 		if ((cur_pos - dest) < 180) {
-			//printf("turning counterclockwise\n");
+			// printf("turning counterclockwise\n");
 			dest += 7;
 			if (dest > 180) dest = 180;
 			set_tacho_speed_sp( motors[0], -MOT_DIR * speed);
 	 		set_tacho_speed_sp( motors[1], MOT_DIR * speed);
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 			while(cur_pos > dest) {
-				cur_pos = my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
@@ -389,7 +390,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 				// printf("4 %d\n", cur_pos);
 			}
 		 	stop_motors(motors);
-			//printf("Update of: %d\n", cur_pos-start_pos);
+			// printf("Update of: %d\n", cur_pos-start_pos);
 			//update_direction(cur_pos-start_pos);
 		}
 		else {
@@ -400,7 +401,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 	 		set_tacho_speed_sp( motors[1], -MOT_DIR * speed);
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 			while(cur_pos > 0) {
-				cur_pos = my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
@@ -408,7 +409,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 				// printf("5 %d\n", cur_pos);
 			}
 			while(cur_pos < dest) {
-				cur_pos = my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
@@ -841,6 +842,7 @@ void * scan_around(void * arg) {
 
 int go_forwards_obs(uint8_t *motors, uint8_t motor_head ,uint8_t dist, uint8_t touch, int cm, int speed) {
 	int c, d, p, ret = 0;
+	int th = 5;
 	pthread_t scanner;
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	set_tacho_speed_sp( motors[0], MOT_DIR * speed * COMP_SX);
@@ -854,7 +856,7 @@ int go_forwards_obs(uint8_t *motors, uint8_t motor_head ,uint8_t dist, uint8_t t
 		get_tacho_position(motor_head, &p);
 		c = get_value_single(touch);
 		// printf("%d\n", c);
-	} while ((d == 0 || d > cm*10.0) && c == 0);
+	} while ((d == 0 || d > cm*10.0) && c == 0 && my_pos.y > th+P); //TODO other directions?
 	if (c == 0) {
 		ret = p;
 		printf("%d\n", p);
@@ -1112,6 +1114,7 @@ void * release_obs_routine(void * thread_args){
 	wait_motor_stop(motor);
 	// printf("%d, %d\n", x, y);
 	// printf("%d, %d\n", x-SIDEX_OBSTACLE/2, y-TAIL-SIDEY_OBSTACLE);
+	//TODO gestire direzione
 	add_my_obstacle(x-SIDEX_OBSTACLE/2, y-TAIL-SIDEY_OBSTACLE, x+SIDEX_OBSTACLE/2, y-TAIL);
 	go_forwards_cm(motors, 5, speed*2);
 	turn_motor_obs_to_pos_up(motor, speed, height_ob_up);
@@ -1153,4 +1156,29 @@ int go_forwards_cm_obs(uint8_t *motors, uint8_t motor_head, uint8_t dist, uint8_
 	turn_motor_to_pos(motor_head, speed, 0);
 	wait_motor_stop(motor_head);
 	return ret;
+}
+
+void panic(uint8_t *motors, uint8_t gyro)
+{
+	int th = 20;
+	printf("%f %f\n",my_pos.dir, gyro_val);
+
+	if (my_pos.dir == 0.0 && abs(gyro_val)>th) {
+		turn_to_angle(motors, gyro, MAX_SPEED/16, 0);
+		return;
+	}
+
+	if (my_pos.dir == 90.0 && abs(gyro_val-90)>th) {
+		turn_to_angle(motors, gyro, MAX_SPEED/16, 90);
+		return;
+	}
+
+	if (my_pos.dir == 180.0 && abs(gyro_val)-180<-th) {
+		turn_to_angle(motors, gyro, MAX_SPEED/16, 180);
+	}
+
+	if (my_pos.dir == -90.0 && abs(gyro_val+90)>th) {
+		turn_to_angle(motors, gyro, MAX_SPEED/16, -90);
+		return;
+	}
 }

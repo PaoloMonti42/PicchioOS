@@ -24,7 +24,6 @@ void *position_updater(void *arg);
 static void kill_all(int signo);
 
 int offset = 0;
-float gyro_val = 0;
 pthread_mutex_t gyro_lock;
 int flag_killer=0;
 uint8_t motor_obs;
@@ -58,7 +57,7 @@ int main( int argc, char **argv )
 	float val;
 	char go;
 	int turn;
-	int recal_flag = 1;
+	int recal_flag = 0;
 	srand(time(NULL));
 
   if ( ev3_init() == -1 )
@@ -91,6 +90,7 @@ int main( int argc, char **argv )
 		bluetooth = 0;
 		turns = 10;
 		timeout = -1;
+		add_small_arena_walls();
 	} else {
 
 		int tmp;
@@ -119,6 +119,14 @@ int main( int argc, char **argv )
 			bluetooth = 1;
 		} else {
 			bluetooth = 0;
+		}
+
+		printf("Am I in the large arena? \n");
+		scanf("%s", s);
+		if (s[0] == 'y' || s[0] == 'Y') {
+			add_large_arena_walls();
+		} else {
+			add_small_arena_walls();
 		}
 
 		printf("How many turns will I perform? \n");
@@ -151,11 +159,6 @@ int main( int argc, char **argv )
 	pthread_create( &position_thread, NULL, position_updater, (void *)&thread_args);
 
 	ftime(&t0);
-
-	add_wall(0, 0, P+L+P, P, SURE_HIT);							// bottom
-  add_wall(0, 0, P, P+H+P, SURE_HIT);							// left
-  add_wall(0, P+H, P+L+P, P+H+P, SURE_HIT);				// top
-  add_wall(P+L, 0, P+L+P, P+H+P, SURE_HIT);				// right
 
 	// d = 80;
   //
@@ -213,16 +216,32 @@ int main( int argc, char **argv )
 	// }
   //
 	// return 0;
-	if (argc == 4) {
-		int bump = go_forwards_cm_obs(motors, motor_head, dist, touch, 100, 12, MAX_SPEED/4);
-		if (bump) {
-			go_backwards_cm(motors, 10, MAX_SPEED/4);
-		}
-		// turn_right_motors(motors, MAX_SPEED/16, 360);
-		// wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
-		// millisleep(2000);
-		// turn_left_motors(motors, MAX_SPEED/16, 360);
-		// wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
+
+	if (argc == 3) { //rotation recalibration
+
+		turn_right_motors(motors, MAX_SPEED/16, 360);
+		wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
+		millisleep(2000);
+		turn_left_motors(motors, MAX_SPEED/16, 360);
+		wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
+
+		return 0;
+	}
+
+
+	if (argc == 4) { //random tests
+		// int bump = go_forwards_cm_obs(motors, motor_head, dist, touch, 100, 12, MAX_SPEED/4);
+		// if (bump) {
+		// 	go_backwards_cm(motors, 10, MAX_SPEED/4);
+		// }
+
+		// go_forwards_cm(motors, 60, MAX_SPEED/4);
+		// panic(motors, gyro);
+
+		my_pos.y = 10;
+		go_forwards_cm(motors, 40, MAX_SPEED/4);
+		turn_left_motors(motors, MAX_SPEED/16, 180);
+		go_forwards_obs(motors, motor_head, dist, touch, 7, MAX_SPEED/4);
 
 		return 0;
 	}
@@ -254,6 +273,9 @@ int main( int argc, char **argv )
 				obs_args.speed = MAX_SPEED/16;
 				obs_args.height_ob_down = 4;
 				obs_args.height_ob_up = 0;
+				if (bluetooth) {
+					send_obs();
+				}
 				pthread_create(&obstacle_thread, NULL, release_obs_routine, (void *)&obs_args);
 				sleep(4);
 				d = d - 15;

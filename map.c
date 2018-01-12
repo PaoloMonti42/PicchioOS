@@ -31,7 +31,7 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
   int w = 4;
   int f = 8;
   int t = DIST_THRESHOLD/10;
-  float height_ob = 3;
+  float height_ob = 15;
   float * obstaclesF;
 
   for(i=0;i<values;i++){
@@ -219,6 +219,26 @@ void add_wall (int startX, int startY, int endX, int endY, int value)
       mat[r][c] = value;
     }
   }
+}
+
+void add_small_arena_walls () {
+  add_wall(0, 0, P+L+P, P, SURE_HIT);							// bottom
+  add_wall(0, 0, P, P+H+P, SURE_HIT);							// left
+  add_wall(0, P+H, P+L+P, P+H+P, SURE_HIT);				// top
+  add_wall(P+L, 0, P+L+P, P+H+P, SURE_HIT);				// right
+}
+
+void add_large_arena_walls () {
+  add_wall(0, 0, P+L+P, P, SURE_HIT);							// bottom
+
+
+  // TAKE PADDING INTO ACCOUNT!!!
+  // add_wall (int startX, int startY, int endX, int endY, SURE_HIT);
+  // add_wall (int startX, int startY, int endX, int endY, SURE_HIT);
+  // add_wall (int startX, int startY, int endX, int endY, SURE_HIT);
+  // add_wall (int startX, int startY, int endX, int endY, SURE_HIT);
+  // add_wall (int startX, int startY, int endX, int endY, SURE_HIT);
+  // add_wall (int startX, int startY, int endX, int endY, SURE_HIT);
 }
 
 void add_my_obstacle(int startX, int startY, int endX, int endY)
