@@ -534,7 +534,7 @@ void *position_updater(void * thread_args)
 
 void *position_logger(void *arg)
 {
-	FILE* fp = fopen("log.txt", "w+");
+	FILE* fp = fopen("logs/log.txt", "w+");
 	int i;
 	for ( ; flag_killer==0; ) {
 	  fprintf( fp, "ID = %d    x = %+.4f    y = %+.4f    dir = %.3f    gyro = %.3f\n", MY_ID, my_pos.x, my_pos.y, my_pos.dir, gyro_val );

@@ -144,7 +144,7 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
 void map_print(int startX, int startY, int endX, int endY) {
   int r, c, i;
 
-  FILE * fp = fopen("map.txt", "w+");
+  FILE * fp = fopen("logs/map.txt", "w+");
   for (r = endY-1; r >= startY; r--) {
     for (c = startX; c < endX; c++) {
       uint16_t tmp = mat[r][c];

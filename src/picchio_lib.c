@@ -18,7 +18,7 @@ float gyro_val = 0;
 
 void picchio_greet() {
 	int c;
-	FILE *fp = fopen("greet.txt", "r");
+	FILE *fp = fopen("logs/greet.txt", "r");
 	while ((c = getc(fp)) != EOF)
         putchar(c);
     fclose(fp);
