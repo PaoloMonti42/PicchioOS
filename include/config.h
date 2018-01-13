@@ -34,8 +34,8 @@
 #define ARM_LENGTH 7.5
 #define ANGLE_UP_OBS_MAX 0
 #define ANGLE_DOWN_OBS_MIN 120
-#define SIDEX_OBSTACLE  8
-#define SIDEY_OBSTACLE  8
+#define SIDEX_OBSTACLE  10
+#define SIDEY_OBSTACLE  10
 
 #define ROBOT_WIDTH 14
 #define FACE 10
