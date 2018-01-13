@@ -3,9 +3,7 @@
 
 ## How to compile and install the binaries
 
-Please notice that the following guide takes for granted that you're running Linux. The source code for our project is hosted at https://github.com/PaoloMonti42/PicchioOS.
-
-In order to download it enter the path where you would like to place the folder containing the code and run:
+In order to download it move to the path where you would like to place the folder containing the code and run:
 
 git clone https://github.com/PaoloMonti42/PicchioOS.git
 
