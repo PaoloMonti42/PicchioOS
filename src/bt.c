@@ -174,7 +174,11 @@ void send_pos () {
 void send_obs () {
   char string[58];
   printf ("[BT] - I released my obstacle...\n");
-  int x = (int)my_pos.x, y = (int)my_pos.y;
+  int x = (int)my_pos.x, y = (int)my_pos.y; int dir = (int)my_pos.dir;
+
+  obs_x = x - (TAIL - SIDEY_OBSTACLE/2)*sin(dir);
+  obs_y = y - (TAIL - SIDEY_OBSTACLE/2)*cos(dir);
+
   string[0] = msgId % 0xFF;
   string[1] = msgId >> 8;
   msgId++;
@@ -182,9 +186,9 @@ void send_obs () {
   string[3] = 0xFF;
   string[4] = MSG_OBSTACLE;
   string[5] = 0x00; //obstacle dropped
-  string[6] = (int)(my_pos.x-P)/5;          /* x */ //TODO
+  string[6] = (int)(obs_x-P)/5;
   string[7] = 0x00;
-  string[8] = (int)(my_pos.y-P)/5;		/* y */ //TODO
+  string[8] = (int)(obs_y-P)/5;
   string[9] = 0x00;
   write(bt_sock, string, 9);
 }

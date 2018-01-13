@@ -1115,7 +1115,11 @@ void * release_obs_routine(void * thread_args){
 	// printf("%d, %d\n", x, y);
 	// printf("%d, %d\n", x-SIDEX_OBSTACLE/2, y-TAIL-SIDEY_OBSTACLE);
 	//TODO gestire direzione
-	add_my_obstacle(x-SIDEX_OBSTACLE/2, y-TAIL-SIDEY_OBSTACLE, x+SIDEX_OBSTACLE/2, y-TAIL);
+	int obs_p1 = x-(TAIL+SIDEY_OBSTACLE)*(sin(dir))-SIDEX_OBSTACLE/2*(cos(dir));
+  int obs_p2 = y-(TAIL+SIDEY_OBSTACLE)*(cos(dir))-SIDEX_OBSTACLE/2*(sin(dir));
+  int obs_p3 = x - TAIL*(sin(dir)) + SIDEX_OBSTACLE/2*(cos(dir));
+  int obs_p4 = y - SIDEX_OBSTACLE*(sin(dir)) - TAIL*(cos(dir));
+  add_my_obstacle(obs_p1, obs_p2, obs_p3, obs_p4);
 	go_forwards_cm(motors, 5, speed*2);
 	turn_motor_obs_to_pos_up(motor, speed, height_ob_up);
 	wait_motor_stop(motor);
