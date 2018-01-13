@@ -21,10 +21,12 @@ void *position_logger(void *arg);
 void * bt_client(void *arg);
 void *direction_updater(void *arg);
 void *position_updater(void *arg);
+void *gyro_position_updater(void *arg);
 static void kill_all(int signo);
 
 int offset = 0;
 pthread_mutex_t gyro_lock;
+pthread_mutex_t pos_lock;
 int flag_killer=0;
 uint8_t motor_obs;
 uint8_t motor_head;
@@ -85,6 +87,8 @@ int main( int argc, char **argv )
 	if (argc > 1) {
 		my_pos.x = START_X+P;
 		my_pos.y = START_Y+P;
+		gyro_pos.x = START_X+P;
+		gyro_pos.y = START_Y+P;
 		released = 1;
 		rot_th = ROT_THRESHOLD;
 		bluetooth = 0;
@@ -98,10 +102,12 @@ int main( int argc, char **argv )
 		printf("What is my starting x coordinate? \n");
 		scanf("%d", &tmp);
 		my_pos.x = tmp+P;
+		gyro_pos.x = tmp+P;
 
 		printf("What is my starting y coordinate? \n");
 		scanf("%d", &tmp);
 		my_pos.y = tmp+P;
+		gyro_pos.y = tmp+P;
 
 		printf("Will I release the obstacle? \n");
 		scanf("%s", s);
@@ -154,6 +160,7 @@ int main( int argc, char **argv )
 	pthread_mutex_init(&gyro_lock, NULL);
 	pthread_create( &direction, NULL, direction_updater, (void *)&gyro);
 
+	pthread_mutex_init(&pos_lock, NULL);
 	thread_args.motor0 = motors[0];
 	thread_args.motor1 = motors[1];
 	pthread_create( &position_thread, NULL, position_updater, (void *)&thread_args);
@@ -286,9 +293,12 @@ int main( int argc, char **argv )
 			d = d/2;
 			prevX = my_pos.x; prevY = my_pos.y;
 			int bump = go_forwards_cm_obs(motors, motor_head, dist, touch, d, 12, MAX_SPEED/4);
+			int panicked = panic(motors, gyro, &pos_lock);//TODO integrate
 			newX = my_pos.x; newY = my_pos.y;
 			d = (int)point_distance(prevX, prevY, newX, newY);
-			map_fix(prevX, prevY, my_pos.dir, d+FACE, ROBOT_WIDTH, SURE_MISS);
+			if (!panicked) {
+				map_fix(prevX, prevY, my_pos.dir, d+FACE, ROBOT_WIDTH, SURE_MISS);
+			}
 			if (bump && d > 10) {
 				go_backwards_cm(motors, 10, MAX_SPEED/4);
 		  }
@@ -313,11 +323,14 @@ int main( int argc, char **argv )
 		} else {
 			prevX = my_pos.x; prevY = my_pos.y;
 			int head_pos = go_forwards_obs(motors, motor_head, dist, touch, 7, MAX_SPEED/4);
+			int panicked = panic(motors, gyro, &pos_lock);//TODO integrate
 			millisleep(100);
 			check_ball(dist, color, my_pos.dir);
 			newX = my_pos.x; newY = my_pos.y;
 			d = (int)point_distance(prevX, prevY, newX, newY);
-			map_fix(prevX, prevY, my_pos.dir, d+FACE, ROBOT_WIDTH, SURE_MISS);
+			if (!panicked) {
+				map_fix(prevX, prevY, my_pos.dir, d+FACE, ROBOT_WIDTH, SURE_MISS);
+			}
 			if (abs(head_pos) < 40 && recal_flag == 1) {
 				angle_recal2(motors, motor_head, dist, gyro, 15, 6, 20, &gyro_lock);
 		  }
@@ -477,7 +490,7 @@ void *direction_updater(void *arg)
 		if (d > 180) {
 			d = d - 360;
 		}
-		gyro_val = d;
+		gyro_pos.dir = d;
 		// my_pos.dir = d;
 		// printf("%d\n", d);
 		pthread_mutex_unlock(&gyro_lock);
@@ -499,6 +512,7 @@ void *position_updater(void * thread_args)
 	struct timeb t0, t1;
 	ftime(&t0); ftime(&t1);
 	for ( ; flag_killer==0; ) {
+		pthread_mutex_lock(&pos_lock);
 	  get_tacho_speed(motors[0], &sp0);
 		get_tacho_speed(motors[1], &sp1);
 		sp0 = sp0 * MOT_DIR;
@@ -525,8 +539,27 @@ void *position_updater(void * thread_args)
 			} else {
 				my_pos.y = ty;
 			}
+
+			dir = gyro_pos.dir;
+			tx = gyro_pos.x + dx * sin((dir * M_PI) / 180.0);
+			if (tx < P) {
+				gyro_pos.x = P + ROBOT_WIDTH/2;
+			} else if (tx > P + L) {
+				gyro_pos.x = P + L - ROBOT_WIDTH/2;
+			} else {
+				gyro_pos.x = tx;
+			}
+			ty = gyro_pos.y + dx * cos((dir * M_PI) / 180.0);
+			if (ty < P) {
+				gyro_pos.y = P + ROBOT_WIDTH/2;
+			} else if (ty > P + H) {
+				gyro_pos.y = P + H - ROBOT_WIDTH/2;
+			} else {
+				gyro_pos.y = ty;
+			}
 		}
 		t0 = t1;
+		pthread_mutex_unlock(&pos_lock);
 		millisleep(10);
   }
 	return NULL;
@@ -537,7 +570,7 @@ void *position_logger(void *arg)
 	FILE* fp = fopen("logs/log.txt", "w+");
 	int i;
 	for ( ; flag_killer==0; ) {
-	  fprintf( fp, "ID = %d    x = %+.4f    y = %+.4f    dir = %.3f    gyro = %.3f\n", MY_ID, my_pos.x, my_pos.y, my_pos.dir, gyro_val );
+	  fprintf( fp, "ID = %d    x = %+.4f    y = %+.4f    dir = %.3f    gyro_x = %+.4f    gyro_y = %+.4f    gyro_dir = %.3f\n", MY_ID, my_pos.x, my_pos.y, my_pos.dir, gyro_pos.x, gyro_pos.y, gyro_pos.dir);
 		millisleep(100);
   }
 	fprintf( stdout, "Finished logging!\n" );
@@ -557,6 +590,7 @@ void *bt_client(void *arg)
 		millisleep(1900);
   }
 	send_map();
+	//wait_stop(); //useless?
 	printf("[BT] - Client returning...\n");
 	return NULL;
 }

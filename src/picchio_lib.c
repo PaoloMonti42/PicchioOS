@@ -14,7 +14,7 @@ typedef struct position {
 } position;
 
 position my_pos;
-float gyro_val = 0;
+position gyro_pos;
 
 void picchio_greet() {
 	int c;
@@ -312,7 +312,7 @@ void turn_left_compass(uint8_t *motors, uint8_t compass, int speed, int deg) {
 }
 
 void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
- 	int cur_pos = gyro_val;//my_pos.dir;
+ 	int cur_pos = gyro_pos.dir;
 	int dest = ((deg + 180) % 360 + 360) % 360 - 180;
 	if (dest == -180) dest = 180;
 	// dest += 6; //TODO
@@ -334,7 +334,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 			// while(my_pos.dir < dest);// {
 		 	while(cur_pos < dest) {
-				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
@@ -353,7 +353,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 	 		set_tacho_speed_sp( motors[1], MOT_DIR * speed);
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 			while(cur_pos < 0) {
-				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
@@ -361,7 +361,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 				// printf("2 %d\n", cur_pos);
 			}
 			while(cur_pos > dest) {
-				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
@@ -382,7 +382,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 	 		set_tacho_speed_sp( motors[1], MOT_DIR * speed);
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 			while(cur_pos > dest) {
-				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
@@ -401,7 +401,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 	 		set_tacho_speed_sp( motors[1], -MOT_DIR * speed);
 			multi_set_tacho_command_inx( motors, TACHO_RUN_FOREVER );
 			while(cur_pos > 0) {
-				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
@@ -409,7 +409,7 @@ void turn_to_angle(uint8_t *motors, uint8_t gyro, int speed, int deg) {
 				// printf("5 %d\n", cur_pos);
 			}
 			while(cur_pos < dest) {
-				cur_pos = gyro_val;//my_pos.dir;//get_value_single(gyro);
+				cur_pos = gyro_pos.dir;//get_value_single(gyro);
 				// cur_pos = (( cur_pos % 360 ) + 360 ) % 360;
 				// if (cur_pos > 180) {
 				// 	cur_pos = cur_pos - 360;
@@ -1013,7 +1013,7 @@ void turn_motor_obs_to_pos_down(uint8_t motor, int speed, float pos){
 	set_tacho_speed_sp( motor, speed *  MOT_DIR );
 	set_tacho_ramp_up_sp( motor, 0 );
 	set_tacho_ramp_down_sp( motor, 0 );
-	f//loat pos;
+	//float pos;
 	//pos=-atan(height_ob/3.5)*180/M_PI;
 	//printf("pos = %f\n", pos);
 	set_tacho_position_sp( motor, pos );
@@ -1107,7 +1107,7 @@ void * release_obs_routine(void * thread_args){
 	int pos_down = args->pos_down;
 	int pos_up = args->pos_up;
 
-	int x = (int)my_pos.x, y = (int)my_pos.y;
+	int x = (int)my_pos.x, y = (int)my_pos.y; int dir = (int)my_pos.dir;
   // printf("im here...\n");
 	turn_motor_obs_to_pos_down(motor, speed, pos_down);
 	wait_motor_stop(motor);
@@ -1161,27 +1161,34 @@ int go_forwards_cm_obs(uint8_t *motors, uint8_t motor_head, uint8_t dist, uint8_
 	return ret;
 }
 
-void panic(uint8_t *motors, uint8_t gyro)
+int panic(uint8_t *motors, uint8_t gyro, pthread_mutex_t *pos_lock)
 {
-	int th = 20;
-	printf("%f %f\n",my_pos.dir, gyro_val);
+	int th = 20, panicked = 0;
+	printf("%f %f\n",my_pos.dir, gyro_pos.dir);
 
-	if (my_pos.dir == 0.0 && abs(gyro_val)>th) {
+	if (my_pos.dir == 0.0 && abs(gyro_pos.dir)>th) {
 		turn_to_angle(motors, gyro, MAX_SPEED/16, 0);
-		return;
+		panicked = 1;
 	}
-
-	if (my_pos.dir == 90.0 && abs(gyro_val-90)>th) {
+	else if (my_pos.dir == 90.0 && abs(gyro_pos.dir-90)>th) {
 		turn_to_angle(motors, gyro, MAX_SPEED/16, 90);
-		return;
+		panicked = 1;
 	}
-
-	if (my_pos.dir == 180.0 && abs(gyro_val)-180<-th) {
+	else if (my_pos.dir == 180.0 && abs(gyro_pos.dir)-180<-th) {
 		turn_to_angle(motors, gyro, MAX_SPEED/16, 180);
+		panicked = 1;
+	}
+	else if (my_pos.dir == -90.0 && abs(gyro_pos.dir+90)>th) {
+		turn_to_angle(motors, gyro, MAX_SPEED/16, -90);
+		panicked = 1;
 	}
 
-	if (my_pos.dir == -90.0 && abs(gyro_val+90)>th) {
-		turn_to_angle(motors, gyro, MAX_SPEED/16, -90);
-		return;
+	if (panicked) {
+		pthread_mutex_lock(pos_lock);
+		my_pos.x = gyro_pos.x;
+		my_pos.y = gyro_pos.y;
+		pthread_mutex_unlock(pos_lock);
 	}
+
+	return panicked;
 }

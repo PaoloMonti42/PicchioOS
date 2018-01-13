@@ -157,7 +157,6 @@ int bt_init() {
 void send_pos () {
   char string[58];
   printf ("[BT] - I'm sending my position...\n");
-  int i, j;
   string[0] = msgId % 0xFF;
   string[1] = msgId >> 8;
   msgId++;
@@ -173,11 +172,11 @@ void send_pos () {
 
 void send_obs () {
   char string[58];
-  printf ("[BT] - I released my obstacle...\n");
+  printf ("[BT] - I'm releasing my obstacle...\n");
   int x = (int)my_pos.x, y = (int)my_pos.y; int dir = (int)my_pos.dir;
 
-  obs_x = x - (TAIL - SIDEY_OBSTACLE/2)*sin(dir);
-  obs_y = y - (TAIL - SIDEY_OBSTACLE/2)*cos(dir);
+  int obs_x = x - (TAIL - SIDEY_OBSTACLE/2)*sin(dir);
+  int obs_y = y - (TAIL - SIDEY_OBSTACLE/2)*cos(dir);
 
   string[0] = msgId % 0xFF;
   string[1] = msgId >> 8;
@@ -186,11 +185,11 @@ void send_obs () {
   string[3] = 0xFF;
   string[4] = MSG_OBSTACLE;
   string[5] = 0x00; //obstacle dropped
-  string[6] = (int)(obs_x-P)/5;
+  string[6] = (obs_x-P)/5;
   string[7] = 0x00;
-  string[8] = (int)(obs_y-P)/5;
+  string[8] = (obs_y-P)/5;
   string[9] = 0x00;
-  write(bt_sock, string, 9);
+  write(bt_sock, string, 10);
 }
 
 
@@ -288,4 +287,18 @@ void send_map(){
 	string[4] = MSG_MAPDONE;
 	write(bt_sock, string, 5);
   return;
+}
+
+void wait_stop() {
+  char type;
+  char string[58];
+  printf("[BT] - I'm waiting for the stop message");
+  while(1){
+    //Wait for stop message
+    read_from_server (bt_sock, string, 58);
+      type = string[4];
+    if (type ==MSG_STOP){
+      return;
+    }
+  }
 }
