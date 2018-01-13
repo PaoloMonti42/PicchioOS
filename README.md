@@ -1,199 +1,132 @@
-# EURECOM OS Contest Server
-# Main website: http://soc.eurecom.fr/OS/projects_fall2017.html
+# Picchio - cartography project for the OS class, group 1, Eurecom, 2017-2018
+# [Website](https://eurecomos.000webhostapp.com/)
 
+## How to compile and install the binaries
 
-A simple server that enables bluetooth communication between a set EV3 Lego Mindstorm.
+Please notice that the following guide takes for granted that you're running Linux. The source code for our project is hosted at https://github.com/PaoloMonti42/PicchioOS.
 
-It is first intended to be used in the OS course of EURECOM but part or all of it can be freely reused by anyone.
+In order to download it enter the path where you would like to place the folder containing the code and run:
 
-## Setup
+git clone https://github.com/PaoloMonti42/PicchioOS.git
 
-### For EV3
+Then you may either download the whole source code inside the robot and compile it internally or use docker on your machine in order to cross compile it and then download the code inside the robot.
 
-Follow the steps from [http://www.ev3dev.org/docs/getting-started/](http://www.ev3dev.org/docs/getting-started/) to download the ev3dev kernel image and flash it on the SD card.
+First of all make sure that your computer is connected to the robot via either wi-fi or bluetooth connection. Then, if you want to compile the source code internally, from the chosen installation path type the following commands on the terminal:
 
-If you do not have blueman, set it up as described: [http://www.ev3dev.org/docs/tutorials/connecting-to-the-internet-via-bluetooth/](http://www.ev3dev.org/docs/tutorials/connecting-to-the-internet-via-bluetooth/).
+scp -r ./PicchioOS robot@ROBOT_ADDRESS:~
 
-Turn on the EV3. Unpair the device on the server. Pair again from the server: enter PIN code and reenter it on EV3. Connect by SSH on the EV3. On both the server and the EV3 the command
-```
-$ hcitool scan
-```
+ssh robot@ROBOT_ADDRESS
 
-should show the connection.
-### For the server
+(insert ev3dev password)
 
-You can compile the server using the provided Makefile. If you run into an error stating that `bluetooth/bluetooth.h` was not found,
-you will need to install the `libbluetooth-dev` package (on Debian-like UNIX).
+cd PicchioOS
 
-Run the server with an appropriate team file. Each line of the team file - provided as input to the server - should be formatted as:
-```
-[TYPE] [ADDR] [NAME]
-```
-where:
-* `[TYPE]` : `1` for bluetooth, `2` for network
-* `[ADDR]` : in the form `aa:bb:cc:dd:ee:ff` is the bluetooth address if type is 1, or in the form `aaa.bbb.ccc.ddd` for IP address if type is 2
-* `[NAME]` : is the name of the team
+make
 
-You can then run the server as
-```
-$ ./server teams
-```
-or
-```
-$ ./server -o log teams
-```
-if you wish to log the session.
+make run
 
-## Protocol
+If you choose instead to cross compile run the following commands, again assuming that you start from the chosen installation path:
 
-To communicate between each other, EV3 must comply with the specified protocol. Invalid messages will be discarded by the
-server so robots can always consider that received messages are well formatted (except for `CUSTOM` messages, whose structure is
-not pre-determined).
+cd PicchioOS
 
-Each message consists of a header and a body. Note that all numbers, unless explicitly stated otherwise, are unsigned integers whose formats are **little-endian**.
+docker run -rm -it -h ev3 -v $(echo $PWD):/src -w /src ev3cc /bin/bash
 
-The protocol may evolve according to needs and proposals.
+cd ev3dev-c/source/ev3/
 
-### Header
+make
 
-The header is 5-bytes long:
+sudo make install
 
-```
-   0      1      2      3      4
-+------+------+------+------+------+
-|     ID      | src  | dst  | type |
-+------+------+------+------+------+
-```
+make shared
 
-Fields description:
-* `ID` is a 2-byte number identifying the message (kind of like a sequence number). It is used when acknowledging messages.
-* `src` is a 1-byte number identifying the team who sent the message (it is unique for the whole contest).
-* `dst` is a 1-byte number identifying the team who should receive the message (it is unique for the whole contest).
-* `type` is a 1-byte code that identifies the kind of message that is sent.
+sudo make shared-install
 
-### Body
+sudo apt-get update
 
-#### ACK
+sudo apt-get install libbluetooth-dev
 
-ACK messages are used to acknowledge the reception of messages. They are 8-byte long:
-```
-    0       1       2       3       4       5       6       7
-+-------+-------+-------+-------+-------+-------+-------+-------+
-|      ID       |  src  |  dst  |   0   |    ID ack     | state |
-+-------+-------+-------+-------+-------+-------+-------+-------+
-```
+cd ../../../
 
-Fields description:
-* `ID ack` is the ID of the message that is acknowledged
-* `state` is a status code. `0 -> OK`, `1 -> error`. Other status codes may be used for acknowledging custom messages.
+make cross
 
-Messages sent by the server should not be acknowledged.
+exit
 
-#### START
+scp Makefile robot@ROBOT_ADDRESS:~
 
-START messages can only be used by the server. One is sent to each team when the game starts. If the robot disconnects and reconnects
-during the game, another START message will be sent to it right after it connects to the server. They are 8-byte long:
-```
-    0       1       2       3       4       5       6       7
-+-------+-------+-------+-------+-------
-|      ID       |  src  |  dst  |   1  | 
-+-------+-------+-------+-------+-------
-```
+scp tester robot@ROBOT_ADDRESS:~
 
+ssh robot@ROBOT_ADDRESS
 
+(insert ev3dev password)
 
-#### STOP
+At this point you must make sure that the tester file is located inside the robot in the same directory where libev3dev-c is placed. If this is not the case make sure to respect this requirement. To start the robot enter the folder where the tester file, the ev3dev-c folder and the Makefile are located and run:
 
-STOP messages are sent by server to every robot when the game ends. They are 5-bytes long:
-```
-    0       1       2       3       4
-+-------+-------+-------+-------+-------+
-|      ID       |  src  |  dst  |   2   |
-+-------+-------+-------+-------+-------+
-```
-#### KICK
+make run
 
-KICK messages can only be sent by the server. This message is used to advertise that a robot got kicked out of the game. It is sent
-to every robot in the game. The message is 6-bytes long:
-```
-    0       1       2       3       4       5
-+-------+-------+-------+-------+-------+-------+
-|      ID       |  src  |  dst  |   3   |  id   |
-+-------+-------+-------+-------+-------+-------+
-```
+Notice that ROBOT_ADDRESS can be substituted with ev3dev.local when connecting via bluetooth.
 
-Fields description:
-* `id` is the id of the robot that was kicked.
+## Specifications
 
-#### POSITION
+* Hardware: Lego Mindstorms ev3 plus sensors and lego blocks;
 
-POSITION messages must be sent by robots every 2 seconds. This message is used to advertise the expected position of the robot.
-The message is 9-bytes long:
-```
-    0       1       2       3       4       5       6       7       8
-+-------+-------+-------+-------+-------+-------+-------+-------+-------+
-|      ID       |  src  |  0XFF |   4   |       x       |       y       |
-+-------+-------+-------+-------+-------+-------+-------+-------+-------+
-```
+* Goal: the robot must realize the map of an arena without bumping into non movable obstacles or the walls of the arena.
 
-Fields description:
-* `x` is the x coordinate of the robot. This field is a **signed** 16-bits little-endian integer.
-* `y` is the y coordinate of the robot. This field is a **signed** 16-bits little-endian integer.
+* The robot must be contained in a cube of 35 cm maximum on each dimension at start-up;
 
-#### MAPDATA
+* Robots can use up to four sensors and up to four engines. You are free to use the sensors you want to among the following ones: touch sensor, light sensor, color sensor, ultrasonic sensor (i.e., distance sensor), compass sensor, gyroscope sensor, magnetic sensor;
 
-After the entire map has been generated, the robot sends the server each 5x5 cm grid one pixel at a time.
-```
-    0       1       2       3       4       5       6       7       8       9      10      11
-+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
-|      ID       |  src  |  0xFF |   5   |       x       |       y       |   R      G        B
-+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
-```
+* The robot must have a flag on which the number of your group is clearly readable from at least two sides of the robot. The flag dimensions are at most 10x10cm. The flag may also contain a logo, a drawing and the name of the robot;
 
-Fields description:
+* The communication protocol between robots (bluetooth) will be given (you don't have to specify it). Basically, robots communicate to a server (and possibly other robots);
 
-* `x` is the x coordinate of the pixel. This field is a **signed** 16-bits little-endian integer.
-* `y` is the y coordinate of the pixel. This field is a **signed** 16-bits little-endian integer.
-* 'R', 'G', and 'B' are the red, green, blue values of the pixel respectively, valued from 0 to 255. 
+* A robot may change its shape during game phases (by deploying elements or grabbing them), but it should fit in a 35cm cube at the start of the game;
 
-#### MAPDONE
+* Your robot is allowed to lose/throw parts on purpose during the game. Destructive weapons are NOT allowed;
 
-These messages signal to the server that their map is finished.
-```
-    0       1       2       3       4
-+-------+-------+-------+-------+-------+
-|      ID       |  src  | 0xFF |   6  |
-+-------+-------+-------+-------+-------+
+* It is forbidden to send orders - remotely or not - to your robot while it is playing, apart from the BT communication with the server. The robot must be fully autonomous as soon as the game starts and until the game ends. Trying to hijack BT messages or performing any other kind of attacks is not allowed;
 
-```
+## Architecture
 
+We used the following devices and sensors:
 
-#### OBSTACLE
+* 4 motors (connected to ports A, B, C, D)
+* Gyroscope (connected to port 3)
+* Ultrasonic sensor (connected to port 2)
+* Color and light sensor (connected to port 4)
+* Touch sensor (connected to port 1)
 
-OBSTACLE messages must be sent when a robot picks up or drop an obstacle. 
-```
-    0       1       2       3       4       5       6       7       8       9
-+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
-|      ID       |  src  |  0XFF |   7   |  act  |       x       |       y       |
-+-------+-------+-------+-------+-------+-------+-------+-------+-------+-------+
-```
+The number of motors and sensors available was limited by the number of ports and by the architecture itself, as adding too many components would yield serious issues in terms of mobility, speed and precision. For instance, we noticed that if the robot was particularly heavy the wheel's axel would be deformed as a consequence, yielding problems such as impossibility to maintain a certain direction precisely or causing the robot to turn slightly left or right when the motors were started. Moreover, we noticed that the motors would be more imprecise when it came to turn left or right if the weight over the wheels wouldn't be evenly distributed. In order to solve these problem we tried several architectures until we achieved a satisfying one.
 
-Fields description:
+The adopted architecture allows to distribute the weight in a more even way between the two wheels and the metal ball, as they are evenly distantiated with respect to the center of mass of the ev3dev board and as the distance between them is approximately the same. Also, stability is greatly improved by placing the ev3dev board in parallel with respect to the axel. This choice also allowed us to use all the available ports and to connect an additional motor used to turn the ultrasonic sensor, placed in the front. Lastly, the color sensor was mounted on top of the ultrasonic sensor while the gyroscope was mounted on top of the ev3dev board, close to the brick itself since we noticed that this reduced vibrations and increased precision.
 
-* `act` is `0` if the robot dropped obstacle or `1` if it picked it up.
-* `x` is the x coordinate of the dropped obstacle. This field is a **signed** 16-bits little-endian integer.
-* `y` is the y coordinate of the dropped obstacle. This field is a **signed** 16-bits little-endian integer.
+#### Motors
 
+Two motors where used to turn the wheels, which are placed in the front.
 
+During the early testing phases we realized that the two motors would mostly start asynchronously, hence causing the robot to turn slightly left or right in a random fashion each time it would start moving. This was due to the axis distortion caused by the weight of the EV3 board and of the other robot parts mounted on top. Placing the wheels in the front and the metal ball in the back allowed us to greatly mitigate this problem, as they now occupy a central position and hence unwanted torques are minimized when turning, resulting in a higher precision.
 
-#### CUSTOM
+The third motor was used to turn the axle connected to two LEGO mechanical arms mounted in the back. Turning the axle would result in either
+lifting or lowering the mechanical arms. This mechanism was exploited in order to hold and release the non movable object within the arena.
 
-CUSTOM messages may be used to increment the protocol if teams wish to add their own custom messages. CUSTOM messages can not have
-a size greater than 58 bytes (header included).
-```
-    0       1       2       3       4        5      . . .
-+-------+-------+-------+-------+-------+-----------------
-|      ID       |  src  |  dst  |   4   |   payload . . .
-+-------+-------+-------+-------+-------+-----------------
-```
+The fourth motor was placed in the front, on top of the ultrasonic sensor, in order to allow its rotation. This apparently cumbersome choice was adopted during later stages of the project as we came to the conclusion that having the robot turning left and right in order to scan its surroundings was too risky, as it would often bump into non moveable objects or against the walls of the arena by doing so.
 
+#### Gyroscope
+
+The gyroscope was mounted on top of the robot. We used the gyroscope for recalibration purposes and in order to make the robot turn to a certain angle. For instance, we used the gyroscope to associate a certain angle to each ultrasonic sensor reading.
+
+#### Ultrasonic sensor
+
+The ultrasonic sensor was used to detect movable and non movable obstacles, borders and in order to generate the map. Although the sensor is in principle capable of measuring distances up to 250 cm, after careful testing we realized that, past 15 cm, the sensor is not reliable any longer. This issue was most likely due to echoes which would confound the sensor at distances larger than 15 cm.
+
+We decided to make the robot stop when it is ca. 7 cm away from an obstacle. After this, thanks to an additional routine, the robot scans the surrounding area and then moves backward in order to make sure that it won't bump into additional walls or obstacles which may be around. When reading the variable referring to the distance detected by the sensor, we discarded any value corresponding to a distance larger than 15 cm for the aforementioned reason.
+
+#### Color and light sensor
+
+This sensor, placed in the front of the robot, was used to detect movable objects and acknowledge their presence, since the project assignment specified that moveable objects are always red balls. The output of this sensor is read every time the ultrasonic sensor detects an obstacle in front of the robot in order to distinguish between a non moveable object and a moveable one.
+
+#### Touch sensor
+
+Mounted on top of the light and color sensor, the touch sensor is used as a failsafe mechanism to realize whether the robot has collided against a non movable obstacle. Since the robot is turning his "head" left and right while moving it may happen that it is not fast enough to detect an obstacle in front of him before bumping into it. In order to augment the sensitivity of the touch sensor a crossbar inserted in a wheel was placed in the socket of the sensor.
+
+## Credits
+Project by group 1 -  Martina Fogliato, Valerio Lanieri, Paolo Monti, Luca Rossi.
