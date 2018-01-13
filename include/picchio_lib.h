@@ -73,9 +73,9 @@ void init_gyro(uint8_t *motors, uint8_t gyro, int speed);
 
 void set_gyro(uint8_t gyro);
 
-void turn_motor_obs_to_pos_down(uint8_t motor, int speed, float height_ob);
+void turn_motor_obs_to_pos_down(uint8_t motor, int speed, float pos_down);
 
-void turn_motor_obs_to_pos_up(uint8_t motor, int speed, float height_ob);
+void turn_motor_obs_to_pos_up(uint8_t motor, int speed, float pos_up);
 
 void angle_recal(uint8_t *motors, uint8_t dist, uint8_t gyro, int speed, int th);
 

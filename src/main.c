@@ -271,8 +271,8 @@ int main( int argc, char **argv )
 				obs_args.motor0 = motors[0];
 				obs_args.motor1 = motors[1];
 				obs_args.speed = MAX_SPEED/16;
-				obs_args.height_ob_down = 4;
-				obs_args.height_ob_up = 0;
+				obs_args.pos_down = -60;
+				obs_args.pos_up = 0;
 				if (bluetooth) {
 					send_obs();
 				}

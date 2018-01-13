@@ -86,8 +86,8 @@ typedef struct rgb {
 	 uint8_t motor0;
    uint8_t motor1;
 	 int speed;
-	 float height_ob_up;
-	 float height_ob_down;
+	 float pos_up;
+	 float pos_down;
  };
 
  void wait_motor_stop(uint8_t motor) {
@@ -992,30 +992,29 @@ void scan_for_obstacle_N_pos(uint8_t *motors, uint8_t dist, uint8_t gyro, int* o
 	 wait_motor_stop(motor);
  }
 
-void turn_motor_obs_to_pos_down(uint8_t motor, int speed, float height_ob){
-	float pos = 0;
+void turn_motor_obs_to_pos_down(uint8_t motor, int speed, float pos){
+	//float pos = 0;
 	set_tacho_stop_action_inx( motor, STOP_ACTION );
  	set_tacho_speed_sp( motor, speed *  MOT_DIR );
  	set_tacho_ramp_up_sp( motor, 0 );
  	set_tacho_ramp_down_sp( motor, 0 );
-	if(height_ob<3.5 && height_ob!=0) {
-		pos = 120 - ((acos(0.5 - height_ob/ARM_LENGTH)*180/M_PI)-60);
+	//if(height_ob<3.5 && height_ob!=0) {
+		//pos = 120 - ((acos(0.5 - height_ob/ARM_LENGTH)*180/M_PI)-60);
 		// printf("pos = %f\n", pos);
-	} else if(height_ob>=3.5 || height_ob==0){
-	  pos = 60;
-	}
-	pos=-pos;
+	//} else if(height_ob>=3.5 || height_ob==0){
+	  //pos = 60;
+	//}
  	set_tacho_position_sp( motor, pos );
  	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
  }
 
- void turn_motor_obs_to_pos_up(uint8_t motor, int speed, float height_ob){
+ void turn_motor_obs_to_pos_up(uint8_t motor, int speed, float pos){
   set_tacho_stop_action_inx( motor, STOP_ACTION );
 	set_tacho_speed_sp( motor, speed *  MOT_DIR );
 	set_tacho_ramp_up_sp( motor, 0 );
 	set_tacho_ramp_down_sp( motor, 0 );
-	float pos;
-	pos=-atan(height_ob/3.5)*180/M_PI;
+	f//loat pos;
+	//pos=-atan(height_ob/3.5)*180/M_PI;
 	//printf("pos = %f\n", pos);
 	set_tacho_position_sp( motor, pos );
 	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
@@ -1105,12 +1104,12 @@ void * release_obs_routine(void * thread_args){
 	motors[0] = args->motor0;
 	motors[1] = args->motor1;
 	int speed = args->speed;
-	int height_ob_down = args->height_ob_down;
-	int height_ob_up = args->height_ob_up;
+	int pos_down = args->pos_down;
+	int pos_up = args->pos_up;
 
 	int x = (int)my_pos.x, y = (int)my_pos.y;
   // printf("im here...\n");
-	turn_motor_obs_to_pos_down(motor, speed, height_ob_down);
+	turn_motor_obs_to_pos_down(motor, speed, pos_down);
 	wait_motor_stop(motor);
 	// printf("%d, %d\n", x, y);
 	// printf("%d, %d\n", x-SIDEX_OBSTACLE/2, y-TAIL-SIDEY_OBSTACLE);
@@ -1121,7 +1120,7 @@ void * release_obs_routine(void * thread_args){
   int obs_p4 = y - SIDEX_OBSTACLE*(sin(dir)) - TAIL*(cos(dir));
   add_my_obstacle(obs_p1, obs_p2, obs_p3, obs_p4);
 	go_forwards_cm(motors, 5, speed*2);
-	turn_motor_obs_to_pos_up(motor, speed, height_ob_up);
+	turn_motor_obs_to_pos_up(motor, speed, pos_up);
 	wait_motor_stop(motor);
 
 		return NULL;
