@@ -19,7 +19,7 @@
 #define MOV_RAMP_UP 0
 #define MOV_RAMP_DOWN 0
 
-#define TURN360 670
+#define TURN360 644
 // 644 655 670
 
 #define EV3_FREQ 697971

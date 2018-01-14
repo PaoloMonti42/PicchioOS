@@ -1,9 +1,10 @@
 
 #include <math.h>
 #include <stdint.h>
+#include <stdlib.h>
 
-#define L 120
-#define H 200
+#define L 75
+#define H 110
 #define P 10
 #define SURE 0b01
 #define HIT 0b11
@@ -24,9 +25,20 @@
 #define MAP_SQUARE 5
 
 uint16_t mat[P+H+P][P+L+P] = {{0}};
+int map_copy[(P+H+P)/5][(P+L+P)/5];
 
 void update_map (int x, int y, float dir, int values, int *obstacles, int *angles) {
   int i;
+  printf("update_map(%d, %d, %d, %d, {", x, y, (int)dir, values);
+  for(i=0;i<values-1;i++){
+    printf("%d, ", obstacles[i]);
+  }
+  printf("%d }, {", obstacles[values-1]);
+  for(i=0;i<values-1;i++){
+    printf("%d, ", angles[i]);
+  }
+  printf("%d })\n", angles[values-1]);
+
   int r, c;
   int w = 4;
   int f = 8;
@@ -112,7 +124,7 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
     // printf("dx: %d, sx: %d, up: %d, dw: %d\n",boundDX, boundSX, boundUP, boundDW);
 
     for (r = boundUP; r > boundDW; r--) {
-      for (c = boundSX; c < boundDX; c++) {
+      for (c = boundSX; c <= boundDX; c++) {
         if ( (p2y-p1y)*c - (p2x-p1x)*r + p2x*p1y - p2y*p1x <= 0 &&
              (p3y-p2y)*c - (p3x-p2x)*r + p3x*p2y - p3y*p2x <= 0 &&
              (p4y-p3y)*c - (p4x-p3x)*r + p4x*p3y - p4y*p3x <= 0 &&
@@ -172,6 +184,7 @@ void map_print(int startX, int startY, int endX, int endY) {
 }
 
 void map_fix (int x, int y, int dir, int dist, int w, int value) {
+  printf("map_fix(%d, %d, %d, %d, %d);\n", x, y, dir, w, value);
   //printf("%d %d %d %d %d\n", x, y, dir, dist, value);
   int r, c;
 
@@ -378,10 +391,13 @@ void map_average(){
       if(average_square>0 && average_square<=25){
         //printf("average_square=%d\n", average_square);
         printf("@ ");
+        map_copy[row_ext/5-1][col_ext/5] = '@';
       } else if (average_square<0) {
           printf("_ ");
+          map_copy[row_ext/5-1][col_ext/5] = '_';
       } else {
         printf("? ");
+        map_copy[row_ext/5-1][col_ext/5] = '?';
       }
 
       average_square=0;
@@ -446,10 +462,13 @@ void map_average_w(float w){
       if(average_square>0 && average_square<=25){
         //printf("average_square=%d\n", average_square);
         printf("@ ");
+        map_copy[row_ext/5-1][col_ext/5] = '@';
       } else if (average_square<0) {
           printf("_ ");
+          map_copy[row_ext/5-1][col_ext/5] = '_';
       } else {
         printf("? ");
+        map_copy[row_ext/5-1][col_ext/5] = '?';
       }
 
       average_square=0;
@@ -460,3 +479,308 @@ void map_average_w(float w){
   //printf("finish\n");
   return;
 }
+
+
+void print_bob(int matrix[26][19]){
+  int i,j;
+  for (i = 25; i >= 0; i-=1) {
+    for (j = 0; j < 19; j+=1) {
+        printf("%c ",matrix[i][j]);
+    }
+    printf("\n");
+  }
+}
+
+
+void image_proc(int full,int empty,int boh,int num_row,int num_col,int map_proc[26][19]){
+  int iterate=1;
+  int full_num=0;
+  int empty_num=0;
+  int boh_num=0;
+  int new_mat[26][19];
+  int row,col;
+
+  while (iterate){
+  iterate=0;
+  for (row=0;row<num_row;row++){
+    //printf("%d\n",row);
+    for (col=0;col<num_col;col++){
+      new_mat[row][col]=map_proc[row][col];
+      if ((row>2)&&(col>2)&&(row<num_row-3)&&(col<num_col-3)){
+        if (map_proc[row][col]==boh){
+          if (map_proc[row+1][col]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row+1][col]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if (map_proc[row][col+1]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row][col+1]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if (map_proc[row-1][col]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row-1][col]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if (map_proc[row][col-1]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row][col-1]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if ((full_num >= empty_num)&&(full_num >= boh_num)) {
+            map_proc[row][col]=full;
+            //new_mat[row][col]=full;
+            iterate=1;
+          }
+          if ((empty_num > full_num)&&(empty_num >= boh_num)) {
+            map_proc[row][col]=empty;
+            //new_mat[row][col]=empty;
+            iterate=1;
+          }
+          empty_num=0;
+          boh_num=0;
+          full_num=0;
+        }
+      }
+     }
+    }
+    /*for (row=0;row<num_row;row++){
+      for (col=0;col<num_col;col++){
+        map_proc[row][col]=new_mat[row][col];
+      }
+    }
+    */
+  }
+  printf("\n\n");
+  print_bob(map_proc);
+  empty_num=0;
+  boh_num=0;
+  full_num=0;
+  // more than 3 full around
+  for (row=0;row<num_row;row++){
+    //printf("%d\n",row);
+    for (col=0;col<num_col;col++){
+        //printf("%d\n",col);
+      if ((row>1)&&(col>1)&&(row<num_row-2)&&(col<num_col-2)){
+        // printf("%d\n",row);
+        if (map_proc[row][col]==empty){
+          if (map_proc[row+1][col]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row+1][col]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if (map_proc[row][col+1]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row][col+1]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if (map_proc[row-1][col]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row-1][col]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if (map_proc[row][col-1]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row][col-1]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if (full_num >= 3){
+            map_proc[row][col]=full;
+          }
+          empty_num=0;
+          boh_num=0;
+          full_num=0;
+        }
+        else {
+          if (map_proc[row][col]==boh){
+            map_proc[row][col]=empty;
+          }
+        }
+      }
+    }
+  }
+
+
+  printf("\n\n");
+  print_bob(map_proc);
+  empty_num=0;
+  boh_num=0;
+  full_num=0;
+  // more than 3 empty around
+  for (row=0;row<num_row;row++){
+    //printf("%d\n",row);
+    for (col=0;col<num_col;col++){
+        //printf("%d\n",col);
+      if ((row>1)&&(col>1)&&(row<num_row-2)&&(col<num_col-2)){
+        if (map_proc[row][col]==full){
+          if (map_proc[row+1][col]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row+1][col]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if (map_proc[row][col+1]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row][col+1]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if (map_proc[row-1][col]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row-1][col]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if (map_proc[row][col-1]==boh){
+            boh_num++;
+          }
+          else {
+            if (map_proc[row][col-1]==empty){
+              empty_num++;
+            }
+            else {
+              full_num++;
+            }
+          }
+
+          if (empty_num >= 3){
+            map_proc[row][col]=empty;
+            //printf ("cor row:%d col:%d full:%d\n", row, col, full_num);
+          }
+          empty_num=0;
+          boh_num=0;
+          full_num=0;
+        }
+      }
+    }
+  }
+
+  printf("\n");
+  printf("before any tunnel check\n");
+  print_bob(map_proc);
+
+  int col_num;
+  int fill;
+  int tunnel_cnt=0;
+  for (row=0;row<num_row;row++){
+    for (col=0;col<num_col;col++){
+      if (map_proc[row][col]==empty){ // may be a tunnel
+        for (col_num=col;col_num<num_col;col_num++){
+          if (map_proc[row][col_num]==full) break; // end tunnel
+          else tunnel_cnt++;
+        }
+        if (tunnel_cnt<2){ // 1=5cm 2=10cm
+          for (fill=0;fill<tunnel_cnt;fill++){
+            map_proc[row][col+fill]=full; // tunnel found place a full to fill it
+          }
+        }
+        tunnel_cnt=0;
+        col = col_num;
+      }
+    }
+  }
+
+  printf("\n");
+  printf("after orizzontal tunnel check\n");
+  print_bob(map_proc);
+
+  int row_num;
+  tunnel_cnt=0;
+  for (col=0;col<num_col;col++){
+    for (row=0;row<num_row;row++){
+      if (map_proc[row][col]==empty){ // may be a tunnel
+        for (row_num=row;row_num<num_row;row_num++){
+          if (map_proc[row_num][col]==full) break; // end tunnel
+          else tunnel_cnt++;
+        }
+        if (tunnel_cnt<2){ // 1=5cm 2=10cm
+          for (fill=0;fill<tunnel_cnt;fill++){
+            map_proc[row+fill][col]=full; // tunnel found place a full to fill it
+          }
+        }
+        tunnel_cnt=0;
+        row = row_num;
+      }
+    }
+  }
+
+  printf("\n");
+  printf("after vertical tunnel check\n");
+  print_bob(map_proc);
+
+ }

@@ -3,7 +3,7 @@
 
 #define millisleep( msec ) usleep(( msec ) * 1000 )
 #include <sys/timeb.h>
-//#include <math.h>
+
 const char const *colors[] = { "?", "BLACK", "BLUE", "GREEN", "YELLOW", "RED", "WHITE", "BROWN" };
 #define COLOR_COUNT  (( int )( sizeof( colors ) / sizeof( colors[ 0 ])))
 
@@ -15,60 +15,6 @@ typedef struct position {
 
 position my_pos;
 position gyro_pos;
-
-void picchio_greet() {
-	int c;
-	FILE *fp = fopen("logs/greet.txt", "r");
-	while ((c = getc(fp)) != EOF)
-        putchar(c);
-    fclose(fp);
-}
-
-float point_distance (float Ax, float Ay, float Bx, float By) {
-	//printf("ax: %d ay: %d bx: %d by: %d\n", Ax, Ay, Bx, By);
-	return sqrt( (Ax-Bx)*(Ax-Bx) + (Ay-By)*(Ay-By) );
-}
-
-void update_direction(int deg) {
-	// printf("dir: %d\n", my_pos.dir);
-	// printf("deg: %d\n", deg);
-  int d = my_pos.dir + deg;
-  if (d > 180) {
-    my_pos.dir = ((d - 180) % 360) - 180;
-  } else if (d < -180) {
-    my_pos.dir = ((d + 180) % 360) + 180;
-  } else {
-    my_pos.dir = d;
-  }
-  // printf("Updated direction to %d!\n", my_pos.dir);
-}
-
-void update_position(float dist) {
-	my_pos.x += dist * sin((my_pos.dir * M_PI) / 180.0);
-	my_pos.y += dist * cos((my_pos.dir * M_PI) / 180.0);
-}
-
-float time_distance(float time, int speed){
-	float d;
-	//speed correction
-	if(speed==525){
-		speed=CORR_DIV2;
-	} else if (speed==262){
-		speed=CORR_DIV4;
-	} else if(speed==131){
-		speed=CORR_DIV8;
-	} else if(speed==65){
-		speed=CORR_DIV16;
-	} else {
-		d=-1;
-	}
-	d=(float) (speed*M_PI)/180*WHEEL_RADIUS;
-	// printf("Speed: %f\n", d);
-	d=d*time;
-	// printf("Distance: %f\n", d);
-	return d;
-
-}
 
 typedef struct rgb {
  	float r;
@@ -90,6 +36,44 @@ typedef struct rgb {
 	 float pos_down;
  };
 
+ /*
+  * Function: picchio_greet
+  * --------------------
+  * Picchio greets the user when starting the program
+  * --------------------
+  * Made by Picchio itself
+  */
+ void picchio_greet() {
+ 	int c;
+ 	FILE *fp = fopen("logs/greet.txt", "r");
+ 	while ((c = getc(fp)) != EOF)
+         putchar(c);
+     fclose(fp);
+ }
+
+ /*
+  * Function: point_distance
+  * --------------------
+  * Computes the distance between two points A and B using geometry
+  * --------------------
+  * Ax and Ay: coordinates of the point A
+  * Bx and By: coordinates of the point B
+  * --------------------
+  * Made by XXX
+  */
+ float point_distance (float Ax, float Ay, float Bx, float By) {
+ 	return sqrt( (Ax-Bx)*(Ax-Bx) + (Ay-By)*(Ay-By) );
+ }
+
+ /*
+  * Function: wait_motor_stop
+  * --------------------
+  * Polls a motor until it stops moving
+  * --------------------
+  * motor: handle of the motor to check
+  * --------------------
+  * Made by XXX
+  */
  void wait_motor_stop(uint8_t motor) {
  	FLAGS_T state;
  	do {
@@ -97,15 +81,19 @@ typedef struct rgb {
  	} while ( state );
  }
 
-void turn_motor_time(uint8_t motor, int speed, int time, int ramp_up, int ramp_down) {
-	set_tacho_stop_action_inx( motor, STOP_ACTION );
-	set_tacho_speed_sp( motor, speed );
-	set_tacho_time_sp( motor, time );
-	set_tacho_ramp_up_sp( motor, ramp_up );
-	set_tacho_ramp_down_sp( motor, ramp_down );
-	set_tacho_command_inx( motor, TACHO_RUN_TIMED );
-}
-
+ /*
+  * Function: turn_motor_deg
+  * --------------------
+  * Turns a motor until by a certain amount of degrees,
+	* relative to the current position.
+	* Does not call wait_motor_stop, so it's not blocking.
+  * --------------------
+  * motor: handle of the motor to check
+	* speed: velocity to turn the motor at
+	* deg: amount of degrees to turn the motor by
+  * --------------------
+  * Made by XXX
+  */
 void turn_motor_deg(uint8_t motor, int speed, int deg) {
 	set_tacho_stop_action_inx( motor, STOP_ACTION );
 	set_tacho_speed_sp( motor, speed );
@@ -115,6 +103,18 @@ void turn_motor_deg(uint8_t motor, int speed, int deg) {
 	set_tacho_command_inx( motor, TACHO_RUN_TO_REL_POS );
 }
 
+/*
+ * Function: turn_motor_to_pos
+ * --------------------
+ * Turns a motor by a certain absolute degree.
+ * Does not call wait_motor_stop, so it's not blocking.
+ * --------------------
+ * motor: handle of the motor to check
+ * speed: velocity to turn the motor at
+ * deg: degree to turn the motor at
+ * --------------------
+ * Made by XXX
+ */
 void turn_motor_to_pos(uint8_t motor, int speed, int pos) {
 	set_tacho_stop_action_inx( motor, STOP_ACTION );
 	set_tacho_speed_sp( motor, speed );
@@ -124,36 +124,20 @@ void turn_motor_to_pos(uint8_t motor, int speed, int pos) {
 	set_tacho_command_inx( motor, TACHO_RUN_TO_ABS_POS );
 }
 
-void go_forwards_time(uint8_t *motors, int time, int speed) {
-	//int d;
-	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
-	multi_set_tacho_speed_sp( motors, MOT_DIR * speed );
-	set_tacho_speed_sp( motors[0], MOT_DIR * speed * COMP_SX);
-	set_tacho_speed_sp( motors[1], MOT_DIR * speed * COMP_DX);
-	multi_set_tacho_time_sp( motors, time );
-	multi_set_tacho_ramp_up_sp( motors, 0 );
-	multi_set_tacho_ramp_down_sp( motors, 0 );
-	multi_set_tacho_command_inx( motors, TACHO_RUN_TIMED );
-	//d=(int) time_distance((float) time/1000, speed);
-	//update_position(d);
-}
-
-void go_backwards_time(uint8_t *motors, int time, int speed) {
-	//int d;
-	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
-	set_tacho_speed_sp( motors[0], -MOT_DIR * speed * COMP_SX);
-	set_tacho_speed_sp( motors[1], -MOT_DIR * speed * COMP_DX);
-	multi_set_tacho_time_sp( motors, time );
-	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
-	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
-	multi_set_tacho_command_inx( motors, TACHO_RUN_TIMED );
-	//d=(int) time_distance((float) time/1000, speed);
-	//update_position(d * -1);
-}
-
+/*
+ * Function: go_forwards_cm
+ * --------------------
+ * Moves the robot ahead by a certain distance.
+ * Calls wait_motor_stop, so it's blocking.
+ * --------------------
+ * motors: handle of the motor array to control
+ * cm: amount of centimeters to move of
+ * speed: velocity to turn the motors at
+ * --------------------
+ * Made by XXX
+ */
 void go_forwards_cm(uint8_t *motors, int cm, int speed) {
 	float deg = (360.0*cm*10)/(M_PI*WHEEL_DIAM);
-	//printf("%f\n", deg);
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	set_tacho_speed_sp( motors[0], speed * COMP_SX);
 	set_tacho_speed_sp( motors[1], speed * COMP_DX);
@@ -161,17 +145,24 @@ void go_forwards_cm(uint8_t *motors, int cm, int speed) {
 	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
-	//map((int)my_pos.x, (int)my_pos.y, my_pos.dir, cm, SURE_MISS);
-	//update_position(cm);
 	wait_motor_stop(motors[0]);
 	wait_motor_stop(motors[1]);
 }
 
-
-
+/*
+ * Function: go_backwards_cm
+ * --------------------
+ * Moves the robot backwards by a certain distance.
+ * Calls wait_motor_stop, so it's blocking.
+ * --------------------
+ * motors: handle of the motor array to control
+ * cm: amount of centimeters to move of
+ * speed: velocity to turn the motors at
+ * --------------------
+ * Made by XXX
+ */
 void go_backwards_cm(uint8_t *motors, int cm, int speed) {
 	float deg = (360.0*cm*10)/(M_PI*WHEEL_DIAM);
-	//printf("%f\n", deg);
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	set_tacho_speed_sp( motors[0], speed * COMP_SX);
 	set_tacho_speed_sp( motors[1], speed * COMP_DX);
@@ -179,11 +170,24 @@ void go_backwards_cm(uint8_t *motors, int cm, int speed) {
 	multi_set_tacho_ramp_up_sp( motors, MOV_RAMP_UP );
 	multi_set_tacho_ramp_down_sp( motors, MOV_RAMP_DOWN );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
-	//update_position(cm * -1);
 	wait_motor_stop(motors[0]);
 	wait_motor_stop(motors[1]);
 }
 
+/*
+ * Function: turn_right
+ * --------------------
+ * Turns the robot right by moving both wheels.
+ * The amount of degrees to turns the wheels of is computed
+ * through a proportion with a predetermined constant.
+ * Does not call wait_motor_stop, so it's not blocking.
+ * --------------------
+ * motors: handle of the motor array to control
+ * speed: velocity to turn the motors at
+ * deg: amount of degrees to turn the robot of
+ * --------------------
+ * Made by XXX
+ */
 void turn_right(uint8_t *motors, int speed, int deg) {
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, speed );
@@ -192,9 +196,19 @@ void turn_right(uint8_t *motors, int speed, int deg) {
 	set_tacho_position_sp( motors[0], MOT_DIR*(TURN360*deg)/360 );
 	set_tacho_position_sp( motors[1], -MOT_DIR*(TURN360*deg)/360 );
 	multi_set_tacho_command_inx( motors, TACHO_RUN_TO_REL_POS );
-	//update_direction(deg);
 }
 
+/*
+ * Function: turn_right_motors
+ * --------------------
+ * Wrapper for turning the robot to the right and updating the direction.
+ * --------------------
+ * motors: handle of the motor array to control
+ * speed: velocity to turn the motors at
+ * deg: amount of degrees to turn the motors of
+ * --------------------
+ * Made by XXX
+ */
 void turn_right_motors(uint8_t *motors, int speed, int deg) {
 	turn_right(motors, speed, deg);
 	wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
@@ -204,6 +218,20 @@ void turn_right_motors(uint8_t *motors, int speed, int deg) {
 	}
 }
 
+/*
+ * Function: turn_left
+ * --------------------
+ * Turns the robot left by moving both wheels.
+ * The amount of degrees to turns the wheels of is computed
+ * through a proportion with a predetermined constant.
+ * Does not call wait_motor_stop, so it's not blocking.
+ * --------------------
+ * motors: handle of the motor array to control
+ * speed: velocity to turn the motors at
+ * deg: amount of degrees to turn the robot of
+ * --------------------
+ * Made by XXX
+ */
 void turn_left(uint8_t *motors, int speed, int deg) {
 	multi_set_tacho_stop_action_inx( motors, STOP_ACTION );
 	multi_set_tacho_speed_sp( motors, speed );
@@ -215,6 +243,17 @@ void turn_left(uint8_t *motors, int speed, int deg) {
 	//update_direction(-deg);
 }
 
+/*
+ * Function: turn_left_motors
+ * --------------------
+ * Wrapper for turning the robot to the left and updating the direction.
+ * --------------------
+ * motors: handle of the motor array to control
+ * speed: velocity to turn the motors at
+ * deg: amount of degrees to turn the motors of
+ * --------------------
+ * Made by XXX
+ */
 void turn_left_motors(uint8_t *motors, int speed, int deg) {
 	turn_left(motors, speed, deg);
 	wait_motor_stop(motors[0]); wait_motor_stop(motors[1]);
@@ -224,12 +263,13 @@ void turn_left_motors(uint8_t *motors, int speed, int deg) {
 	}
 }
 
-void stop_motors(uint8_t *motors) {
-	multi_set_tacho_command_inx( motors, TACHO_STOP );
-}
 
 void stop_motor(uint8_t motor) {
 	set_tacho_command_inx( motor, TACHO_STOP );
+}
+
+void stop_motors(uint8_t *motors) {
+	multi_set_tacho_command_inx( motors, TACHO_STOP );
 }
 
 float get_value_single(uint8_t sensor) {
@@ -859,7 +899,7 @@ int go_forwards_obs(uint8_t *motors, uint8_t motor_head ,uint8_t dist, uint8_t t
 	} while ((d == 0 || d > cm*10.0) && c == 0 && my_pos.y > th+P); //TODO other directions?
 	if (c == 0) {
 		ret = p;
-		printf("%d\n", p);
+		// printf("%d\n", p);
 	}
 	stop_motors(motors);
 	pthread_cancel(scanner);
@@ -964,7 +1004,7 @@ void scan_for_obstacle_N_pos(uint8_t *motors, uint8_t dist, uint8_t gyro, int* o
 	 int i;
 	 float anglef;
 	 anglef = (float)(span) / (pos-1);
-	 printf("%f\n", anglef);
+	 // printf("%f\n", anglef);
 	 // angle = (int) (anglef);
 	 turn_motor_to_pos(motor, speed, 0);
 	 wait_motor_stop(motor);
@@ -1059,7 +1099,7 @@ void angle_recal2(uint8_t *motors, uint8_t head, uint8_t dist, uint8_t gyro, int
 		turn_motor_to_pos(head, MAX_SPEED/32, -pos);
 		wait_motor_stop(head);
 		d = front_obstacle(dist);
-		printf("Dist: %d %d\n", d, pos);
+		// printf("Dist: %d %d\n", d, pos);
 		if (d < min && d != 0) {
 			min = d;
 			best = pos;
@@ -1073,7 +1113,7 @@ void angle_recal2(uint8_t *motors, uint8_t head, uint8_t dist, uint8_t gyro, int
 	best = (best*2 + (cnt-1)*deg)/2;
 	turn_motor_to_pos(head, MAX_SPEED/32, 0);
 	wait_motor_stop(head);
-	printf("%d %d\n", best,cnt);
+	// printf("%d %d\n", best,cnt);
 	if (cnt == 0 ){//|| abs(best) < 7) {
 	 	return;
 	}
@@ -1163,7 +1203,7 @@ int go_forwards_cm_obs(uint8_t *motors, uint8_t motor_head, uint8_t dist, uint8_
 
 int panic(uint8_t *motors, uint8_t gyro, pthread_mutex_t *pos_lock)
 {
-	int th = 20, panicked = 0;
+	int th = 15, panicked = 0;
 	printf("%f %f\n",my_pos.dir, gyro_pos.dir);
 
 	if (my_pos.dir == 0.0 && abs(gyro_pos.dir)>th) {

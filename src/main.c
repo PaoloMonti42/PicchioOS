@@ -22,6 +22,7 @@ void * bt_client(void *arg);
 void *direction_updater(void *arg);
 void *position_updater(void *arg);
 void *gyro_position_updater(void *arg);
+void *wait_kick(void *arg);
 static void kill_all(int signo);
 
 int offset = 0;
@@ -79,7 +80,7 @@ int main( int argc, char **argv )
 	int turns, released, timeout, rot_th, bluetooth;
 	int d, rev;
 	struct timeb t0, t1;
-	int count = 0, flag = 0;
+	int count = 0, flag = 0, r = 0;
 	float prevX, prevY, newX, newY;
 
 
@@ -255,9 +256,9 @@ int main( int argc, char **argv )
 
 	for (i = 0; i < turns; i++) {
 
-		if (i > 3 && rand()%10 >= 5 && flag>=1) { //TODO evaluate rand & flag
+		if (i > 3 && rand()%10 >= r && flag>=2) { //TODO evaluate rand & flag
 
-			// count = count+turn;
+			count = count+turn;
 			// turn_fix(motors, gyro, MAX_SPEED/16, count*90);
 			if (turn > 0) {
 				turn_right_motors(motors, MAX_SPEED/16, 90);
@@ -267,12 +268,13 @@ int main( int argc, char **argv )
 
 			millisleep(50);
 			pthread_mutex_lock(&gyro_lock);
-			offset = ((count*90 + 180) % 360 + 360) % 360 - 180;
+			offset = gyro_pos.dir;//((count*90 + 180) % 360 + 360) % 360 - 180;
 			set_gyro(gyro);
 			pthread_mutex_unlock(&gyro_lock);
 			millisleep(50);
 
 			if (d > 40 && !released) {
+				r = 5;
 				go_forwards_cm(motors, 10, MAX_SPEED/4);
 				obs_args.motor = motor_obs;
 				obs_args.motor0 = motors[0];
@@ -293,7 +295,7 @@ int main( int argc, char **argv )
 			d = d/2;
 			prevX = my_pos.x; prevY = my_pos.y;
 			int bump = go_forwards_cm_obs(motors, motor_head, dist, touch, d, 12, MAX_SPEED/4);
-			int panicked = panic(motors, gyro, &pos_lock);//TODO integrate
+			int panicked = panic(motors, gyro, &pos_lock);
 			newX = my_pos.x; newY = my_pos.y;
 			d = (int)point_distance(prevX, prevY, newX, newY);
 			if (!panicked) {
@@ -303,7 +305,7 @@ int main( int argc, char **argv )
 				go_backwards_cm(motors, 10, MAX_SPEED/4);
 		  }
 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
-			// count = count+turn;
+			count = count+turn;
 			// turn_fix(motors, gyro, MAX_SPEED/16, count*90);
 			if (turn > 0) {
 				turn_right_motors(motors, MAX_SPEED/16, 90);
@@ -313,7 +315,7 @@ int main( int argc, char **argv )
 
 			millisleep(50);
 			pthread_mutex_lock(&gyro_lock);
-			offset = ((count*90 + 180) % 360 + 360) % 360 - 180;
+			offset = gyro_pos.dir;//((count*90 + 180) % 360 + 360) % 360 - 180;
 			set_gyro(gyro);
 			pthread_mutex_unlock(&gyro_lock);
 			millisleep(50);
@@ -323,7 +325,7 @@ int main( int argc, char **argv )
 		} else {
 			prevX = my_pos.x; prevY = my_pos.y;
 			int head_pos = go_forwards_obs(motors, motor_head, dist, touch, 7, MAX_SPEED/4);
-			int panicked = panic(motors, gyro, &pos_lock);//TODO integrate
+			int panicked = panic(motors, gyro, &pos_lock);
 			millisleep(100);
 			check_ball(dist, color, my_pos.dir);
 			newX = my_pos.x; newY = my_pos.y;
@@ -334,39 +336,46 @@ int main( int argc, char **argv )
 			if (abs(head_pos) < 40 && recal_flag == 1) {
 				angle_recal2(motors, motor_head, dist, gyro, 15, 6, 20, &gyro_lock);
 		  }
-			recal_flag = 1;
+			recal_flag = 0;
+			int f = 1;
 			while(1) {
-				scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 7, 150, MAX_SPEED/16);
+				scan_for_obstacle_N_pos_head(motor_head, dist, obstacles, angles, 7, 125, MAX_SPEED/16);
 				update_map(my_pos.x, my_pos.y, my_pos.dir, 7, obstacles, angles);
 				// blocked in both directions
 				if (obstacles[0] != 0 && obstacles[0] < rot_th && obstacles[6] != 0 && obstacles[6] < rot_th) {
-					rev = 20;
+					rev = 15;
 					go_backwards_cm(motors, rev, MAX_SPEED/4);
+					f = 0;
 				// blocked to the left
 				} else if (obstacles[0] != 0 && obstacles[0] < rot_th) {
-					rev = 15;
+					rev = 10;
 					turn_left_motors(motors, MAX_SPEED/16, 45);
 					// turn_left_gyro(motors, gyro, MAX_SPEED/16, 45);
 					go_backwards_cm(motors, rev, MAX_SPEED/4);
 					turn_right_motors(motors, MAX_SPEED/16, 45);
+					f = 0;
 					// turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
 			  // blocked to the right
 				} else if (obstacles[6] != 0 && obstacles[6] < rot_th) {
-					rev = 15;
+					rev = 10;
 					turn_right_motors(motors, MAX_SPEED/16, 45);
 					// turn_right_gyro(motors, gyro, MAX_SPEED/16, 45);
 					go_backwards_cm(motors, rev, MAX_SPEED/4);
 					// turn_left_gyro(motors, gyro, MAX_SPEED/16, 45);
 					turn_left_motors(motors, MAX_SPEED/16, 45);
+					f = 0;
 				} else {
-					rev = 5;
-					go_backwards_cm(motors, rev, MAX_SPEED/4);
+					if (f) {
+						rev = 5;
+						go_backwards_cm(motors, rev, MAX_SPEED/4);
+					}
 					break;
 				}
+				panic(motors, gyro, &pos_lock);
 			}
 
 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
-			// count += turn;
+			count += turn;
 			// turn_fix(motors, gyro, MAX_SPEED/16, count*90);
 			if (turn > 0) {
 				turn_right_motors(motors, MAX_SPEED/16, 90);
@@ -376,7 +385,7 @@ int main( int argc, char **argv )
 
 			millisleep(50);
 			pthread_mutex_lock(&gyro_lock);
-			offset = ((count*90 + 180) % 360 + 360) % 360 - 180;
+			offset = gyro_pos.dir;//((count*90 + 180) % 360 + 360) % 360 - 180;
 			set_gyro(gyro);
 			pthread_mutex_unlock(&gyro_lock);
 			millisleep(50);
@@ -390,6 +399,7 @@ int main( int argc, char **argv )
 
 	map_print(0, 0, P+L+P, P+H+P);
 	map_average();
+	image_proc('@','_','?',26,19,map_copy);
 	for (i=1; i <=10; i++) {
 		printf("[[[%f]]]\n", i/10.0);
 		map_average_w(i/10.0);
@@ -441,31 +451,39 @@ int motor_init(uint8_t *motor0, uint8_t* motor1, uint8_t* motor_obs, uint8_t *mo
 	ev3_tacho_init();
 	if ( !ev3_search_tacho_plugged_in( MOT_SX, 0, motor0, 0 )) {
 		fprintf( stderr, "Motor SX not found!\n" );
+		set_tacho_stop_action_inx( *motor0, STOP_ACTION );
 		set_tacho_command_inx( *motor0, TACHO_STOP );
 		all_ok = 0;
 	} else {
+		set_tacho_stop_action_inx( *motor0, STOP_ACTION );
 		set_tacho_command_inx( *motor0, TACHO_STOP );
 	}
 	if ( !ev3_search_tacho_plugged_in( MOT_DX, 0, motor1, 0 )) {
 		fprintf( stderr, "Motor DX not found!\n" );
+		set_tacho_stop_action_inx( *motor1, STOP_ACTION );
 		set_tacho_command_inx( *motor1, TACHO_STOP );
 		all_ok = 0;
 	} else {
+		set_tacho_stop_action_inx( *motor1, STOP_ACTION );
 		set_tacho_command_inx( *motor1, TACHO_STOP );
 	}
 	if ( !ev3_search_tacho_plugged_in( MOT_OBS, 0, motor_obs, 0 )) {
 		fprintf( stderr, "Motor OBS not found!\n" );
+		set_tacho_stop_action_inx( *motor_obs, STOP_ACTION );
 		set_tacho_command_inx( *motor_obs, TACHO_STOP );
 		all_ok = 0;
 	} else {
+		set_tacho_stop_action_inx( *motor_obs, STOP_ACTION );
 		set_tacho_command_inx( *motor_obs, TACHO_STOP );
 		set_tacho_position( *motor_obs, 0 );
 	}
 	if ( !ev3_search_tacho_plugged_in( MOT_HEAD, 0, motor_head, 0 )) {
 		fprintf( stderr, "Motor OBS not found!\n" );
+		set_tacho_stop_action_inx( *motor_head, STOP_ACTION );
 		set_tacho_command_inx( *motor_head, TACHO_STOP );
 		all_ok = 0;
 	} else {
+		set_tacho_stop_action_inx( *motor_head, STOP_ACTION );
 		set_tacho_command_inx( *motor_head, TACHO_STOP );
 		set_tacho_position( *motor_head, 0 );
 	}
@@ -521,7 +539,7 @@ void *position_updater(void * thread_args)
 		if ((sp0 > 0 && sp1 > 0) || (sp0 < 0 && sp1 < 0)) {
 			float speed = (sp0 + sp1) / 2.0;
 			dt = (t1.time-t0.time)*1000+(t1.millitm-t0.millitm);
-			dx = (speed*M_PI)/180*WHEEL_RADIUS*0.1*dt*1.05;
+			dx = (speed*M_PI)/180*WHEEL_RADIUS*0.1*dt*1.0;
 			dir = my_pos.dir;
 			float tx = my_pos.x + dx * sin((dir * M_PI) / 180.0);
 			if (tx < P) {
@@ -581,10 +599,12 @@ void *position_logger(void *arg)
 
 void *bt_client(void *arg)
 {
+	pthread_t kick;
 	printf("[BT] - Bluetooth client starting up...\n");
   sleep(2);
 	while (bt_init() != 0);
 	printf("[BT] - Successful server connection!\n");
+	pthread_create( &kick, NULL, wait_kick, NULL );
 	for ( ; flag_killer==0; ) {
 	  send_pos();
 		millisleep(1900);
@@ -595,6 +615,19 @@ void *bt_client(void *arg)
 	return NULL;
 }
 
+void *wait_kick(void *arg) {
+  char type;
+  char string[58];
+  while(flag_killer == 0){
+    //Wait for stop message
+    read_from_server (bt_sock, string, 58);
+      type = string[4];
+    if (type == MSG_KICK){
+      printf("[BT] - I was kicked by the server :(");
+      flag_killer = 1;
+    }
+  }
+}
 
 static void kill_all(int signo) {
 
