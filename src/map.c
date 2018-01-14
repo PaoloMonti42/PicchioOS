@@ -26,6 +26,9 @@
 
 #define MAP_SQUARE 5
 
+#define SAFE_X 120
+#define SAFE_Y 50
+
 uint16_t mat[P+H+P][P+L+P] = {{0}};
 int map_copy[H_AVG][L_AVG];
 
@@ -273,6 +276,7 @@ void add_small_arena_walls () {
   add_wall(0, 0, P, P+H+P, SURE_HIT);							// left
   add_wall(0, P+H, P+L+P, P+H+P, SURE_HIT);				// top
   add_wall(P+L, 0, P+L+P, P+H+P, SURE_HIT);				// right
+  add_wall(P, P, P+L, P+SAFE_Y, SURE_MISS);             //safe area
 }
 
 /*
@@ -284,6 +288,7 @@ void add_small_arena_walls () {
  */
 void add_large_arena_walls () {
   add_wall(0, 0, P+L+P, P, SURE_HIT);							// bottom
+  add_wall(P, P, P+SAFE_X, P+SAFE_Y, SURE_MISS);             //safe area
   // TAKE PADDING INTO ACCOUNT!!!
   // add_wall (int startX, int startY, int endX, int endY, SURE_HIT);
   // add_wall (int startX, int startY, int endX, int endY, SURE_HIT);

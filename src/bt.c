@@ -7,8 +7,8 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
 
-//#define SERV_ADDR   "40:e2:30:50:e9:4c"     /* Valerio */
-#define SERV_ADDR   "00:1a:7d:da:71:06"     /* Letitia */
+#define SERV_ADDR   "40:e2:30:50:e9:4c"     /* Valerio */
+//#define SERV_ADDR   "00:1a:7d:da:71:06"     /* Letitia */
 #define TEAM_ID     1                       /* Your team ID */
 
 #define MSG_ACK     0
@@ -22,6 +22,7 @@
 
 int bt_sock;
 uint16_t msgId = 0;
+volatile int start = 0;
 
 /*
  * Function: read_from_server
@@ -43,7 +44,7 @@ int read_from_server (int sock, char *buffer, size_t maxSize) {
     close (bt_sock);
     exit (EXIT_FAILURE);
   }
-  printf ("[BT] - received %d bytes\n", bytes_read);
+  printf ("[BT] - Received %d bytes\n", bytes_read);
   return bytes_read;
 }
 
@@ -74,6 +75,7 @@ int bt_init() {
     read_from_server (bt_sock, string, 9);
     if (string[4] == MSG_START) {
       printf ("[BT] - Received start message!\n");
+      start = 1;
     }
     return 0;
   } else {
@@ -136,12 +138,12 @@ void send_obs () {
 }
 
 /*
- * Function: send_obs
+ * Function: send_map
  * --------------------
  * Sends the final map to the server
  * --------------------
  * Made by Luca & Martina
- */ //TODO
+ */
 void send_map(){
   char string[58];
   printf ("[BT] - I'm sending my map...\n");
@@ -193,7 +195,7 @@ void send_map(){
 	    string[4] = MSG_MAPDATA;
     	string[5] = col_ext/5;          /* x */
 			string[6] = 0x00;
-    	string[7] = row_ext/5;		     /* y */
+    	string[7] = H_AVG-row_ext/5;		     /* y */
 			string[8]= 0x00;
       if(average_square>0 && average_square<=25){
         string[9] = 255;
@@ -244,6 +246,13 @@ void wait_stop() {
   }
 }
 
+/*
+ * Function: send_map
+ * --------------------
+ * Sends the final map to the server, after processing
+ * --------------------
+ * Made by Luca & Paolo
+ */
 void send_matrix(int matrix[H_AVG][L_AVG]){
   char string[58];
   int i,j;
@@ -257,22 +266,31 @@ void send_matrix(int matrix[H_AVG][L_AVG]){
       string[4] = MSG_MAPDATA;
       string[5] = j;          /* x */
       string[6] = 0x00;
-      string[7] = i;		     /* y */
+      string[7] = H_AVG-i;		     /* y */
       string[8]= 0x00;
       if(matrix[i][j] == '@'){
-        string[9] = 255;
-        string[10] = 255;
-        string[11] = 255;
-      } else if (matrix[i][j] == '_') {
         string[9] = 0;
         string[10] = 0;
         string[11] = 0;
+      } else if (matrix[i][j] == '_') {
+        string[9] = 23;
+        string[10] = 161;
+        string[11] = 200;
       } else {
-        string[9]= 0;
-        string[10]= 255;
-        string[11]= 0;
+        string[9] = 23;
+        string[10] = 161;
+        string[11] = 200;
       }
       write(bt_sock, string, 12);
     }
   }
+
+  printf("[BT] - Done sending map");
+  string[0] = msgId % 0xFF;
+  string[1] = msgId >> 8;
+  msgId++;
+	string[2] = TEAM_ID;
+	string[3] = 0xFF;
+	string[4] = MSG_MAPDONE;
+	write(bt_sock, string, 5);
 }

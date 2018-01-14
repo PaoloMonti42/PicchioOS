@@ -1019,7 +1019,6 @@ int go_forwards_cm_obs(uint8_t *motors, uint8_t motor_head, uint8_t dist, uint8_
 int panic(uint8_t *motors, pthread_mutex_t *pos_lock)
 {
 	int th = 15, panicked = 0;
-	printf("%f %f\n",my_pos.dir, gyro_pos.dir);
 
 	//Check if we think we are looking at 0 but drifted by more than th degrees
 	if (my_pos.dir == 0.0 && abs(gyro_pos.dir)>th) {
