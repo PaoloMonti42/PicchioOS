@@ -6,6 +6,8 @@
 #define L 75
 #define H 110
 #define P 10
+#define L_AVG (P+L+P)/5
+#define H_AVG (P+H+P)/5
 #define SURE 0b01
 #define HIT 0b11
 #define MISS 0b10
@@ -25,40 +27,43 @@
 #define MAP_SQUARE 5
 
 uint16_t mat[P+H+P][P+L+P] = {{0}};
-int map_copy[(P+H+P)/5][(P+L+P)/5];
+int map_copy[H_AVG][L_AVG];
 
+/*
+ * Function: update_map
+ * --------------------
+ * Saves in the map the obstacles identified by the robot
+ * --------------------
+ * x: x coordinate of the robot
+ * y: y coordintae of the robot
+ * dir: direction of the robot in the range (-180:180) where 0 means front -90 left 90 right
+ * values: number of readings performed by the robot with the scan function
+ * obstacles: array of the distances of the obstacles identified by the robot with 0 that means no obstacle. sorted with the same rule used for angles
+ * angles: array of the relative angles (-180:180) in which the robot has perfmormed a scan. in position 0 there is the leftmost scan
+ * --------------------
+ * Made by Paolo & Martina & Luca
+ */
 void update_map (int x, int y, float dir, int values, int *obstacles, int *angles) {
   int i;
-  printf("update_map(%d, %d, %d, %d, {", x, y, (int)dir, values);
-  for(i=0;i<values-1;i++){
-    printf("%d, ", obstacles[i]);
-  }
-  printf("%d }, {", obstacles[values-1]);
-  for(i=0;i<values-1;i++){
-    printf("%d, ", angles[i]);
-  }
-  printf("%d })\n", angles[values-1]);
 
   int r, c;
-  int w = 4;
-  int f = 8;
-  int t = DIST_THRESHOLD/10;
-  float height_ob = 15;
+  int width = 4;
+  int face = 8;
+  int th = DIST_THRESHOLD/10;
+  float obs_depth = 15;
   float * obstaclesF;
 
+  //Apply the array of relative angles to the current position
   for(i=0;i<values;i++){
       angles[i] = angles[i]+dir;
       if (angles[i] > 180) angles[i] -= 360;
       if (angles[i] < - 180) angles[i] += 360;
   }
 
-  // rotation point of eyes
-  float fx = x + f * sin((angles[values/2] * M_PI) / 180.0);
-  float fy = y + f * cos((angles[values/2] * M_PI) / 180.0);
+  // Compute the rotation point of eyes
+  float fx = x + face * sin((angles[values/2] * M_PI) / 180.0);
+  float fy = y + face * cos((angles[values/2] * M_PI) / 180.0);
 
-  // printf("%d %d %f %f %f %d %d %d\n", x, y, dir, fx, fy, values/2, angles[values/2], obstacles[values/2]);
-
-  // printf("(x,y)=(%d,%d)\n", x, y);
   obstaclesF = (float *)malloc(sizeof(float)*values);
 
   for(i=0;i<values;i++){
@@ -66,72 +71,64 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
   }
 
   for (i = 0; i < values; i++) {
-
-
-    // exact point of eyes
+    // Compute the exact point of eyes
     float ex = fx + 2 * sin((angles[i] * M_PI) / 180.0);
     float ey = fy + 2 * cos((angles[i] * M_PI) / 180.0);
-    // printf("angles[%d] = %d, fx = %f fy = %f, ex = %f, ey = %f\n", i, angles[i], fx-P, fy-P, ex-P, ey-P);
 
-    float mx = (obstacles[i] == 0 ? t : obstaclesF[i]) * sin((angles[i] * M_PI) / 180.0);
-    float my = (obstacles[i] == 0 ? t : obstaclesF[i]) * cos((angles[i] * M_PI) / 180.0);
-    float heightx = (obstacles[i] == 0 ? 0 : height_ob) * sin((angles[i] * M_PI) / 180.0);
-    float heighty = (obstacles[i] == 0 ? 0 : height_ob) * cos((angles[i] * M_PI) / 180.0);
+    //Geometry ahead
 
-    float nx = w/2 * sin(((angles[i]+90) * M_PI) / 180.0);
-    float ny = w/2 * cos(((angles[i]+90) * M_PI) / 180.0);
+    //Find the slope of the line of the scan
+    float mx = (obstacles[i] == 0 ? th : obstaclesF[i]) * sin((angles[i] * M_PI) / 180.0);
+    float my = (obstacles[i] == 0 ? th : obstaclesF[i]) * cos((angles[i] * M_PI) / 180.0);
+    float heightx = (obstacles[i] == 0 ? 0 : obs_depth) * sin((angles[i] * M_PI) / 180.0);
+    float heighty = (obstacles[i] == 0 ? 0 : obs_depth) * cos((angles[i] * M_PI) / 180.0);
 
+    //Find the slope of the other line of the scan
+    float nx = width/2 * sin(((angles[i]+90) * M_PI) / 180.0);
+    float ny = width/2 * cos(((angles[i]+90) * M_PI) / 180.0);
+
+    //Coordinates of the scanned area
     float p1x = ex - nx;
     float p1y = ey - ny;
-    // printf("P1 (%f, %f)\n", p1x, p1y);
 
     float p2x = ex + nx;
     float p2y = ey + ny;
-    // printf("P2 (%f, %f)\n", p2x, p2y);
 
     float p3x = p2x + mx;
     float p3y = p2y + my;
-    // printf("P3 (%f, %f)\n", p3x, p3y);
 
     float p4x = p1x + mx;
     float p4y = p1y + my;
-    // printf("P4 (%f, %f)\n", p4x, p4y);
 
     float ob_p1x = p4x;
     float ob_p1y = p4y;
-    //printf("P1 (%f, %f)\n", p1x, p1y);
 
     float ob_p2x = p3x;
     float ob_p2y = p3y;
-    //printf("P2 (%f, %f)\n", p2x, p2y);
 
     float ob_p3x = ob_p2x + heightx;
     float ob_p3y = ob_p2y + heighty;
-    //printf("P3 (%f, %f)\n", p3x, p3y);
 
     float ob_p4x = ob_p1x + heightx;
     float ob_p4y = ob_p1y + heighty;
 
-    // printf("coordinates: (%f, %f), (%f, %f), (%f, %f), (%f, %f)\n", ob_p1x, ob_p1y, ob_p2x, ob_p2y, ob_p3x, ob_p3y, ob_p4x, ob_p4y);
+    //Compute bound to avoid writing OOB
+    int boundDX = ex+th>P+L-1?P+L-1:ex+th;
+    int boundSX = ex-th<P?P:ex-th;
 
-
-    int boundDX = ex+t>P+L-1?P+L-1:ex+t;
-    int boundSX = ex-t<P?P:ex-t;
-
-    int boundUP = ey+t+1>P+H-1?P+H-1:ey+t+1;
-    int boundDW = ey-t<P?P:ey-t;
-
-    // printf("dx: %d, sx: %d, up: %d, dw: %d\n",boundDX, boundSX, boundUP, boundDW);
+    int boundUP = ey+th+1>P+H-1?P+H-1:ey+th+1;
+    int boundDW = ey-th<P?P:ey-th;
 
     for (r = boundUP; r > boundDW; r--) {
       for (c = boundSX; c <= boundDX; c++) {
+        //Compute if a given point of the map is inside the rectagle delimited by the four coordinates
         if ( (p2y-p1y)*c - (p2x-p1x)*r + p2x*p1y - p2y*p1x <= 0 &&
              (p3y-p2y)*c - (p3x-p2x)*r + p3x*p2y - p3y*p2x <= 0 &&
              (p4y-p3y)*c - (p4x-p3x)*r + p4x*p3y - p4y*p3x <= 0 &&
              (p1y-p4y)*c - (p1x-p4x)*r + p1x*p4y - p1y*p4x <= 0 ) {
           if ((mat[r][c] & 0b11) != SURE) {
+            //Shift the current cell to add a measurement
             mat[r][c] = (mat[r][c] << 2) + MISS;
-            // printf("0 ");
           }
         } else if (!(heightx==0 && heighty==0) &&(ob_p2y-ob_p1y)*c - (ob_p2x-ob_p1x)*r + ob_p2x*ob_p1y - ob_p2y*ob_p1x <= 0 &&
              (ob_p3y-ob_p2y)*c - (ob_p3x-ob_p2x)*r + ob_p3x*ob_p2y - ob_p3y*ob_p2x <= 0 &&
@@ -139,20 +136,27 @@ void update_map (int x, int y, float dir, int values, int *obstacles, int *angle
              (ob_p1y-ob_p4y)*c - (ob_p1x-ob_p4x)*r + ob_p1x*ob_p4y - ob_p1y*ob_p4x <= 0 ) {
             if ((mat[r][c] & 0b11) != SURE) {
               mat[r][c] = (mat[r][c] << 2) + HIT;
-              // printf("1 ");
             }
        }  else {
-          // fuori dal campo visivo, rimane unknown
-          // printf(". ");
         }
       }
-      // printf("\n");
     }
-    // printf("------------------------------------------------------\n");
   }
-
 }
 
+
+/*
+ * Function: map_print
+ * --------------------
+ * Saves the map in logs/map.txt file
+ * --------------------
+ * startX: x coordinate of starting point of the map to be saved in the file
+ * startY: y coordinate of starting point of the map to be saved in the file
+ * endX: x coordinate of ending point of the map to be saved in the file
+ * endY: y coordinate of ending point of the map to be saved in the file
+ * --------------------
+ * Made by Paolo
+ */
 void map_print(int startX, int startY, int endX, int endY) {
   int r, c, i;
 
@@ -183,11 +187,25 @@ void map_print(int startX, int startY, int endX, int endY) {
   fclose(fp);
 }
 
+/*
+ * Function: map_fix
+ * --------------------
+ * Save the path followed by the robot in the map
+ * --------------------
+ * x: x coordinate of starting point of the robot
+ * y: y coordinate of starting point of the robot
+ * dir: direction of the robot in the range (-180:180) where 0 means front -90 left 90 right
+ * dist: distance traveld by the robot
+ * w: width of the robot
+ * value: value to be written in the map in the path travelled by the robot
+ * --------------------
+ * Made by Paolo
+ */
 void map_fix (int x, int y, int dir, int dist, int w, int value) {
-  printf("map_fix(%d, %d, %d, %d, %d);\n", x, y, dir, w, value);
-  //printf("%d %d %d %d %d\n", x, y, dir, dist, value);
   int r, c;
 
+  //Similar geometry comutations to update_map
+  //Aim is always to find the 4 coordinates of the area to cover
   float mx = dist * sin((dir * M_PI) / 180.0);
   float my = dist * cos((dir * M_PI) / 180.0);
 
@@ -196,19 +214,15 @@ void map_fix (int x, int y, int dir, int dist, int w, int value) {
 
   float p1x = x - nx;
   float p1y = y - ny;
-  // printf("P1 (%f, %f)\n", p1x, p1y);
 
   float p2x = x + nx;
   float p2y = y + ny;
-  // printf("P2 (%f, %f)\n", p2x, p2y);
 
   float p3x = p2x + mx;
   float p3y = p2y + my;
-  // printf("P3 (%f, %f)\n", p3x, p3y);
 
   float p4x = p1x + mx;
   float p4y = p1y + my;
-  // printf("P4 (%f, %f)\n", p4x, p4y);
 
   for (r = P+H+P; r > 0; r--) {
     for (c = 0; c < P+L+P; c++) {
@@ -224,6 +238,19 @@ void map_fix (int x, int y, int dir, int dist, int w, int value) {
   }
 }
 
+/*
+ * Function: add_wall
+ * --------------------
+ * Adds a wall in the map
+ * --------------------
+ * startX: x coordinate of the starting point of the wall
+ * startY: y coordinate of the starting point of the wall
+ * endX: x coordinate of the ending point of the wall
+ * endY: y coordinate of the ending point of the wall
+ * value: value to be written in the map for the wall
+ * --------------------
+ * Made by Paolo & Luca
+ */
 void add_wall (int startX, int startY, int endX, int endY, int value)
 {
   int r, c;
@@ -234,6 +261,13 @@ void add_wall (int startX, int startY, int endX, int endY, int value)
   }
 }
 
+/*
+ * Function: add_small_arena_walls
+ * --------------------
+ * Add the walls of the small arena in the map
+ * --------------------
+ * Made by Paolo
+ */
 void add_small_arena_walls () {
   add_wall(0, 0, P+L+P, P, SURE_HIT);							// bottom
   add_wall(0, 0, P, P+H+P, SURE_HIT);							// left
@@ -241,10 +275,15 @@ void add_small_arena_walls () {
   add_wall(P+L, 0, P+L+P, P+H+P, SURE_HIT);				// right
 }
 
+/*
+ * Function: add_large_arena_walls
+ * --------------------
+ * Add the walls of the large arena in the map
+ * --------------------
+ * Made by Paolo
+ */
 void add_large_arena_walls () {
   add_wall(0, 0, P+L+P, P, SURE_HIT);							// bottom
-
-
   // TAKE PADDING INTO ACCOUNT!!!
   // add_wall (int startX, int startY, int endX, int endY, SURE_HIT);
   // add_wall (int startX, int startY, int endX, int endY, SURE_HIT);
@@ -254,33 +293,66 @@ void add_large_arena_walls () {
   // add_wall (int startX, int startY, int endX, int endY, SURE_HIT);
 }
 
+/*
+ * Function: add_my_obstacle
+ * --------------------
+ * Wrapper of the add_wall function used to mark the obstacle relased by the robot in the map
+ * --------------------
+ * startX: x coordinate of the starting point of the wall
+ * startY: y coordinate of the starting point of the wall
+ * endX: x coordinate of the ending point of the wall
+ * endY: y coordinate of the ending point of the wall
+ * --------------------
+ * Made by Martina
+ */
 void add_my_obstacle(int startX, int startY, int endX, int endY)
 {
-  //add_my_obstacle(my_pos.x-SIDEX_OBSTACLE/2, my_pos.y-TAIL-SIDEY_OBSTACLE, my_pos.x+SIDEX_OBSTACLE/2, my_pos.y-TAIL);
-  //printf("startx:%d, starty:%d, endx:%d, endy:%d\n", startX, startY, endX, endY);
   add_wall(startX, startY, endX, endY, SURE_HIT);
 }
 
+/*
+ * Function: empty_cnt
+ * —------------------
+ * Counts the number of not yet defined readings for a point in the map
+ * —------------------
+ * x: x coordinate of the point in the map
+ * y: y coordinate of the point in the map
+ * —------------------
+ * return: the number of undefined reading for that point or 0 if it is a SURE_HIT or SURE_MISS
+ * —------------------
+ * Made by Valerio
+ */
 int empty_cnt(int y, int x){
   int a=0, k;
   if((mat[y][x] & 0b11)==0b01){
-    //printf("In y: %d and x: %d found: %d zeros.\n", y, x, a);
 		return 0;
 	}
   for(k=0; k<8; k++){
 	   if(((mat[y][x] >> (2*k)) & 0b11)==0)
 		   a++;
   }
-	//printf("In y: %d and x: %d found: %d zeros.\n", y, x, a);
   return a;
 }
 
-
+/*
+ * Function: choice_LR
+ * —------------------
+ * Chooses the next turn direction of the robot basd on which area of the map is the most unexplored
+ * —------------------
+ * x: x coordinate of the robot in the map
+ * y: y coordinate of the robot in the map
+ * dir: direction of the robot
+ * —------------------
+ * return: the choosen direction LEFT,RIGHT or 0 that means LEFT in case of even result
+ * —------------------
+ * Made by Martina & Valerio
+ */
 int choice_LR(int x, int y, int dir){
   int i,j;
   int check1=0, check2=0;
 	int orientation, direction;
 
+  //Quickly find which direction we are looking at
 	if(dir <= 45 && dir > -45){
 		orientation=VERTICAL;
 		direction=NORTH;
@@ -299,30 +371,25 @@ int choice_LR(int x, int y, int dir){
 	if(orientation==VERTICAL){
  		for(i=0; i<H; i++){
   	  for(j=0; j<x; j++){
-				// printf("y: %d, x: %d.\n", i, j);
 	      check1+=empty_cnt(i,j);
  		  }
 		  for(j=x; j<L; j++){
-        // printf("y: %d, x: %d.\n", i, j);
   			check2+=empty_cnt(i,j);
       }
     }
 	//HORIZONTAL SPAN
 	}else{
 		for(j=0; j<L; j++){
-			// printf("check1:\n");
       for(i=0; i<y; i++){
         check1+=empty_cnt(i,j);
       }
-			// printf("check2:\n");
       for(i=y; i<H; i++){
         check2+=empty_cnt(i,j);
       }
     }
 	}
 
-	// printf("Check1: %d, check2: %d, direction: %d, orientation: %d.\n", check1, check2, direction, orientation);
-
+  //Decide which half of the map is less explored based on the two counters
   if(check1>check2){
 		if(direction==NORTH || direction==WEST){
 			return LEFT;
@@ -339,91 +406,105 @@ int choice_LR(int x, int y, int dir){
   return 0;
 }
 
+/*
+ * Function: map_average
+ * --------------------
+ * Squeezes the 1x1 cm rapresentation of the map into a 5x5 cm one and generates a map_copy for future image processing
+ * --------------------
+ * Made by Martina & Luca
+ */
 void map_average(){
-  int row_ext, col_ext, row_int, col_int, k;
-  int average[MAP_SQUARE][MAP_SQUARE]={{0}};
-  int average_square=0;
-  int flag=0;
 
-  for (row_ext = P+H+P; row_ext > 0; row_ext-=5) {
-    //printf("row_ext=%d\n", row_ext);
-    for (col_ext = 0; col_ext < P+L+P; col_ext+=5) {
-      //printf("col_ext=%d\n", col_ext);
-      for(row_int=row_ext-MAP_SQUARE; row_int<row_ext; row_int++){
-        //printf("row_int=%d\n", row_int);
-        for(col_int=col_ext; col_int < col_ext+MAP_SQUARE; col_int++){
-          //printf("col_int=%d\n", col_int);
-            if((mat[row_int][col_int] & 0b11)==0b01){
-              if((((mat[row_int][col_int] >> 2) & 0b11))==HIT){
-                average[row_int % MAP_SQUARE][col_int % MAP_SQUARE]=8;
-                flag=1;
-              } else {
-                average[row_int % MAP_SQUARE][col_int % MAP_SQUARE]=-8;
-                flag=1;
-              }
-            } else {
-              for(k=0; k<8; k++){
-                //printf("a\n");
-                if((((mat[row_int][col_int] >> (2*k)) & 0b11))==HIT){
-                  average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]+=1;
+    int row_ext, col_ext, row_int, col_int, k;
+    int average[MAP_SQUARE][MAP_SQUARE]={{0}};
+    int average_square=0;
+    int flag=0;
+
+    //for all groups of 5 rows and cols in the 1x1 matrix
+    for (row_ext = P+H+P; row_ext > 0; row_ext-=5) {
+      for (col_ext = 0; col_ext < P+L+P; col_ext+=5) {
+        for(row_int=row_ext-MAP_SQUARE; row_int<row_ext; row_int++){
+          for(col_int=col_ext; col_int < col_ext+MAP_SQUARE; col_int++){
+              //if square is a sure measure
+              if((mat[row_int][col_int] & 0b11)==0b01){
+                //if square is a sure hit average of the 1x1cm square = 8
+                //if square is a sure miss average of the 1x1cm square = -8
+                if((((mat[row_int][col_int] >> 2) & 0b11))==HIT){
+                  average[row_int % MAP_SQUARE][col_int % MAP_SQUARE]=8;
                   flag=1;
-                  //printf("FULL HERE\n");
-                } else if((((mat[row_int][col_int] >> (2*k)) & 0b11))==MISS){
-                  //average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]-=1;
-                  //flag=1;
+                } else {
+                  average[row_int % MAP_SQUARE][col_int % MAP_SQUARE]=-8;
+                  flag=1;
+                }
+              } else {
+                //else for all readings in a square if it's a hit average+=1
+                // if it's a miss average-=1
+                for(k=0; k<8; k++){
+                  if((((mat[row_int][col_int] >> (2*k)) & 0b11))==HIT){
+                    average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]+=1;
+                    flag=1;
+                  } else if((((mat[row_int][col_int] >> (2*k)) & 0b11))==MISS){
+                  }
                 }
               }
-            }
-                //printf("average=%d\n", average[row_int][col_int]);
-                if(flag==0){
-                  average_square=0;
-                }
-                else if(average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]>=0){
-                  average_square+=1;
-                  } else {
-                    average_square-=1;
+                  if(flag==0){
+                    average_square=0;
                   }
-                average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]=0;
-                flag=0;
-            }
+                  //average of the 5x5cm square is increased by 1 if average
+                  //of the 1x1cm square is larger than 0, is decreased by 1
+                  //otherwise
+                  else if(average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]>=0){
+                    average_square+=1;
+                    } else {
+                      average_square-=1;
+                    }
+                  average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]=0;
+                  flag=0;
+              }
+          }
+        //if the majority of smaller squares are filled, the 5x5cm square is //set as an obstacle
+        if(average_square>0 && average_square<=25){
+          printf("@ ");
+          map_copy[row_ext/5-1][col_ext/5] = '@';
+        //if the majority of smaller squares are empty, the 5x5cm square is //set as empty
+        } else if (average_square<0) {
+            printf("_ ");
+            map_copy[row_ext/5-1][col_ext/5] = '_';
+        //otherwise is left unknown
+        } else {
+          printf("? ");
+          map_copy[row_ext/5-1][col_ext/5] = '?';
         }
-      //printf("average of the square is: %d\n", average_square);
-      if(average_square>0 && average_square<=25){
-        //printf("average_square=%d\n", average_square);
-        printf("@ ");
-        map_copy[row_ext/5-1][col_ext/5] = '@';
-      } else if (average_square<0) {
-          printf("_ ");
-          map_copy[row_ext/5-1][col_ext/5] = '_';
-      } else {
-        printf("? ");
-        map_copy[row_ext/5-1][col_ext/5] = '?';
-      }
 
-      average_square=0;
+        average_square=0;
+        }
+          printf("\n");
       }
-        printf("\n");
-    }
+    return;
 
-  //printf("finish\n");
-  return;
 }
 
-
+/*
+ * Function: map_average_w
+ * --------------------
+ * Squeezes the 1x1 cm rapresentation of the map into a 5x5 cm one by giving a w wieght to the MISS lecture.
+ * It generates also a map_copy of it for future image processing
+ * —------------------
+ * w: weight of the MISS lecture
+ * —------------------
+ * Made by Martina & Luca
+ */
 void map_average_w(float w){
   int row_ext, col_ext, row_int, col_int, k;
   float average[MAP_SQUARE][MAP_SQUARE]={{0}};
   int average_square=0;
   int flag=0;
 
+  //Same comments as the previous function
   for (row_ext = P+H+P; row_ext > 0; row_ext-=5) {
-    //printf("row_ext=%d\n", row_ext);
     for (col_ext = 0; col_ext < P+L+P; col_ext+=5) {
-      //printf("col_ext=%d\n", col_ext);
       for(row_int=row_ext-MAP_SQUARE; row_int<row_ext; row_int++){
-        //printf("row_int=%d\n", row_int);
         for(col_int=col_ext; col_int < col_ext+MAP_SQUARE; col_int++){
-          //printf("col_int=%d\n", col_int);
             if((mat[row_int][col_int] & 0b11)==0b01){
               if((((mat[row_int][col_int] >> 2) & 0b11))==HIT){
                 average[row_int % MAP_SQUARE][col_int % MAP_SQUARE]=8;
@@ -434,18 +515,15 @@ void map_average_w(float w){
               }
             } else {
               for(k=0; k<8; k++){
-                //printf("a\n");
                 if((((mat[row_int][col_int] >> (2*k)) & 0b11))==HIT){
                   average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]+=1;
                   flag=1;
-                  //printf("FULL HERE\n");
                 } else if((((mat[row_int][col_int] >> (2*k)) & 0b11))==MISS){
                   average[row_int% MAP_SQUARE][col_int% MAP_SQUARE]-=w;
                   flag=1;
                 }
               }
             }
-                //printf("average=%d\n", average[row_int][col_int]);
                 if(flag==0){
                   average_square=0;
                 }
@@ -458,9 +536,7 @@ void map_average_w(float w){
                 flag=0;
             }
         }
-      //printf("average of the square is: %d\n", average_square);
       if(average_square>0 && average_square<=25){
-        //printf("average_square=%d\n", average_square);
         printf("@ ");
         map_copy[row_ext/5-1][col_ext/5] = '@';
       } else if (average_square<0) {
@@ -470,42 +546,64 @@ void map_average_w(float w){
         printf("? ");
         map_copy[row_ext/5-1][col_ext/5] = '?';
       }
-
       average_square=0;
       }
         printf("\n");
     }
-
-  //printf("finish\n");
   return;
 }
 
-
-void print_bob(int matrix[26][19]){
+/*
+ * Function: print_matrix
+ * --------------------
+ * Displays on the sreen the averaged matrix
+ * —------------------
+ * matrix: matrix to be displayed
+ * —------------------
+ * Made by Luca
+ */
+void print_matrix(int matrix[H_AVG][L_AVG]){
   int i,j;
-  for (i = 25; i >= 0; i-=1) {
-    for (j = 0; j < 19; j+=1) {
+  for (i = H_AVG-1; i >= 0; i-=1) {
+    for (j = 0; j < L_AVG; j+=1) {
         printf("%c ",matrix[i][j]);
     }
     printf("\n");
   }
 }
 
+/*
+ * Function: image_proc
+ * --------------------
+ * Apply some transformations to the map in order to eliminate the unexplored areas
+ * —------------------
+ * full: character used to mark an obstacle in the map
+ * empty: character used to mark an empty location in the map
+ * boh: character used to mark an unknown location in the map
+ * map_proc: map on which apply the transformations
+ * —------------------
+ * Made by Luca
+ * TODO eliminate print_matrix in the middle
+ * TODO decide how to work on the map
+ */
 
-void image_proc(int full,int empty,int boh,int num_row,int num_col,int map_proc[26][19]){
+void image_proc(int full,int empty,int boh,int map_proc[H_AVG][L_AVG]){
+  int num_row = H_AVG, num_col = L_AVG;
   int iterate=1;
   int full_num=0;
   int empty_num=0;
   int boh_num=0;
-  int new_mat[26][19];
+  //int new_mat[H_AVG][L_AVG];
   int row,col;
 
+  // eliminate the unknown locations of the map surrounded by well known points
+  // iterate until at least one change is performed in the map
   while (iterate){
   iterate=0;
   for (row=0;row<num_row;row++){
-    //printf("%d\n",row);
     for (col=0;col<num_col;col++){
-      new_mat[row][col]=map_proc[row][col];
+      // new_mat[row][col]=map_proc[row][col];
+      // to avoid segmentation fault and the full flooding given by the walls
       if ((row>2)&&(col>2)&&(row<num_row-3)&&(col<num_col-3)){
         if (map_proc[row][col]==boh){
           if (map_proc[row+1][col]==boh){
@@ -555,12 +653,13 @@ void image_proc(int full,int empty,int boh,int num_row,int num_col,int map_proc[
               full_num++;
             }
           }
-
+          // number of full around the unknown location is grater than the empty spaces and unknown one
           if ((full_num >= empty_num)&&(full_num >= boh_num)) {
             map_proc[row][col]=full;
             //new_mat[row][col]=full;
             iterate=1;
           }
+          // number of empty around the unknown location is grater than the full spaces and unknown one
           if ((empty_num > full_num)&&(empty_num >= boh_num)) {
             map_proc[row][col]=empty;
             //new_mat[row][col]=empty;
@@ -580,18 +679,17 @@ void image_proc(int full,int empty,int boh,int num_row,int num_col,int map_proc[
     }
     */
   }
+
   printf("\n\n");
-  print_bob(map_proc);
+  print_matrix(map_proc);
+
   empty_num=0;
   boh_num=0;
   full_num=0;
-  // more than 3 full around
+  // substitute the empty spaces surrounded by more than 3 full with a full one
   for (row=0;row<num_row;row++){
-    //printf("%d\n",row);
     for (col=0;col<num_col;col++){
-        //printf("%d\n",col);
       if ((row>1)&&(col>1)&&(row<num_row-2)&&(col<num_col-2)){
-        // printf("%d\n",row);
         if (map_proc[row][col]==empty){
           if (map_proc[row+1][col]==boh){
             boh_num++;
@@ -648,6 +746,7 @@ void image_proc(int full,int empty,int boh,int num_row,int num_col,int map_proc[
           boh_num=0;
           full_num=0;
         }
+        // substitute all the unknown points with empty one
         else {
           if (map_proc[row][col]==boh){
             map_proc[row][col]=empty;
@@ -657,17 +756,15 @@ void image_proc(int full,int empty,int boh,int num_row,int num_col,int map_proc[
     }
   }
 
-
   printf("\n\n");
-  print_bob(map_proc);
+  print_matrix(map_proc);
+
   empty_num=0;
   boh_num=0;
   full_num=0;
-  // more than 3 empty around
+  //substitute the full spaces surround by more than 3 full with an empty one
   for (row=0;row<num_row;row++){
-    //printf("%d\n",row);
     for (col=0;col<num_col;col++){
-        //printf("%d\n",col);
       if ((row>1)&&(col>1)&&(row<num_row-2)&&(col<num_col-2)){
         if (map_proc[row][col]==full){
           if (map_proc[row+1][col]==boh){
@@ -720,7 +817,6 @@ void image_proc(int full,int empty,int boh,int num_row,int num_col,int map_proc[
 
           if (empty_num >= 3){
             map_proc[row][col]=empty;
-            //printf ("cor row:%d col:%d full:%d\n", row, col, full_num);
           }
           empty_num=0;
           boh_num=0;
@@ -732,21 +828,22 @@ void image_proc(int full,int empty,int boh,int num_row,int num_col,int map_proc[
 
   printf("\n");
   printf("before any tunnel check\n");
-  print_bob(map_proc);
+  print_matrix(map_proc);
 
+  // find the vertical corridors in the map and try to eliminate the ones with width lower than a defined threshold
   int col_num;
   int fill;
   int tunnel_cnt=0;
   for (row=0;row<num_row;row++){
     for (col=0;col<num_col;col++){
-      if (map_proc[row][col]==empty){ // may be a tunnel
+      if (map_proc[row][col]==empty){ // may be a corridor
         for (col_num=col;col_num<num_col;col_num++){
-          if (map_proc[row][col_num]==full) break; // end tunnel
+          if (map_proc[row][col_num]==full) break; // end of the corridor
           else tunnel_cnt++;
         }
-        if (tunnel_cnt<2){ // 1=5cm 2=10cm
+        if (tunnel_cnt<2){ // 1=5cm width corridor 2=10cm width corridor
           for (fill=0;fill<tunnel_cnt;fill++){
-            map_proc[row][col+fill]=full; // tunnel found place a full to fill it
+            map_proc[row][col+fill]=full; // corridor found place some fulls to fill it
           }
         }
         tunnel_cnt=0;
@@ -757,20 +854,21 @@ void image_proc(int full,int empty,int boh,int num_row,int num_col,int map_proc[
 
   printf("\n");
   printf("after orizzontal tunnel check\n");
-  print_bob(map_proc);
+  print_matrix(map_proc);
 
+  // find the orizontal corridors in the map and try to eliminate the ones with width lower than a defined threshold
   int row_num;
   tunnel_cnt=0;
   for (col=0;col<num_col;col++){
     for (row=0;row<num_row;row++){
-      if (map_proc[row][col]==empty){ // may be a tunnel
+      if (map_proc[row][col]==empty){ // may be a corridor
         for (row_num=row;row_num<num_row;row_num++){
-          if (map_proc[row_num][col]==full) break; // end tunnel
+          if (map_proc[row_num][col]==full) break; // end of the corridor
           else tunnel_cnt++;
         }
-        if (tunnel_cnt<2){ // 1=5cm 2=10cm
+        if (tunnel_cnt<2){ // 1=5cm width corridor 2=10cm width corridor
           for (fill=0;fill<tunnel_cnt;fill++){
-            map_proc[row+fill][col]=full; // tunnel found place a full to fill it
+            map_proc[row+fill][col]=full; // corridor found place some fulls to fill it
           }
         }
         tunnel_cnt=0;
@@ -781,6 +879,6 @@ void image_proc(int full,int empty,int boh,int num_row,int num_col,int map_proc[
 
   printf("\n");
   printf("after vertical tunnel check\n");
-  print_bob(map_proc);
+  print_matrix(map_proc);
 
  }

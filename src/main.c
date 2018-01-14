@@ -15,7 +15,7 @@
 #include "bt.h"
 
 
-int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist);
+int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *gyro, uint8_t *dist);
 int motor_init(uint8_t *motor0, uint8_t *motor1, uint8_t *motor_obs, uint8_t *motor_head);
 void *position_logger(void *arg);
 void * bt_client(void *arg);
@@ -40,25 +40,18 @@ pthread_t obstacle_thread;
 
 int main( int argc, char **argv )
 {
-	int i,j;
+	(void)(argv);
+	int i;
 	char s[256];
 	uint8_t touch;
 	uint8_t color;
-	uint8_t compass;
 	uint8_t gyro;
 	struct thread_arguments thread_args;
 	struct obstacle_thread_arguments obs_args;
 	uint8_t dist;
-	rgb color_val;
 
-	char command;
 	int	obstacles[180];
 	int angles[9];
-	int distance;
-	int pos;
-	int span;
-	float val;
-	char go;
 	int turn;
 	int recal_flag = 0;
 	srand(time(NULL));
@@ -74,7 +67,7 @@ int main( int argc, char **argv )
 	picchio_greet();
 	printf( "*** ( PICCHIO ) Hello! ***\n" );
 
-	sensor_init( &touch, &color, &compass, &gyro, &dist );
+	sensor_init( &touch, &color, &gyro, &dist );
 	motor_init( &motors[0], &motors[1], &motor_obs, &motor_head );
 
 	int turns, released, timeout, rot_th, bluetooth;
@@ -99,7 +92,6 @@ int main( int argc, char **argv )
 	} else {
 
 		int tmp;
-		char c;
 		printf("What is my starting x coordinate? \n");
 		scanf("%d", &tmp);
 		my_pos.x = tmp+P;
@@ -244,7 +236,7 @@ int main( int argc, char **argv )
 		// }
 
 		// go_forwards_cm(motors, 60, MAX_SPEED/4);
-		// panic(motors, gyro);
+		// panic(motors, &gyro_lock);
 
 		my_pos.y = 10;
 		go_forwards_cm(motors, 40, MAX_SPEED/4);
@@ -295,7 +287,7 @@ int main( int argc, char **argv )
 			d = d/2;
 			prevX = my_pos.x; prevY = my_pos.y;
 			int bump = go_forwards_cm_obs(motors, motor_head, dist, touch, d, 12, MAX_SPEED/4);
-			int panicked = panic(motors, gyro, &pos_lock);
+			int panicked = panic(motors, &pos_lock);
 			newX = my_pos.x; newY = my_pos.y;
 			d = (int)point_distance(prevX, prevY, newX, newY);
 			if (!panicked) {
@@ -325,7 +317,7 @@ int main( int argc, char **argv )
 		} else {
 			prevX = my_pos.x; prevY = my_pos.y;
 			int head_pos = go_forwards_obs(motors, motor_head, dist, touch, 7, MAX_SPEED/4);
-			int panicked = panic(motors, gyro, &pos_lock);
+			int panicked = panic(motors, &pos_lock);
 			millisleep(100);
 			check_ball(dist, color, my_pos.dir);
 			newX = my_pos.x; newY = my_pos.y;
@@ -334,7 +326,7 @@ int main( int argc, char **argv )
 				map_fix(prevX, prevY, my_pos.dir, d+FACE, ROBOT_WIDTH, SURE_MISS);
 			}
 			if (abs(head_pos) < 40 && recal_flag == 1) {
-				angle_recal2(motors, motor_head, dist, gyro, 15, 6, 20, &gyro_lock);
+				angle_recal(motors, motor_head, dist, gyro, 15, 6, 20, &gyro_lock);
 		  }
 			recal_flag = 0;
 			int f = 1;
@@ -371,7 +363,7 @@ int main( int argc, char **argv )
 					}
 					break;
 				}
-				panic(motors, gyro, &pos_lock);
+				panic(motors, &pos_lock);
 			}
 
 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
@@ -399,7 +391,7 @@ int main( int argc, char **argv )
 
 	map_print(0, 0, P+L+P, P+H+P);
 	map_average();
-	image_proc('@','_','?',26,19,map_copy);
+	image_proc('@','_','?',map_copy);
 	for (i=1; i <=10; i++) {
 		printf("[[[%f]]]\n", i/10.0);
 		map_average_w(i/10.0);
@@ -414,7 +406,7 @@ int main( int argc, char **argv )
 	return ( 0 );
 }
 
-int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro, uint8_t *dist) {
+int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *gyro, uint8_t *dist) {
 	int all_ok = 1;
 	ev3_sensor_init();
 	if ( !ev3_search_sensor( LEGO_EV3_TOUCH, touch, 0 )) {
@@ -425,13 +417,8 @@ int sensor_init(uint8_t *touch, uint8_t *color, uint8_t *compass, uint8_t *gyro,
 		fprintf( stderr, "Color sensor not found...\n" );
 		all_ok = 0;
 	} else {
-		//set_sensor_mode_inx(*color, COLOR_COL_COLOR);
 		set_sensor_mode_inx(*color, COLOR_RGB_RAW);
 	}
-	// if ( !ev3_search_sensor( HT_NXT_COMPASS, compass, 0 )) {
-	// 	fprintf( stderr, "Compass not found...\n" );
-	// 	all_ok = 0;
-	// }
 	if ( !ev3_search_sensor( LEGO_EV3_GYRO, gyro, 0 )) {
 		fprintf( stderr, "Gyroscope not found...\n" );
 		all_ok = 0;
@@ -519,14 +506,13 @@ void *direction_updater(void *arg)
 
 void *position_updater(void * thread_args)
 {
-
 	struct thread_arguments * args;
 	args = (struct thread_arguments *) thread_args;
 	uint8_t motors[2];
 	motors[0]=args->motor0;
 	motors[1]=args->motor1;
 	int sp0, sp1;
-	float dx = 0, dir, speed, dt;
+	float dx = 0, dir, dt;
 	struct timeb t0, t1;
 	ftime(&t0); ftime(&t1);
 	for ( ; flag_killer==0; ) {
@@ -585,8 +571,8 @@ void *position_updater(void * thread_args)
 
 void *position_logger(void *arg)
 {
+	(void)(arg);
 	FILE* fp = fopen("logs/log.txt", "w+");
-	int i;
 	for ( ; flag_killer==0; ) {
 	  fprintf( fp, "ID = %d    x = %+.4f    y = %+.4f    dir = %.3f    gyro_x = %+.4f    gyro_y = %+.4f    gyro_dir = %.3f\n", MY_ID, my_pos.x, my_pos.y, my_pos.dir, gyro_pos.x, gyro_pos.y, gyro_pos.dir);
 		millisleep(100);
@@ -599,6 +585,7 @@ void *position_logger(void *arg)
 
 void *bt_client(void *arg)
 {
+	(void)(arg);
 	pthread_t kick;
 	printf("[BT] - Bluetooth client starting up...\n");
   sleep(2);
@@ -616,6 +603,7 @@ void *bt_client(void *arg)
 }
 
 void *wait_kick(void *arg) {
+	(void)(arg);
   char type;
   char string[58];
   while(flag_killer == 0){
@@ -627,10 +615,11 @@ void *wait_kick(void *arg) {
       flag_killer = 1;
     }
   }
+	return NULL;
 }
 
 static void kill_all(int signo) {
-
+	(void)(signo);
   puts("Stopping the motors and pausing the threads.\n");
 
 	stop_motor(motors[0]);
