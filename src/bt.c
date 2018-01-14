@@ -247,7 +247,7 @@ void wait_stop() {
 }
 
 /*
- * Function: send_map
+ * Function: send_matrix
  * --------------------
  * Sends the final map to the server, after processing
  * --------------------
