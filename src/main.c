@@ -188,6 +188,25 @@ int main( int argc, char **argv )
 	}
 
 	for (i = 0; i < turns; i++) {
+		if (!released) {
+			rand_th = 5;
+			go_forwards_cm(motors, 15, MAX_SPEED/4);
+			obs_args.motor = motor_obs;
+			obs_args.motor0 = motors[0];
+			obs_args.motor1 = motors[1];
+			obs_args.speed = MAX_SPEED/16;
+			obs_args.pos_down = -60;
+			obs_args.pos_up = 0;
+			if (bluetooth) {
+				send_obs();
+			}
+			//Spawn the thread to manage the release of the obstacle
+			pthread_create(&obstacle_thread, NULL, release_obs_routine, (void *)&obs_args);
+			sleep(4);
+			released = 1;
+			//Update the dimension of the robot for better turning
+			rot_th -= ROT_THRESHOLD;
+		}
 
 		//We enter this condition, randomly, after the first few turns, in order to better explore new areas
 		if (i > 3 && rand()%10 >= rand_th && flag>=2) {
@@ -198,6 +217,8 @@ int main( int argc, char **argv )
 			} else {
 				turn_left_motors(motors, MAX_SPEED/16, 90);
 			}
+
+			if (d < 20) d = 50;
 
 			//Safely reset the gyroscope
 			millisleep(50);
@@ -233,7 +254,7 @@ int main( int argc, char **argv )
 			//Save the coordinates before starting to move
 			prevX = my_pos.x; prevY = my_pos.y;
 			//Go until an obstacle, keep track if we bumped or not
-			int bump = go_forwards_cm_obs(motors, motor_head, dist, touch, d, 12, MAX_SPEED/4);
+			go_forwards_cm_obs(motors, motor_head, dist, touch, d, 12, MAX_SPEED/4);
 			//Check if our direction drifted. If yes, recalibtrate
 			int panicked = panic(motors, &pos_lock);
 			//Save the coordinates after stopping
@@ -244,9 +265,9 @@ int main( int argc, char **argv )
 				//If we drifted, we should not trust our path so we don't update the map
 				map_fix(prevX, prevY, my_pos.dir, d+FACE, ROBOT_WIDTH, SURE_MISS);
 			}
-			if (bump && d > 10) {
-				//If we bumped, we go backwards a bit to get room
-				go_backwards_cm(motors, 10, MAX_SPEED/4);
+			if (d > 5) {
+				//We go backwards a bit to get room
+				go_backwards_cm(motors, 5, MAX_SPEED/4);
 		  }
 			//We decide which half of the map is the least explored and we turn towards it
 			turn = choice_LR((int)my_pos.x, (int)my_pos.y, my_pos.dir);
@@ -341,7 +362,7 @@ int main( int argc, char **argv )
 			//Safely reset the gyroscope
 			millisleep(50);
 			pthread_mutex_lock(&gyro_lock);
-			offset = gyro_pos.dir;//((count*90 + 180) % 360 + 360) % 360 - 180;
+			offset = gyro_pos.dir;
 			set_gyro(gyro);
 			pthread_mutex_unlock(&gyro_lock);
 			millisleep(50);

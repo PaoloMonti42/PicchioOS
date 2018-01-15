@@ -7,8 +7,10 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/rfcomm.h>
 
-#define SERV_ADDR   "40:e2:30:50:e9:4c"     /* Valerio */
-//#define SERV_ADDR   "00:1a:7d:da:71:06"     /* Letitia */
+//XXX
+//#define SERV_ADDR   "40:e2:30:50:e9:4c"     /* Valerio */
+#define SERV_ADDR   "00:1a:7d:da:71:06"     /* Large arena */
+//#define SERV_ADDR   "dc:53:60:ad:61:90"     /* Small arena */
 #define TEAM_ID     1                       /* Your team ID */
 
 #define MSG_ACK     0
@@ -215,7 +217,7 @@ void send_map(){
     }
   }
 
-  printf("[BT] - Done sending map");
+  printf("[BT] - Done sending map\n");
   string[0] = msgId % 0xFF;
   string[1] = msgId >> 8;
   msgId++;
@@ -236,7 +238,7 @@ void send_map(){
 void wait_stop() {
   char type;
   char string[58];
-  printf("[BT] - I'm waiting for the stop message");
+  printf("[BT] - I'm waiting for the stop message\n");
   while(1){
     read_from_server (bt_sock, string, 58);
       type = string[4];
@@ -247,7 +249,7 @@ void wait_stop() {
 }
 
 /*
- * Function: send_map
+ * Function: send_matrix
  * --------------------
  * Sends the final map to the server, after processing
  * --------------------
@@ -282,10 +284,11 @@ void send_matrix(int matrix[H_AVG][L_AVG]){
         string[11] = 200;
       }
       write(bt_sock, string, 12);
+      millisleep(2);
     }
   }
 
-  printf("[BT] - Done sending map");
+  printf("[BT] - Done sending map\n");
   string[0] = msgId % 0xFF;
   string[1] = msgId >> 8;
   msgId++;

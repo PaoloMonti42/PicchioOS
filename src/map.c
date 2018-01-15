@@ -3,8 +3,11 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-#define L 75
-#define H 110
+#define SAFE_X 250
+#define SAFE_Y 50
+#define L 250
+#define H 330
+
 #define P 10
 #define L_AVG (P+L+P)/5
 #define H_AVG (P+H+P)/5
@@ -26,8 +29,7 @@
 
 #define MAP_SQUARE 5
 
-#define SAFE_X 120
-#define SAFE_Y 50
+
 
 uint16_t mat[P+H+P][P+L+P] = {{0}};
 int map_copy[H_AVG][L_AVG];
@@ -760,7 +762,7 @@ void image_proc(int full,int empty,int boh,int map_proc[H_AVG][L_AVG]){
       }
     }
   }
-
+  /*
   printf("\n\n");
   print_matrix(map_proc);
 
@@ -830,7 +832,7 @@ void image_proc(int full,int empty,int boh,int map_proc[H_AVG][L_AVG]){
       }
     }
   }
-
+  */
   printf("\n");
   printf("before any tunnel check\n");
   print_matrix(map_proc);
